@@ -1,0 +1,2 @@
+/home/zjac281/Desktop/RustMC/genmc_for_rust/rust_benchmark/mixed_codebases/race_free_test/target/x86_64-unknown-linux-gnu/debug/deps/race_free_test-8e9767728bf5add8.bc
+/home/zjac281/Desktop/RustMC/genmc_for_rust/rust_benchmark/mixed_codebases/race_free_test/target/x86_64-unknown-linux-gnu/debug/deps/hello.bc

@@ -1,0 +1,2 @@
+/home/zjac281/Desktop/RustMC/genmc_for_rust/rust_benchmark/mixed_codebases/racy_test/target/x86_64-unknown-linux-gnu/debug/deps/racy_test-fafcf45f360fcb23.bc
+/home/zjac281/Desktop/RustMC/genmc_for_rust/rust_benchmark/mixed_codebases/racy_test/target/x86_64-unknown-linux-gnu/debug/deps/racy.bc

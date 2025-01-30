@@ -1,0 +1,5 @@
+fn main() {
+    println!("cargo:rustc-link-lib=dylib=std");
+    println!("cargo:rustc-link-search=native=/home/zjac281/Documents/Rust_projects/guessing_game_root/library");
+}
+
