@@ -2,7 +2,7 @@ RustMC: Extending the GenMC
 stateless model checker to Rust
 
 
-To build the Rust std library, RustMC and verify a Rust program:
+To build the Rust std library, and verify a Rust program:
 
 1) Installing Rust source:
 
