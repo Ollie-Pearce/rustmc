@@ -1,32 +1,39 @@
-RustMC: Extending the GenMC
-stateless model checker to Rust
+# RustMC: Extending the GenMC stateless model checker to Rust
+
+## Set-up and compile
+
+### Installing Rust source:
+
+To build the adapted Rust standard library follow the instructions
+below.
 
 
-To build the Rust std library, and verify a Rust program:
+    - Navigate to RustMC/rust and execute `./x setup`
 
-1) Installing Rust source:
-
-    - Navigate to RustMC/rust and execute "./x setup"
-
-    - select "b" for "compiler"
+    - select `b` for `compiler`
 
     - insert the following in config.toml 
-
+	
+	```
         [llvm]
         download-ci-llvm = false
+	```
+	
+    - next run `rustup toolchain link RustMC rust/build/x86_64-unknown-linux-gnu/stage1`
 
-    - next run "rustup toolchain link RustMC rust/build/x86_64-unknown-linux-gnu/stage1
+### Building GenMC/RustMC:
 
-2) Building genmc:
-	- Navigate to RustMC/genmc_for_rust/genmc
+	- Navigate to `RustMC/genmc_for_rust/genmc`
 
 	- Run:
+	```
         	autoreconf --install
 	        ./configure
 	        make
+	```
 
-4) Verifying a Rust program:
+## Verifying a Rust program with RustMC:
 	- Run:
-  		sh verify.sh /path/to/rust/file.rs
+  		`sh verify.sh /path/to/rust/file.rs`
 
-	- Results will be output in rustmc/verification.txt 
+	- Results will be output in `rustmc/verification.txt`
