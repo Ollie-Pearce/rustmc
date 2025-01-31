@@ -15,7 +15,7 @@ To build the Rust std library, RustMC and verify a Rust program:
         [llvm]
         download-ci-llvm = false
 
-    - next run "rustup toolchain link RustMC build/x86_64-unknown-linux-gnu/stage1
+    - next run "rustup toolchain link RustMC rust/build/x86_64-unknown-linux-gnu/stage1
 
 2) Building genmc:
 	- Navigate to RustMC/genmc_for_rust/genmc
