@@ -1,38 +1,27 @@
+RustMC: Extending the GenMC
+stateless model checker to Rust
 
 
-
-To build the Rust std library, GenMC and an example rust program:
+To build the Rust std library, RustMC and verify a Rust program:
 
 1) Installing Rust source:
 
-    - navigate to RustMC/rust and execute "./x build library"
+    - Navigate to RustMC/rust and execute "./x build library"
 
     - You may need to run "./x setup" first
 
     - next run "rustup toolcahin link RustMC build/x86_64-unknown-linux-gnu/stage1
 
-2) Building genmc and the Rust program:
+2) Building genmc:
+	- Navigate to RustMC/genmc_for_rust/genmc
 
-    - Navigate to RustMC/genmc_for_rust/genmc
-
-    - Run:
+	- Run:
         	autoreconf --install
 	        ./configure
 	        make
 
+4) Verifying a Rust program:
+	- Run:
+  		sh verify.sh /path/to/rust/file.rs
 
-
-    - To test GenMC on a Rust program use run.sh, this script:
-
-        - Compiles a benchmark to llvm bytecode
-
-        - Links this bytecode into an LLVM-IR module. Overriding system threading functions.
-
-        - Runs genmc on the LLVM-IR module
-
-
-######################################################################################
- 
-In order to run a build genmc on the working test case (with manually stored undef values) run:
-
-    - sh run_working_case.sh
+	- Results will be output in rustmc/verification.txt 
