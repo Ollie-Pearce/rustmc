@@ -6,9 +6,14 @@ To build the Rust std library, RustMC and verify a Rust program:
 
 1) Installing Rust source:
 
-    - Navigate to RustMC/rust and execute "./x build library"
+    - Navigate to RustMC/rust and execute "./x setup"
 
-    - You may need to run "./x setup" first
+    - select "b" for "compiler"
+
+    - insert the following in config.toml 
+
+        [llvm]
+        download-ci-llvm = false
 
     - next run "rustup toolchain link RustMC build/x86_64-unknown-linux-gnu/stage1
 
