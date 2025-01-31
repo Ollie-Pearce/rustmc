@@ -10,7 +10,7 @@ To build the Rust std library, RustMC and verify a Rust program:
 
     - You may need to run "./x setup" first
 
-    - next run "rustup toolcahin link RustMC build/x86_64-unknown-linux-gnu/stage1
+    - next run "rustup toolchain link RustMC build/x86_64-unknown-linux-gnu/stage1
 
 2) Building genmc:
 	- Navigate to RustMC/genmc_for_rust/genmc
