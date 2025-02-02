@@ -23,6 +23,7 @@
 #include "Static/Transforms/DeclareInternalsPass.hpp"
 #include "Static/Transforms/MDataCollectionPass.hpp"
 #include "Support/Error.hpp"
+#include "Static/LLVMUtils.hpp"
 #include "config.h"
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Analysis/CallGraph.h>
@@ -36,6 +37,7 @@ using namespace llvm;
 auto isInlinable(CallGraph &CG, CallGraphNode *node, SmallVector<CallGraphNode *, 4> &chain) -> bool
 {
 	/* Base cases: indirect/empty/recursive calls */
+	/* RustMC: C functions are not inlined in order to differentiate them when transforming memory intrinsics*/
 	auto *F = node->getFunction();
 	if (node == CG.getCallsExternalNode())
 		return false;

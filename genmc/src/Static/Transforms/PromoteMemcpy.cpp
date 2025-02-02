@@ -13,10 +13,10 @@
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/IR/Type.h>
-#include <llvm/IR/Metadata.h>
 
 #include <ranges>
 
@@ -86,41 +86,39 @@ auto promote1xI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted
 	promoted.push_back(MI);
 }
 
-
-
 auto promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
 	if (!constLength) {
-       WARN_ONCE("memintr-length", "Cannot promote non-constant-length mem intrinsic!"
-                       "Skipping...\n");
-       return false;
+		WARN_ONCE("memintr-length", "Cannot promote non-constant-length mem intrinsic!"
+					    "Skipping...\n");
+		return false;
 	}
 
 	Value *dest = MI->getRawDest();
-    Value *src = MI->getRawSource(); 
+	Value *src = MI->getRawSource();
 	IRBuilder<> builder(MI);
 
 	Type *int8Type = Type::getInt8Ty(MI->getContext());
 
 	Value *destPtr = builder.CreateBitCast(dest, int8Type->getPointerTo());
-    Value *srcPtr = builder.CreateBitCast(src, int8Type->getPointerTo());
+	Value *srcPtr = builder.CreateBitCast(src, int8Type->getPointerTo());
 
 	Value *zeroValue = ConstantInt::get(int8Type, 0);
 
 	uint64_t lengthValue = constLength->getZExtValue();
 
 	for (uint64_t i = 0; i < constLength->getZExtValue(); ++i) {
-        Value *index = ConstantInt::get(builder.getInt64Ty(), i);
+		Value *index = ConstantInt::get(builder.getInt64Ty(), i);
 
-        // Compute pointers for source and destination at offset i.
-        Value *destGEP = builder.CreateGEP(int8Type, destPtr, index, "dest_gep");
-        Value *srcGEP  = builder.CreateGEP(int8Type, srcPtr,  index, "src_gep");
+		// Compute pointers for source and destination at offset i.
+		Value *destGEP = builder.CreateGEP(int8Type, destPtr, index, "dest_gep");
+		Value *srcGEP = builder.CreateGEP(int8Type, srcPtr, index, "src_gep");
 
-        // Load a byte from the source.
-        Value *loadedVal = builder.CreateLoad(int8Type, srcGEP, "load_byte");
-        // Store the byte into the destination.
-        builder.CreateStore(loadedVal, destGEP);
+		// Load a byte from the source.
+		Value *loadedVal = builder.CreateLoad(int8Type, srcGEP, "load_byte");
+		// Store the byte into the destination.
+		builder.CreateStore(loadedVal, destGEP);
 	}
 
 	promoted.push_back(MI);
@@ -130,7 +128,7 @@ auto promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> 
 auto new_promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	Value *dest = MI->getRawDest();
-    Value *src = MI->getRawSource(); 
+	Value *src = MI->getRawSource();
 	Value *length = MI->getLength();
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
 	auto *nullInt = Constant::getNullValue(I64Type);
@@ -139,18 +137,19 @@ auto new_promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 
 	Type *int8Type = Type::getInt8Ty(MI->getContext());
 	Value *destPtr = builder.CreateBitCast(dest, int8Type->getPointerTo());
-    Value *srcPtr = builder.CreateBitCast(src, int8Type->getPointerTo());
+	Value *srcPtr = builder.CreateBitCast(src, int8Type->getPointerTo());
 
 	auto *constLength = llvm::dyn_cast<llvm::ConstantInt>(length);
 	int size_in_i64s = static_cast<int>(constLength->getZExtValue()) / 8;
 
 	for (uint64_t i = 0; i < size_in_i64s; i++) {
-		Value *index = ConstantInt::get(builder.getInt64Ty(), i*8);
+		Value *index = ConstantInt::get(builder.getInt64Ty(), i * 8);
 
-        // Compute pointers for source and destination at offset i.
-		Value *srcGEP  = builder.CreateGEP(int8Type, MI->getSource(),  index, "new_promote_src_gep");
-        Value *destGEP = builder.CreateGEP(int8Type, MI->getDest(), index, "new_promote_dst_gep");
-        
+		// Compute pointers for source and destination at offset i.
+		Value *srcGEP =
+			builder.CreateGEP(int8Type, MI->getSource(), index, "new_promote_src_gep");
+		Value *destGEP =
+			builder.CreateGEP(int8Type, MI->getDest(), index, "new_promote_dst_gep");
 
 		Value *loadedVal = builder.CreateLoad(I64Type, srcGEP, "new_promote_load");
 		builder.CreateStore(loadedVal, destGEP);
@@ -159,23 +158,20 @@ auto new_promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	return true;
 }
 
-
-
 bool isSpecial(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 
-		ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
+	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
 	if (!constLength) {
-       WARN_ONCE("memintr-length", "Cannot promote non-constant-length mem intrinsic!"
-                       "Skipping...\n");
-       return false;
+		WARN_ONCE("memintr-length", "Cannot promote non-constant-length mem intrinsic!"
+					    "Skipping...\n");
+		return false;
 	}
-	
 
 	auto lengthint = constLength->getZExtValue();
 
-	//lengthint == 48 || lengthint == 32 || lengthint == 24 || lengthint == 16
-	if (lengthint % 8 == 0 && lengthint > 8){
+	// lengthint == 48 || lengthint == 32 || lengthint == 24 || lengthint == 16
+	if (lengthint % 8 == 0 && lengthint > 8) {
 		new_promote(MI, promoted);
 		return true;
 	}
@@ -196,9 +192,29 @@ bool isSpecial(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	return false;
 }
 
+auto promote_8len_memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+{
 
+	Type *I64Type = Type::getInt64Ty(MI->getContext());
+	Type *I32Type = Type::getInt32Ty(MI->getContext());
+	Type *I8Type = Type::getInt8Ty(MI->getContext());
+	auto *nullInt = Constant::getNullValue(I64Type);
+	std::vector<Value *> args = {nullInt};
+	IRBuilder<> builder(MI);
 
+	auto *dst = MI->getDest();
 
+	auto *argVal = MI->getValue();
+
+	long int ival = dyn_cast<ConstantInt>(argVal)->getSExtValue();
+	Value *val = Constant::getIntegerValue(I64Type, APInt(64, ival));
+
+	builder.CreateStore(val, dst, "mynewstoretuna");
+
+	promoted.push_back(MI);
+
+	return true;
+}
 
 auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAnalyses
 {
@@ -211,17 +227,19 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 
 	for (auto &I : instructions(F)) {
 		if (auto *MI = dyn_cast<MemCpyInst>(&I)) {
-				errs() << "MI detected:";
+			errs() << "MI detected:";
+			MI->dump();
+			if (isSpecial(MI, promoted)) {
+				modified = true;
+			} else {
+				errs() << "Non special detected: ";
 				MI->dump();
-				if (isSpecial(MI, promoted)) {
-					modified = true;
-				} else {
-					errs() << "Non special detected: ";
-					MI->dump();
-					modified |= promote(MI, promoted);
-				}
-			} 
-		
+				modified |= promote(MI, promoted);
+			}
+		}
+		if (auto *MS = dyn_cast<MemSetInst>(&I)) {
+			modified |= promote_8len_memset(MS, promoted);
+		}
 	}
 	removePromoted2(promoted);
 	return modified ? PreservedAnalyses::none() : PreservedAnalyses::all();

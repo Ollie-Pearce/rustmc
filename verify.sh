@@ -23,6 +23,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+cd genmc
+make
+cd ..
+
 cd $TARGET_RUST_PROJECT
 
 cargo clean
@@ -31,7 +35,7 @@ export RUSTFLAGS=" -C overflow-checks=off -C panic=abort --emit=llvm-bc -C opt-l
 rustup run RustMC cargo run --target x86_64-unknown-linux-gnu 
 
 if [ "$MIXED_LANGUAGE" = "true" ]; then
-	clang -O0 -emit-llvm -c *.c
+	clang -O3 -emit-llvm -c *.c
 	mv *.bc $(pwd)/target/x86_64-unknown-linux-gnu/debug/deps
 fi
 
@@ -43,4 +47,4 @@ llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined
 
 cd $DEPDIR/genmc
 
-./genmc --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/combined.ll > $DEPDIR/verification.txt
+./genmc --disable-function-inliner --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/combined.ll > $DEPDIR/verification.txt
