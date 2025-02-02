@@ -2,43 +2,23 @@
 
 ## Set-up and compile
 
-### Installing Rust source:
+### Linking Rust Toolchain and Building GenMC/RustMC:
 
-To build the adapted Rust standard library follow the instructions
-below.
+The included build script will:
 
-- use git `submodule update --init --recursive` to clone the custom toolchain submodule
+- Download, extract and link the custom toolchain 
 
-- Naviagate to `rust/`
+- Build GenMC/RustMC
 
-- Insert the following in config.toml 
-	
-```
-[llvm]
-download-ci-llvm = false
-```
-	
-- Navigate to RustMC/rust and execute `./x build library`
+- To execute the build script run: `sh build.sh`
 
-- Run `rustup toolchain link RustMC rust/build/x86_64-unknown-linux-gnu/stage1`
-
-### Building GenMC/RustMC:
-
-- Navigate to `RustMC/genmc_for_rust/genmc`
-
-- Run:
-```
-autoreconf --install
-./configure
-make
-```
+- The custom toolchain can be found at: <https://github.com/Ollie-Pearce/rust>
 
 ## Verifying a Rust project with RustMC:
 
 - Run: `sh verify.sh /path/to/project/`
 
 - Results will be output in `rustmc/verification.txt`
-
 
 ## Verifying a Rust program containing FFI dependencies with RustMC
 
