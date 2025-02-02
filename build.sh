@@ -10,7 +10,7 @@ ASSET_API_URL=$(echo "$RELEASE_JSON" | jq -r ".assets[]? | select(.name==\"$ASSE
 
 #Download, extract and link custom toolchain
 curl -L -H "Accept: application/octet-stream" "$ASSET_API_URL" -o "$ASSET_NAME"
-tar -xf "$ASSET_NAME" -C rust_toolchain
+tar -xf "$ASSET_NAME"
 rustup toolchain link RustMC $PWD/rust_toolchain/stage1
 
 
