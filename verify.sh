@@ -47,4 +47,4 @@ llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined
 
 cd $DEPDIR/genmc
 
-./genmc --disable-function-inliner --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/combined.ll > $DEPDIR/verification.txt
+./genmc --print-exec-graphs --disable-function-inliner --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/combined.ll > $DEPDIR/verification.txt
