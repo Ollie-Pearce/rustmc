@@ -109,7 +109,7 @@ auto promoteByteWise(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promo
 	return true;
 }
 
-auto PromoteI64s(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
+auto promoteI64s(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	Value *dest = MI->getRawDest();
 	Value *src = MI->getRawSource();
@@ -142,7 +142,7 @@ auto PromoteI64s(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	return true;
 }
 
-auto promote_8len_memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+auto promotI64Memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
@@ -159,7 +159,7 @@ auto promote_8len_memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &p
 	long int ival = dyn_cast<ConstantInt>(argVal)->getSExtValue();
 	Value *val = Constant::getIntegerValue(I64Type, APInt(64, ival));
 
-	builder.CreateStore(val, dst, "mynewstoretuna");
+	builder.CreateStore(val, dst);
 
 	promoted.push_back(MI);
 
@@ -183,7 +183,7 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 				auto lengthint = constLength->getZExtValue();
 				switch (lengthint % 8) {
 				case 0:
-					modified |= PromoteI64s(MI, promoted);
+					modified |= promoteI64s(MI, promoted);
 					break;
 				case 4:
 					modified |= promoteI32(MI, promoted);
@@ -197,7 +197,7 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 				}
 			}
 		} else if (auto *MS = dyn_cast<MemSetInst>(&I)) {
-			modified |= promote_8len_memset(MS, promoted);
+			modified |= promotI64Memset(MS, promoted);
 		}
 	}
 	removePromoted(promoted);
