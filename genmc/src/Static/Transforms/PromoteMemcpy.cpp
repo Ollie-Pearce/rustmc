@@ -198,13 +198,33 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 
 	for (auto &I : instructions(F)) {
 		if (auto *MI = dyn_cast<MemCpyInst>(&I)) {
-			if (IsDivisibleBy8(MI, promoted)) {
-				modified = true;
+			ConstantInt *constLength =
+				llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
+			if (!constLength) {
+				WARN_ONCE("memintr-length",
+					  "Cannot promote non-constant-length mem intrinsic!"
+					  "Skipping...\n");
 			} else {
-				modified |= promoteByteWise(MI, promoted);
+				auto lengthint = constLength->getZExtValue();
+				switch (lengthint % 8) {
+				case 0:
+					PromoteI64s(MI, promoted);
+					modified = true;
+					break;
+				case 4:
+					promoteI32(MI, promoted);
+					modified = true;
+					break;
+				case 2:
+					promoteI16(MI, promoted);
+					modified = true;
+					break;
+				default:
+					modified |= promoteByteWise(MI, promoted);
+					break;
+				}
 			}
-		}
-		if (auto *MS = dyn_cast<MemSetInst>(&I)) {
+		} else if (auto *MS = dyn_cast<MemSetInst>(&I)) {
 			modified |= promote_8len_memset(MS, promoted);
 		}
 	}
