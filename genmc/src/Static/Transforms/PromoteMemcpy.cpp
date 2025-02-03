@@ -38,7 +38,7 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 	}
 }
 
-auto promote1xI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+auto promoteI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
 	Type *I32Type = Type::getInt32Ty(MI->getContext());
@@ -54,7 +54,7 @@ auto promote1xI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted
 	promoted.push_back(MI);
 }
 
-auto promote1xI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+auto promoteI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 
 	Type *I16Type = Type::getInt16Ty(MI->getContext());
@@ -156,10 +156,10 @@ bool IsDivisibleBy8(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promot
 		PromoteI64s(MI, promoted);
 		return true;
 	case 4:
-		promote1xI32(MI, promoted);
+		promoteI32(MI, promoted);
 		return true;
 	case 2:
-		promote1xI16(MI, promoted);
+		promoteI16(MI, promoted);
 		return true;
 	default:
 		return false;
