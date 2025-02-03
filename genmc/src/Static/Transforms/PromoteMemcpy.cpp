@@ -142,33 +142,6 @@ auto PromoteI64s(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	return true;
 }
 
-bool IsDivisibleBy8(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
-{
-
-	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
-	if (!constLength) {
-		WARN_ONCE("memintr-length", "Cannot promote non-constant-length mem intrinsic!"
-					    "Skipping...\n");
-		return false;
-	}
-	auto lengthint = constLength->getZExtValue();
-
-	switch (lengthint % 8) {
-	case 0:
-		PromoteI64s(MI, promoted);
-		return true;
-	case 4:
-		promoteI32(MI, promoted);
-		return true;
-	case 2:
-		promoteI16(MI, promoted);
-		return true;
-	default:
-		return false;
-	}
-	return false;
-}
-
 auto promote_8len_memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 
