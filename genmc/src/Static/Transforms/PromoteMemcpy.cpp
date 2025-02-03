@@ -38,22 +38,6 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 	}
 }
 
-auto promote1xI64(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
-{
-	Type *I64Type = Type::getInt64Ty(MI->getContext());
-	Type *I32Type = Type::getInt32Ty(MI->getContext());
-	Type *I8Type = Type::getInt8Ty(MI->getContext());
-	auto *nullInt = Constant::getNullValue(I64Type);
-	std::vector<Value *> args = {nullInt};
-	IRBuilder<> builder(MI);
-
-	Value *promote1xI64_load0 =
-		builder.CreateLoad(I64Type, MI->getSource(), "promote1xI64_store");
-	builder.CreateStore(promote1xI64_load0, MI->getDest());
-
-	promoted.push_back(MI);
-}
-
 auto promote1xI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
