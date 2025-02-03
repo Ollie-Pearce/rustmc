@@ -246,7 +246,7 @@ bool IsCFunction(Function &F)
 					}
 				}
 			}
-            return false;
+            
 		}
 		
 	}
