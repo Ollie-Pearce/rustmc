@@ -38,7 +38,7 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 	}
 }
 
-auto promoteI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+auto promoteI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
 	Type *I32Type = Type::getInt32Ty(MI->getContext());
@@ -52,9 +52,10 @@ auto promoteI32(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	builder.CreateStore(promote1xI32_load0, MI->getDest());
 
 	promoted.push_back(MI);
+	return true;
 }
 
-auto promoteI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+auto promoteI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 
 	Type *I16Type = Type::getInt16Ty(MI->getContext());
@@ -66,6 +67,7 @@ auto promoteI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	builder.CreateStore(promote1xI16_load0, MI->getDest());
 
 	promoted.push_back(MI);
+	return true;
 }
 
 auto promoteByteWise(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
@@ -208,16 +210,13 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 				auto lengthint = constLength->getZExtValue();
 				switch (lengthint % 8) {
 				case 0:
-					PromoteI64s(MI, promoted);
-					modified = true;
+					modified |= PromoteI64s(MI, promoted);
 					break;
 				case 4:
-					promoteI32(MI, promoted);
-					modified = true;
+					modified |= promoteI32(MI, promoted);
 					break;
 				case 2:
-					promoteI16(MI, promoted);
-					modified = true;
+					modified |= promoteI16(MI, promoted);
 					break;
 				default:
 					modified |= promoteByteWise(MI, promoted);
