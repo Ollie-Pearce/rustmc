@@ -95,6 +95,7 @@ private:
 };
 #endif
 
+
 /*
  * Returns true if o1 and o2 are the same ordering as far as a load
  * operation is concerned. This catches cases where e.g.,

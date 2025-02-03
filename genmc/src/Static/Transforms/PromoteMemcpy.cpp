@@ -22,7 +22,7 @@
 
 using namespace llvm;
 
-void removePromoted2(std::ranges::input_range auto &&promoted)
+void removePromoted(std::ranges::input_range auto &&promoted)
 {
 	for (auto *MI : promoted) {
 		BitCastInst *dst = dyn_cast<BitCastInst>(MI->getRawDest());
@@ -86,7 +86,7 @@ auto promote1xI16(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted
 	promoted.push_back(MI);
 }
 
-auto promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
+auto promoteByteWise(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
 	if (!constLength) {
@@ -125,7 +125,7 @@ auto promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> 
 	return true;
 }
 
-auto new_promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
+auto PromoteI64s(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted) -> bool
 {
 	Value *dest = MI->getRawDest();
 	Value *src = MI->getRawSource();
@@ -158,7 +158,7 @@ auto new_promote(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 	return true;
 }
 
-bool isSpecial(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
+bool IsDivisibleBy8(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 
 	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
@@ -167,18 +167,11 @@ bool isSpecial(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 					    "Skipping...\n");
 		return false;
 	}
-
 	auto lengthint = constLength->getZExtValue();
 
-	// lengthint == 48 || lengthint == 32 || lengthint == 24 || lengthint == 16
-	if (lengthint % 8 == 0 && lengthint > 8) {
-		new_promote(MI, promoted);
-		return true;
-	}
-
-	switch (lengthint) {
-	case 8:
-		promote1xI64(MI, promoted);
+	switch (lengthint % 8) {
+	case 0:
+		PromoteI64s(MI, promoted);
 		return true;
 	case 4:
 		promote1xI32(MI, promoted);
@@ -218,29 +211,21 @@ auto promote_8len_memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &p
 
 auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAnalyses
 {
-	int promotecount = 0;
-	int potentialpromote = 0;
 	auto modified = false;
-	int gep_edge_cases = 0;
-
 	SmallVector<llvm::MemIntrinsic *, 8> promoted;
 
 	for (auto &I : instructions(F)) {
 		if (auto *MI = dyn_cast<MemCpyInst>(&I)) {
-			errs() << "MI detected:";
-			MI->dump();
-			if (isSpecial(MI, promoted)) {
+			if (IsDivisibleBy8(MI, promoted)) {
 				modified = true;
 			} else {
-				errs() << "Non special detected: ";
-				MI->dump();
-				modified |= promote(MI, promoted);
+				modified |= promoteByteWise(MI, promoted);
 			}
 		}
 		if (auto *MS = dyn_cast<MemSetInst>(&I)) {
 			modified |= promote_8len_memset(MS, promoted);
 		}
 	}
-	removePromoted2(promoted);
+	removePromoted(promoted);
 	return modified ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
