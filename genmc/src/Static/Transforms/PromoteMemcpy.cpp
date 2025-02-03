@@ -38,8 +38,6 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 	}
 }
 
-bool can_promote(Value *op) { return isa<GetElementPtrInst>(op); }
-
 auto promote1xI64(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &promoted)
 {
 	Type *I64Type = Type::getInt64Ty(MI->getContext());
