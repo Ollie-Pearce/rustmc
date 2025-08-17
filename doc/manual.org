@@ -1,0 +1,1115 @@
+#+LATEX_CLASS: michalis-demo
+#+TITLE: {{{genmc}}}: A Generic Model Checker for C Programs
+#+OPTIONS: author:nil date:nil
+#+CREATOR: <a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode)
+#+LATEX_HEADER: \usepackage{calc}
+#+LATEX_HEADER: \usepackage{xspace}
+#+LATEX_HEADER: \usepackage{enumitem}
+
+# The macros below should be defined properly according to the export.
+# For GenMC's name, specifically:
+#
+#     HTML:  @@html:<font style="font-variant: small-caps">GenMC</font>@@
+#     LaTeX: \textsc{GenMC}\xspace
+#
+# To understand LaTeX's color mixing:
+#
+# https://tex.stackexchange.com/questions/34909/understanding-xcolor-color-mixing-model
+#
+# Example definitions of coloring macros (see below for a uniform way):
+#
+#    HTML: <span style="color: rgb(COLOR)"><code>$1</code></font>@@
+#    LaTeX: \textcolor[RGB]{COLOR}{\mathtt{$1}}
+#
+# Colors used for relations:
+#
+#    colorPO #808080
+#    colorRF #00ff00
+#    colorMO #ffa500
+
+#+MACRO: color   @@html:<span style="color: #$1">$2</span>@@@@latex:\textcolor[HTML]{$1}{$2}@@
+#+MACRO: colortt @@html:<span style="color: #$1; font-family: monospace">$2</span>@@@@latex:\textcolor[HTML]{$1}{\texttt{$2}}@@
+
+#+MACRO: genmc @@html:<font style="font-variant: small-caps">GenMC</font>@@@@latex:\textsc{GenMC}\xspace@@
+#+MACRO: lapor @@html:<font style="font-variant: small-caps">LAPOR</font>@@@@latex:\textsc{LAPOR}\xspace@@
+#+MACRO: bam @@html:<font style="font-variant: small-caps">BAM</font>@@@@latex:\textsc{BAM}\xspace@@
+#+MACRO: persevere @@html:<font style="font-variant: small-caps">Persevere</font>@@@@latex:\textsc{Persevere}\xspace@@
+#+MACRO: helper @@html:<font style="font-variant: small-caps">helper</font>@@@@latex:\textsc{Helper}\xspace@@
+#+MACRO: po {{{colortt(808080,po)}}}
+#+MACRO: ppo {{{colortt(808080,ppo)}}}
+#+MACRO: rf {{{colortt(00ff00,rf)}}}
+#+MACRO: mo {{{colortt(ffa500,mo)}}}
+
+#+BEGIN_EXPORT latex
+\newpage
+#+END_EXPORT
+
+
+* Introduction <<sec:intro>>
+
+{{{genmc}}} is an effective stateless model checker for programs
+written under the RC11 cite:lahav2017:repairing, IMM
+cite:podkopaev2019:imm, and LKMM cite:alglave2018:lkmm memory models.
+{{{genmc}}} verifies safety properties of C programs that use =C11=
+atomics and the =pthread= library for concurrency. It employs a very
+effective dynamic partial order reduction technique
+cite:kokologiannakis2019:genmc,kokologiannakis2022:trust that is
+sound, complete and optimal.
+
+{{{genmc}}} works at the level of LLVM Intermediate Representation (LLVM-IR)
+and uses =clang= to translate C programs to LLVM-IR. This means it
+can miss some bugs that are removed during the translation to LLVM-IR,
+but it is guaranteed to encounter at least as many bugs as the
+compiler backend will encounter.
+
+{{{genmc}}} should compile on Linux and Mac OSX provided that the relevant
+dependencies are installed.
+
+
+* Basic Usage
+
+A generic invocation of {{{genmc}}} resembles the following:
+
+#+BEGIN_SRC sh
+    genmc [OPTIONS] -- [CFLAGS] <file>
+#+END_SRC
+
+In the above command, =OPTIONS= include several options that can be
+passed to {{{genmc}}} (see Section [[sec:cli]] for more details), and
+=CFLAGS= are the options that one would normally pass to the C
+compiler. If no such flags exist, the =--= can be omitted.
+Lastly, =file= should be a C file that uses the =stdatomic.h=
+and =pthread.h= APIs for concurrency.
+
+Note that, in order for {{{genmc}}} to be able to verify it, =file=
+needs to meet two requirements: finiteness and data-determinism.
+Finiteness means that all tests need to have finite traces,
+i.e., no infinite loops (these need to be bounded; see
+Section [[sec:basic-loops]]). Data-determinism means that
+the code under test should be data-deterministic, i.e.,
+not perform actions like calling =rand()=, performing
+actions based on user input or the clock, etc. In other words,
+all non-determinism should originate either from the scheduler
+or the underlying (weak) memory model.
+
+As long as these requirements as satisfied, {{{genmc}}} will detect safety
+errors, races on non-atomic variables, as well as some memory errors
+(e.g., double-free error). Users can provide safety specifications for
+their programs by using =assert()= statements.
+
+** A First Example
+
+Consider the following program, demonstrating the Message-Passing (MP)
+idiom:
+
+#+BEGIN_SRC C
+/* file: mp.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+atomic_int data;
+atomic_bool ready;
+
+void *thread_1(void *unused)
+{
+	atomic_store_explicit(&data, 42, memory_order_relaxed);
+	atomic_store_explicit(&ready, true, memory_order_release);
+	return NULL;
+}
+
+void *thread_2(void *unused)
+{
+	if (atomic_load_explicit(&ready, memory_order_acquire)) {
+		int d = atomic_load_explicit(&data, memory_order_relaxed);
+		assert(d == 42);
+	}
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+
+In order to analyze the code above with {{{genmc}}}, we can use the
+following command:
+
+#+BEGIN_SRC sh
+genmc mp.c
+#+END_SRC
+with which {{{genmc}}} will yield the following result:
+#+BEGIN_SRC sh
+Number of complete executions explored: 2
+Total wall-clock time: 0.02s
+#+END_SRC
+{{{genmc}}} explores two executions: one where $ready = data =0$, and
+one where $ready = data = 1$.
+
+
+** Reducing the State Space of a Program With =assume()= Statements <<sec:basic-assume>>
+
+In some programs, we only care about what happens when certain reads
+read certain values of interest. That said, by default, {{{genmc}}}
+will explore all possible values for all program loads, possibly
+leading to the exploration of an exponential number of executions.
+
+To alleviate this problem, {{{genmc}}} supports the
+=__VERIFIER_assume()= function (similar to the one specified in
+SV-COMP cite:www:svcomp). This function takes an integer argument
+(e.g., the value read from a load), and only continues the execution
+if the argument is non-zero.
+
+For example, let us consider the MP program from the previous section,
+and suppose that we are only interested in verifying the assertion
+in cases where the first read of the second thread reads 1. We can
+use an =assume()= statement to achieve this, as shown below:
+
+#+BEGIN_SRC C
+/* file: mp-assume.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+void __VERIFIER_assume(int);
+
+atomic_int data;
+atomic_bool ready;
+
+void *thread_1(void *unused)
+{
+	atomic_store_explicit(&data, 42, memory_order_relaxed);
+	atomic_store_explicit(&ready, true, memory_order_release);
+	return NULL;
+}
+
+void *thread_2(void *unused)
+{
+        int r = atomic_load_explicit(&ready, memory_order_acquire);
+	__VERIFIER_assume(r);
+	if (r) {
+		int d = atomic_load_explicit(&data, memory_order_relaxed);
+		assert(d == 42);
+	}
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+Note that the =__VERIFIER_assume()= function has to be declared. Alternatively,
+one can include the =<genmc.h>= header, that contains the declarations for all
+the special function that {{{genmc}}} offers (see Section [[sec:apis]]).
+
+If we run {{{genmc}}} on the =mp-assume.c= program above, we get the following
+output:
+#+BEGIN_SRC sh
+Number of complete executions explored: 1
+Number of blocked executions seen: 1
+Total wall-clock time: 0.02s
+#+END_SRC
+As can be seen, {{{genmc}}} only explored one full execution (the one
+where $r = 1$, while the execution where $r = 0$ was blocked, because
+of the =assume()= statement. Of course, while the usage of =assume()=
+does not make any practical difference in this small example, this is
+not always the case: generally, using =assume()= might yield an
+exponential improvement in {{{genmc}}}'s running time.
+
+Finally, note that, when using {{{genmc}}} under memory models that
+track dependencies (see Section [[sec:features-mms]]), an =assume()=
+statement will introduce a control dependency in the program code.
+
+
+** Handling Infinite Loops <<sec:basic-loops>>
+
+As mentioned in the beginning of this section, all programs that
+{{{genmc}}} can handle need to have finite traces. That said, many
+programs of interest do not fulfill this requirement, because, for
+example, they have some infinite loop. {{{genmc}}} offers three
+solutions for such cases.
+
+First, {{{genmc}}} can automatically perform the "spin-assume"
+transformation for a large class of spinloops. Specifically, as long
+as a spinloop completes a full iteration with no visible side effects
+(e.g., stores to global variables), {{{genmc}}} will cut the respective
+execution. For instance, consider the following simple loop:
+#+BEGIN_SRC C
+int r = 0;
+while (!atomic_compare_exchange_strong(&x, &r, 1))
+        r = 0;
+#+END_SRC
+Since this loop has no visible side-effects whenever it completes
+a full iteration, {{{genmc}}} will not explore more than one
+execution where the loop fails (the execution where the loop fails
+will be reported as a blocked execution). The "spin-assume"
+transformation has proven to be very effective for a wide range of
+loops; for more details on whether it applies on a specific loop,
+please see cite:kokologiannakis2021:saver.
+
+
+
+Finally, for infinite loops with side effects, we can use the
+=-unroll=N= command-line option (see Section [[sec:cli]]). This option
+bounds all loops so that they are executed at most =N= times.  In this
+case, any verification guarantees that {{{genmc}}} provides hold up to
+that bound.  If you are unsure whether you should use the =-unroll=N=
+switch, you can try to verify the program and check whether
+{{{genmc}}} complains about the graph size
+(=-warn-on-graph-size=<N>=). If it does, there is a good chance you
+need to use the =-unroll=N= switch.
+
+Note that the loop-bounding happens at the LLVM-IR level, which means
+that the loops there may not directly correspond to loops in the C
+code (depending on the enabled compiled optimizations, etc).
+
+
+** Error Reporting <<sec:basic-error>>
+
+In the previous sections, saw how {{{genmc}}} verifies the small MP program.
+Let us now proceed with an erroneous version of this program, in order
+to show how {{{genmc}}} reports errors to the user.
+
+Consider the following variant of the MP program below, where the
+store to =ready= in the first thread is now performed using a relaxed
+access:
+#+BEGIN_SRC C
+/* file: mp-error.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+atomic_int data;
+atomic_bool ready;
+
+void *thread_1(void *unused)
+{
+	atomic_store_explicit(&data, 42, memory_order_relaxed);
+	atomic_store_explicit(&ready, true, memory_order_relaxed);
+	return NULL;
+}
+
+void *thread_2(void *unused)
+{
+	if (atomic_load_explicit(&ready, memory_order_acquire)) {
+		int d = atomic_load_explicit(&data, memory_order_relaxed);
+		assert(d == 42);
+	}
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+This program is buggy since the load from =ready= no longer
+synchronizes with the corresponding store, which in turn means that
+the load from =data= may also read 0 (the initial value), and
+not just 42.
+
+Running {{{genmc}}} on the above program, we get the following outcome:
+#+BEGIN_SRC sh
+Error detected: Safety violation!
+Event (2, 2) in graph:
+<-1, 0> main:
+	(0, 0): B
+	(0, 1): M
+	(0, 2): M
+	(0, 3): TC [forks 1] L.30
+	(0, 4): Wna (t1, 1) L.30
+	(0, 5): TC [forks 2] L.32
+	(0, 6): Wna (t2, 2) L.32
+	(0, 7): E
+<0, 1> thread_1:
+	(1, 0): B
+	(1, 1): Wrlx (data, 42) L.12
+	(1, 2): Wrlx (ready, 1) L.13
+	(1, 3): E
+<0, 2> thread_2:
+	(2, 0): B
+	(2, 1): Racq (ready, 1) [(1, 2)] L.19
+	(2, 2): Rrlx (data, 0) [INIT] L.20
+
+Assertion violation: d == 42
+Number of complete executions explored: 1
+Total wall-clock time: 0.02s
+#+END_SRC
+
+{{{genmc}}} reports an error and prints some information relevant for
+debugging. First, it prints the type of the error, then the execution
+graph representing the erroneous execution, and finally the error
+message, along with the executions explored so far and the time that
+was required.
+
+The graph contains the events of each thread along with some
+information about the corresponding source-code instructions.  For
+example, for write events (e.g., event (1, 1)), the access mode, the
+name of the variable accessed, the value written, as well as the
+corresponding source-code line are printed. The situation is similar
+for reads (e.g., event (2, 1)), but also the position in the graph
+from which the read is reading from is printed.
+
+Note that there are many different types of events. However, many of
+them are {{{genmc}}}-related and not of particular interest to users (e.g.,
+events labeled with `B', which correspond to the beginning of a
+thread). Thus, {{{genmc}}} only prints the source-code lines for events
+that correspond to actual user instructions, thus helping the
+debugging procedure.
+
+Finally, when more information regarding an error are required,
+two command-line switches are provided. The =-dump-error-graph=<file>=
+switch provides a visual representation of the erroneous execution,
+as it will output the reported graph in DOT format in =<file>=,
+so that it can be viewed by a PDF viewer. Finally, the =-print-error-trace=
+switch will print a sequence of source-code lines leading to
+the error. The latter is especially useful for cases where
+the bug is not caused by some weak-memory effect but rather from
+some particular interleaving (e.g., if all accesses are
+ =memory_order_seq_cst=), and the write where each read is reading
+from can be determined simply by locating the previous write in the
+same memory location in the sequence.
+
+
+* Tool Features <<sec:features>>
+
+# {{{genmc}}} has a number of features and extensions that are
+# discussed below.
+
+** Available Memory Models <<sec:features-mms>>
+
+By default, {{{genmc}}} verifies programs under RC11. However, apart
+from RC11, {{{genmc}}} also supports IMM and (experimentally) LKMM.
+The difference between these memory models (as far as allowed outcomes are concerned)
+can be seen in the following program:
+
+#+BEGIN_SRC C
+/* file: lb.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+atomic_int x;
+atomic_int y;
+
+void *thread_1(void *unused)
+{
+	int a = atomic_load_explicit(&x, memory_order_relaxed);
+	atomic_store_explicit(&y, 1, memory_order_relaxed);
+	return NULL;
+}
+
+void *thread_2(void *unused)
+{
+	int b = atomic_load_explicit(&y, memory_order_relaxed);
+	atomic_store_explicit(&x, 1, memory_order_relaxed);
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+
+Under RC11, an execution where both $a = 1$ and $b = 1$ is forbidden,
+whereas such an execution is allowed under IMM and LKMM. To account for such
+behaviors, {{{genmc}}} tracks dependencies between program instructions
+thus leading to a constant overhead when verifying programs under
+models like IMM.
+
+*** Note on LKMM Support
+
+{{{genmc}}}'s support for LKMM is currently at an experimental stage.
+{{{genmc}}} includes plain accesses in {{{ppo}}}
+(in contrast to what cite:alglave2018:lkmm dictates), as plain accesses
+to temporary LLVM-IR variables are occasionally generated by =clang= between
+accesses to shared memory, and thus including them in {{{ppo}}} is
+necessary to preserve dependencies.
+
+Tests that use LKMM atomics need to include =<lkmm.h=.
+
+*** Note on Language Memory Models vs Hardware Memory Models
+
+RC11 is a language-level memory model while IMM is a hardware memory
+model. Subsequently, the verification results produced by {{{genmc}}}
+for the two models should be interpreted somewhat differently.
+
+What this means in practice is that, when verifying programs under
+RC11, the input file is assumed to be the very source code the user
+wrote. A successful verification result under RC11 holds all the
+way down to the actual executable, due to the guarantees provided
+by RC11 cite:lahav2017:repairing.
+
+On the other hand, when verifying programs under IMM, the input file
+is assumed to be the assembly code run by the processor (or, more
+precisely, a program in IMM's intermediate language).  And while
+{{{genmc}}} allows the input file to be a C file (as in the case of
+RC11), it assumes that this C file corresponds to an assembly file
+that is the result of the compilation of some program in IMM's
+language. In other words, program correctness is not preserved across
+compilation for IMM inputs.
+
+** Race Detection and Memory Errors
+
+For memory models that define the notion of a race, {{{genmc}}} will
+report executions containing races erroneous. For instance, under
+RC11, the following program is racy, as there is no happens-before
+between the write of $x$ in the first thread and the non-atomic
+read of $x$ in the second thread (even though the latter causally
+depends on the former).
+
+#+BEGIN_SRC C
+/* file: race.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+atomic_int x;
+
+void *thread_1(void *unused)
+{
+	atomic_store_explicit(&x, 1, memory_order_relaxed);
+	return NULL;
+}
+
+void *thread_2(void *unused)
+{
+	int a, b;
+
+	a = atomic_load_explicit(&x, memory_order_relaxed);
+	if (a == 1)
+		b = *((int *) &x);
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+
+Additionally, for all memory models, {{{genmc}}} detects some memory
+races like accessing memory that has been already freed, accessing
+dynamic memory that has not been allocated, or freeing an already
+freed chunk of memory.
+
+Race detection can be completely disabled by means of
+=-disable-race-detection=, which may yield better performance for
+certain programs.
+
+** Lock-Aware Partial Order Reduction ({{{lapor}}})
+
+For programs that employ coarse-grained locking schemes {{{lapor}}}
+cite:kokologiannakis2019:lapor might greatly reduce the state space
+and thus the verification time.  For instance, consider the following
+program where a lock is used (overly conservatively) to read a shared
+variable:
+
+#+BEGIN_SRC C
+/* file: lapor.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <assert.h>
+
+#ifndef N
+# define N 2
+#endif
+
+pthread_mutex_t l;
+int x;
+
+void *thread_n(void *unused)
+{
+	pthread_mutex_lock(&l);
+	int r = x;
+	pthread_mutex_unlock(&l);
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t[N];
+
+	for (int i = 0; i < N; i++) {
+		if (pthread_create(&t[i], NULL, thread_n, NULL))
+			abort();
+	}
+
+	return 0;
+}
+#+END_SRC
+
+Running {{{genmc}}} on the program above results in the following outcome:
+#+BEGIN_SRC sh
+Number of complete executions explored: 2
+Total wall-clock time: 0.02s
+#+END_SRC
+As expected, as the value of $N$ increases, the executions of the
+program also increase in an exponential manner.
+
+However, if we run {{{genmc}}} with =-lapor= on the same program, we get the
+following output:
+#+BEGIN_SRC sh
+Number of complete executions explored: 1
+Total wall-clock time: 0.02s
+#+END_SRC
+{{{lapor}}} leverages the fact that the contents of the critical
+sections of the threads commute (i.e., the order in which the critical
+sections are executed does not matter), and only explores 1 execution
+for all values of $N$.
+
+We note that for programs where no further reduction in the
+state space is possible, {{{lapor}}} can be cause a polynomial
+slowdown.
+
+
+** Barrier-Aware Model Checking ({{{bam}}})
+
+{{{genmc}}} v0.6 comes with built-in support for =pthread_barrier_t=
+functions (see Section [[sec:apis]]) via {{{bam}}} cite:kokologiannakis2021:bam.
+As an example of {{{bam}}} in action, consider the following program:
+
+#+BEGIN_SRC C
+/* file: bam.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <genmc.h>
+#include <assert.h>
+
+#ifndef N
+# define N 2
+#endif
+
+pthread_barrier_t b;
+atomic_int x;
+
+void *thread_n(void *unused)
+{
+	++x;
+	pthread_barrier_wait(&b);
+	assert(x == N);
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t[N];
+
+	pthread_barrier_init(&b, NULL, N);
+	for (int i = 0u; i < N; i++) {
+		if (pthread_create(&t[i], NULL, thread_n, NULL))
+			abort();
+	}
+
+	return 0;
+}
+#+END_SRC
+
+Running {{{genmc}}} on the program above results in the following output:
+#+begin_src sh
+Number of complete executions explored: 2
+Total wall-clock time: 0.01s
+#+end_src
+As can be seen, {{{genmc}}} treats =barrier_wait= calls as no-ops,
+and they do not lead to any additional explorations. (The two executions
+explored correspond to the possible ways in which =x= can be incremented).
+
+However, if we disable {{{bam}}} by means of the =-disable-bam= switch,
+get get the following output:
+#+begin_src sh
+Number of complete executions explored: 4
+Number of blocked executions seen: 4
+Total wall-clock time: 0.01s
+#+end_src
+
+Note that while {{{bam}}} can lead to the exploration of exponentially
+fewer executions, it can only be used if the result of the =barrier_wait=
+is not used. If it is, then using =-disable-bam= is necessary,
+as {{{genmc}}} currently does not enforce this limitation.
+
+
+** Symmetry Reduction
+
+{{{genmc}}} also employs an experimental symmetry reduction mechanism.
+While {{{genmc}}}'s symmetry reduction does not guarantee optimality,
+i.e., might explore more executions than what an ideal symmetry
+reduction algorithm would (although never more than what the enabled
+partitioning dictates), it is still beneficial to use when threads
+use the same code.
+
+For instance, if =-sr= is used in the following program, {{{genmc}}}
+explores only one execution instead of 6.
+#+begin_src C
+/* file: sr.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <genmc.h>
+#include <assert.h>
+
+atomic_int x;
+
+void *thread_n(void *unused)
+{
+	++x;
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2, t3;
+
+	if (pthread_create(&t1, NULL, thread_n, NULL))
+		abort();
+	if (pthread_create(&t2, NULL, thread_n, NULL))
+		abort();
+	if (pthread_create(&t3, NULL, thread_n, NULL))
+		abort();
+
+	return 0;
+}
+#+end_src
+
+In order for symmetry reduction to actually take place, the spawned
+threads need to share exactly the same code, have exactly the same
+arguments, and also there must not be any memory access (at the
+LLVM-IR level) between the spawn instructions.
+
+
+** Checking Liveness <<sec:liveness>>
+
+{{{genmc}}} can also check for liveness violations in programs with
+spinloops. Consider the following simple program:
+
+#+begin_src C
+/* file: liveness.c */
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdatomic.h>
+
+atomic_int x;
+
+void *thread_1(void *unused)
+{
+	while (!x)
+		;
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1;
+
+	if (pthread_create(&t1, NULL, thread_1, NULL))
+		abort();
+
+	return 0;
+}
+#+end_src
+Since there are no writes to $x$, the loop in =thread_1= above
+will never terminate. Indeed, running {{{genmc}}} with
+ =-check-liveness= produces a relevant error report:
+#+begin_src sh
+Error detected: Liveness violation!
+Event (1, 4) in graph:
+<-1, 0> main:
+	(0, 0): B
+	(0, 1): TC [forks 1] L.19
+	(0, 2): E
+<0, 1> thread_1:
+	(1, 0): B
+	(1, 1): LOOP_BEGIN
+	(1, 2): SPIN_START
+	(1, 3): Rsc (x, 0) [INIT] L.9
+	(1, 4): BLOCK [spinloop]
+
+Non-terminating spinloop: thread 1
+Number of complete executions explored: 0
+Number of blocked executions seen: 1
+Total wall-clock time: 0.07s
+#+end_src
+
+The =-check-liveness= switch will automatically check for liveness
+violations in all loops that have been captured by the spin-assume
+transformation (see [[sec:cli]]).
+
+
+** System Calls and Persistency Checks ({{{persevere}}}) <<sec:pers>>
+
+Since v0.5, {{{genmc}}} supports the verification programs involving
+system calls for file manipulation like =read()= and =write()=.  In
+addition, using {{{persevere}}} cite:kokologiannakis2021:persevere,
+{{{genmc}}} can verify persistency properties of such programs. Below
+we discuss some details that are important when it comes to verifying
+programs that involve file manipulation.
+
+*** Consistency of File-Manipulating Programs
+
+As a first example consider the program below, where a file
+="foo.txt"= is first populated by =main=, and then concurrently
+read and written by two threads at offset 0:
+
+#+BEGIN_SRC C
+/* file: file-rw.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdatomic.h>
+#include <pthread.h>
+#include <assert.h>
+
+void *thread_1(void *fdp)
+{
+	int fd = *((int *) fdp);
+	char buf[8];
+
+	buf[0] = buf[1] = 1;
+	int nw = pwrite(fd, buf, 2, 0);
+	return NULL;
+}
+
+void *thread_2(void *fdp)
+{
+	int fd = *((int *) fdp);
+	char buf[8];
+
+	int nr = pread(fd, buf, 2, 0);
+	if (nr == 2)
+		assert((buf[0] == 0 && buf[1] == 0) || (buf[0] == 1 && buf[1] == 1));
+	return NULL;
+}
+
+int main()
+{
+	pthread_t t1, t2;
+	char buf[8];
+
+	int fd = open("foo.txt", O_CREAT|O_RDWR, 0);
+
+	buf[0] = buf[1] = 0;
+	int nw = write(fd, buf, 2);
+	assert(nw == 2);
+
+	if (pthread_create(&t1, NULL, thread_1, &fd))
+		abort();
+	if (pthread_create(&t2, NULL, thread_2, &fd))
+		abort();
+
+	if (pthread_join(t1, NULL))
+		abort();
+	if (pthread_join(t2, NULL))
+		abort();
+
+	return 0;
+}
+#+END_SRC
+
+One property we might be interested in in the above program is whether
+the reading thread can see any other (intermediate) state for the file
+apart from =00= and =11=. Indeed, as can be seen below, running {{{genmc}}}
+on the program above produces an example where the assertion is violated.
+#+BEGIN_SRC sh
+Error detected: Safety violation!
+[...]
+Assertion violation: (buf[0] == 0 && buf[1] == 0) || (buf[0] == 1 && buf[1] == 1)
+Number of complete executions explored: 1
+Total wall-clock time: 0.03s
+#+END_SRC
+Apart from safety violations like in this case, {{{genmc}}} will also
+report system call failures as errors (e.g., trying to write to a file
+that has been opened with =O_RDONLY=). This behavior can be disabled
+with =-disable-stop-on-system-error=, which will make {{{genmc}}} report
+such errors through =errno=.
+
+When including headers like =stdio.h= or =unistd.h=, {{{genmc}}} intercepts
+calls to =open()=, =read()=, =write()=, and other system calls defined
+in these header files, and models their behavior. Note that these header
+files are also part of {{{genmc}}} so, in general, only the functionality
+described in Section [[sec:apis]] from said header files can be used in programs.
+
+Note that only constant (static) strings can be used as filenames when
+using system calls. The filenames need not exist as regular files in
+the user's system, as the effects of these system calls are modeled,
+and not actually executed. Thus, it is in general preferable if the
+contents of the manipulated files maintain a small size across
+executions.
+
+*** Persistency of File-Manipulating Programs
+
+In addition to checking whether safety properties of file-manipulating
+programs with regards to consistency are satisfied (as described
+above), {{{genmc}}} can also check whether some safety property with
+regards to persistency (under =ext4=) is satisfied.  This is achieved
+through {{{persevere}}}, which can be enabled with =-persevere=.
+
+For example, let us consider the program below and suppose we want to
+check whether, after a crash, it is possible to observe only a part of
+an append to a file:
+
+#+BEGIN_SRC C
+/* file: pers.c */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdatomic.h>
+#include <pthread.h>
+#include <assert.h>
+#include <genmc.h>
+
+#include <fcntl.h>
+#include <sys/stat.h>
+
+void __VERIFIER_recovery_routine(void)
+{
+	char buf[8];
+	buf[0] = 0;
+	buf[1] = 0;
+
+	int fd = open("foo.txt", O_RDONLY, 0666);
+	assert(fd != -1);
+
+	/* Is is possible to read something other than {2,2} ? */
+	int nr = pread(fd, buf, 2, 3);
+	if (nr == 2)
+		assert(buf[0] == 2 && buf[1] == 2);
+	return;
+}
+
+int main()
+{
+	char buf[8];
+
+	buf[0] = 1;
+	buf[1] = 1;
+	buf[2] = 1;
+
+	int fd = open("foo.txt", O_CREAT|O_TRUNC|O_RDWR, S_IRWXU);
+	write(fd, buf, 3);
+
+	__VERIFIER_pbarrier();
+
+	write(fd, buf + 3, 2);
+
+	close(fd);
+
+	return 0;
+}
+#+END_SRC
+
+In the program above, the =__VERIFIER_pbarrier()= call ensures that
+all the file operations before it will be considered as "persisted"
+(i.e., having reached disk) in this program. The function
+=__VERIFIER_recovery_routine()= is automatically called by {{{genmc}}}
+and contains the code to be run by the recovery routine, in order to
+observe the post-crash disk state.
+
+In this case, by issuing =genmc -persevere pers.c= we observe that
+partly observing the append is indeed possible under =ext4=, as can
+be seen below.
+#+BEGIN_SRC sh
+Error detected: Recovery error!
+[...]
+Assertion violation: buf[0] == 2 && buf[1] == 2
+Number of complete executions explored: 2
+Total wall-clock time: 0.08s
+#+END_SRC
+For this program in particular, this property is violated due to the
+default block size (which is 2 bytes), and the nature of appends in
+the default data ordering mode of =ext4= (=data=ordered=).
+
+In general, such parameters of =ext4= can be tuned via the
+=--block-size= and =--journal-data= switches (see Section [[sec:cli]] and
+=genmc -help= for more information).  {{{genmc}}} currently assumes a
+sector size of 1 byte.
+
+
+* Command-line Options <<sec:cli>>
+
+A full list of the available command-line options can by viewed
+by issuing =genmc -help=. Below we describe the ones that
+are most useful when verifying user programs.
+
+#+ATTR_LATEX: :options [leftmargin=!, labelwidth=\widthof{\ttfamily pprogrampentrypfunction=pfunpnamep}, font={\color{blue!50!black}\ttfamily}, labelindent=\parindent]
+- =-rc11= :: Perform the exploration under the RC11 memory model (default)
+- =-imm= :: Perform the exploration under the IMM memory model
+- =-lkmm= :: Perform the exploration under the LKMM memory model (experimental)
+- =-wb= :: Perform the exploration based on the {{{po}}}{{{rf}}}
+     equivalence partitioning.
+- =-mo= :: Perform the exploration based on the {{{po}}} $\cup$ {{{rf}}} $\cup$ {{{mo}}}
+     equivalence partitioning (default).
+- =-lapor= :: Enable Lock-Aware Partial Order Reduction ({{{lapor}}})
+- =-disable-bam= :: Disables Barrier-Aware Model-checking ({{{bam}}})
+- =-check-liveness= :: Check for liveness violations in spinloops
+- =-persevere= :: Enable =ext4= persistency checks ({{{persevere}}})
+- =-unroll=<N>= :: All loops will be executed at most $N$ times.
+- =-dump-error-graph=<file>= :: Outputs an erroneous graph to file
+     =<file>=.
+- =-print-error-trace= :: Outputs a sequence of source-code instructions
+     that lead to an error.
+- =-disable-race-detection= :: Disables race detection for non-atomic
+     accesses.
+- =-program-entry-function=<fun_name>= :: Uses function =<fun_name>=
+     as the program's entry point, instead of =main()=.
+- =-disable-spin-assume= :: Disables the transformation of spin loops to
+     =assume()= statements.
+
+
+* Supported APIs <<sec:apis>>
+
+Apart from C11 API (defined in =stdatomic.h=) and the =assert()=
+function used to define safety specifications, below we list supported
+functions from different libraries.
+
+** Supported =stdio=, =unistd= and =fcntl= API
+
+The following functions are supported for I/O:
+
+#+ATTR_LATEX: :options [leftmargin=!, font={\color{red!50!black}\ttfamily}, labelindent=\parindent]
+- =int printf(const char *, ...)= ::
+- =int open (const char *, int , mode_t)= ::
+- =int creat (const char *, mode_t)= ::
+- =off_t lseek (int, off_t, int)= ::
+- =int close (int)= ::
+- =ssize_t read (int, void *, size_t)= ::
+- =ssize_t write (int, const void *, size_t)= ::
+- =ssize_t pread (int, void *, size_t, off_t)= ::
+- =ssize_t pwrite (int, const void *, size_t, off_t)= ::
+- =int truncate (const char *, off_t)= ::
+- =int link (const char *, const char *)= ::
+- =int unlink (const char *)= ::
+- =int rename (const char *, const char *)= ::
+- =int fsync (int)= ::
+- =void sync (void)= ::
+
+Note that the functions above are modeled and not actually executed,
+as described in Section [[sec:pers]].
+
+** Supported =stdlib= API
+
+The following functions are supported from =stdlib.h=:
+
+#+ATTR_LATEX: :options [leftmargin=!, font={\color{red!50!black}\ttfamily}, labelindent=\parindent]
+- =void abort(void)= ::
+- =int abs(int)= ::
+- =int atoi(const char *)= ::
+- =void free(void *)= ::
+- =void *malloc(size_t)= ::
+- =void *aligned_alloc(size_t, size_t)= ::
+
+** Supported =pthread= API
+
+The following functions are supported from =pthread.h=:
+
+#+ATTR_LATEX: :options [leftmargin=!, font={\color{red!50!black}\ttfamily}, labelindent=\parindent]
+- =int pthread_create (pthread_t *, const pthread_attr_t *, void *(*) (void *), void *)= ::
+- =int pthread_join (pthread_t, void **)= ::
+- =pthread_t pthread_self (void)= ::
+- =void pthread_exit (void *)= ::
+- =int pthread_mutex_init (pthread_mutex_t *, const pthread_mutexattr_t *)= ::
+- =int pthread_mutex_lock (pthread_mutex_t *)= ::
+- =int pthread_mutex_trylock (pthread_mutex_t *)= ::
+- =int pthread_mutex_unlock (pthread_mutex_t *)= ::
+- =int pthread_mutex_destroy (pthread_mutex_t *)= ::
+- =int pthread_barrier_init (pthread_barrier_t *, const pthread_barrierattr_t *, unsigned)= ::
+- =int pthread_barrier_wait (pthread_barrier_t *)= ::
+- =int pthread_barrier_destroy (pthread_barrier_t *)= ::
+
+
+** Supported SV-COMP cite:www:svcomp API
+
+The following functions from the ones defined in SV-COMP cite:www:svcomp are supported:
+
+#+ATTR_LATEX: :options [leftmargin=!, font={\color{red!50!black}\ttfamily}, labelindent=\parindent]
+- =void __VERIFIER_assume(int)= ::
+- =int __VERIFIER_nondet_int(void)= ::
+
+Note that, since {{{genmc}}} is a stateless model checker, =__VERIFIER_nondet_int()=
+only "simulates" data non-determism, and does actually provide support for it.
+More specifically, the sequence of numbers it produces for each thread, remains
+the same across different executions.
+
+* Contact <<sec:contact>>
+
+For feedback, questions, and bug reports please send an e-mail to
+[[mailto:michalis@mpi-sws.org][michalis@mpi-sws.org]].
+
+#
+# Uncomment the lines below (or add local hooks) for a decent HTML bib export
+#
+
+# * Bibliography <<sec:bib>>
+
+# #+BEGIN_SRC emacs-lisp :exports none
+# (add-to-list 'load-path ".")
+# (require 'org-ref-citeproc)
+
+# (when (file-exists-p "readme.html") (delete-file "readme.html"))
+# (let ((org-export-before-parsing-hook '(orcp-citeproc)))
+#   (browse-url (org-html-export-to-html)))
+# #+END_SRC
+
+# #+RESULTS:
+
+# #+BEGIN_SRC emacs-lisp :exports none
+# (add-hook 'org-export-before-parsing-hook 'orcp-citeproc)
+# #+END_SRC
+
+# #+RESULTS:
+# | orcp-citeproc |
+
+bibliographystyle:unsrt
+bibliography:~/Documents/wmbib/biblio.bib

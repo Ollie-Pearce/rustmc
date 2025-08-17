@@ -1,0 +1,49 @@
+Error detected: Invalid argument!
+Event (0, 21) in graph:
+<-1, 0> main:
+	(0, 0): B
+	(0, 1): M
+	(0, 2): Wna (buf[0], 42) L.16
+	(0, 3): Cacq (__genmc_dir_inode.lock.__private, 0) [INIT] L.18
+	(0, 4): Cacq (__genmc_dir_inode.lock.__private, 1) L.18
+	(0, 5): DRacq (__genmc_dir_inode.i_transaction, 0) [INIT] L.18
+	(0, 6): DRacq (__genmc_dir_inode.data[0], 0x0) [INIT] L.18
+	(0, 7): M
+	(0, 8): Wrel (__inode_foo.lock, 0) L.18
+	(0, 9): Wrel (__inode_foo.i_size, 0) L.18
+	(0, 10): DWrel (__inode_foo.i_transaction, 0) L.18
+	(0, 11): DWrel (__inode_foo.i_disksize, 0) L.18
+	(0, 12): DF L.18
+	(0, 13): DWrel (__genmc_dir_inode.data[0], 0x2000000000000010) L.18
+	(0, 14): Wrel (__genmc_dir_inode.lock.__private, 0) L.18
+	(0, 15): FO (foo, 0) L.18
+	(0, 16): M
+	(0, 17): Wna (__file_foo_0_15.inode, 0x2000000000000010) L.18
+	(0, 18): Wna (__file_foo_0_15.flags, 64) L.18
+	(0, 19): Wna (__file_foo_0_15.pos, 0) L.18
+	(0, 20): Wrel (__file_foo_0_15.pos_lock, 0) L.18
+	(0, 21): Wrel (__file_foo_0_15.count, 1) L.18
+
+Trace to (0, 21):
+[main] crrd-off-einval0.c: 16: buf[0] = 42;
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+[main] crrd-off-einval0.c: 18: int fd = open("foo", O_CREAT|O_RDONLY, S_IRWXU);
+Invalid offset in pread()
+Number of complete executions explored: 0
+Number of blocked executions seen: 1
