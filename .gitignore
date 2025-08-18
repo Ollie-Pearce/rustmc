@@ -1,2 +1,3 @@
 *.o
 src/*.o
+libgenmc.a
