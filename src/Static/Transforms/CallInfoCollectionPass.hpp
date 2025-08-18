@@ -21,7 +21,7 @@
 #ifndef GENMC_CALL_INFO_COLLECTION_PASS_HPP
 #define GENMC_CALL_INFO_COLLECTION_PASS_HPP
 
-#include "ADT/VSet.hpp"
+#include "../../VSet.hpp"
 #include <llvm/Passes/PassBuilder.h>
 
 namespace llvm {

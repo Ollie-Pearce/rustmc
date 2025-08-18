@@ -21,7 +21,7 @@
 #ifndef GENMC_SPIN_ASSUME_PASS_HPP
 #define GENMC_SPIN_ASSUME_PASS_HPP
 
-#include "ADT/VSet.hpp"
+#include "../../VSet.hpp"
 
 #include <llvm/Passes/PassBuilder.h>
 

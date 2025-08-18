@@ -20,8 +20,8 @@
 
 #include "config.h"
 
-#include "Config/Config.hpp"
-#include "Static/ModuleInfo.hpp"
+#include "../Config.hpp"
+#include "ModuleInfo.hpp"
 
 #include <llvm/IR/Module.h>
 #include <memory>

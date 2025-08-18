@@ -21,7 +21,7 @@
 #include "Config.hpp"
 #include "DriverFactory.hpp"
 #include "Error.hpp"
-#include "LLVMModule.hpp"
+#include "Static/LLVMModule.hpp"
 #include "config.h"
 
 #include <chrono>

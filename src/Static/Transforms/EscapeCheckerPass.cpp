@@ -19,9 +19,9 @@
  */
 
 #include "EscapeCheckerPass.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/Transforms/CallInfoCollectionPass.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../Transforms/CallInfoCollectionPass.hpp"
 
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/InstIterator.h>

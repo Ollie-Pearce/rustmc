@@ -19,9 +19,9 @@
  */
 
 #include "CallInfoCollectionPass.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Support/Error.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../../Error.hpp"
 #include "config.h"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Function.h>

@@ -19,7 +19,7 @@
  */
 
 #include "PromoteMemIntrinsicPass.hpp"
-#include "Support/Error.hpp"
+#include "../../Error.hpp"
 #include <llvm/ADT/Twine.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/DebugInfo.h>

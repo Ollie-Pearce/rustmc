@@ -23,7 +23,7 @@
  *******************************************************************************/
 
 #include "RADriver.hpp"
-#include "ModuleInfo.hpp"
+#include "Static/ModuleInfo.hpp"
 
 RADriver::RADriver(std::shared_ptr<const Config> conf, std::unique_ptr<llvm::Module> mod,
 		std::unique_ptr<ModuleInfo> MI, GenMCDriver::Mode mode /* = GenMCDriver::VerificationMode{} */)

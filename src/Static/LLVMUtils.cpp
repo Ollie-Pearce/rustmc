@@ -19,7 +19,7 @@
  */
 
 #include "LLVMUtils.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
+#include "../InterpreterEnumAPI.hpp"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/ValueHandle.h>

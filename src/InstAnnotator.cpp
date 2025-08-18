@@ -23,7 +23,7 @@
 #include "InstAnnotator.hpp"
 #include "InterpreterEnumAPI.hpp"
 #include "LLVMUtils.hpp"
-#include "ModuleInfo.hpp"
+#include "Static/ModuleInfo.hpp"
 #include "SExprVisitor.hpp"
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/Constants.h>

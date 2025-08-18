@@ -19,9 +19,9 @@
  */
 
 #include "LoopJumpThreadingPass.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/Transforms/InstAnnotator.hpp"
-#include "Support/SExprVisitor.hpp"
+#include "../LLVMUtils.hpp"
+#include "../Transforms/InstAnnotator.hpp"
+#include "../../SExprVisitor.hpp"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Value.h>
 

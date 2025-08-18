@@ -21,8 +21,8 @@
 #ifndef GENMC_MDATA_COLLECTION_PASS_HPP
 #define GENMC_MDATA_COLLECTION_PASS_HPP
 
-#include "Static/ModuleInfo.hpp"
-#include "Support/NameInfo.hpp"
+#include "../ModuleInfo.hpp"
+#include "../../NameInfo.hpp"
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Module.h>

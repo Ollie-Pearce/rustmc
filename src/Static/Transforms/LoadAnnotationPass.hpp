@@ -21,7 +21,7 @@
 #ifndef GENMC_LOAD_ANNOTATION_PASS_HPP
 #define GENMC_LOAD_ANNOTATION_PASS_HPP
 
-#include "Static/ModuleInfo.hpp"
+#include "../ModuleInfo.hpp"
 #include <llvm/IR/Instructions.h>
 #include <llvm/Passes/PassBuilder.h>
 

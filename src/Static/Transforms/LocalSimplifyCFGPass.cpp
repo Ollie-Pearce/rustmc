@@ -19,7 +19,7 @@
  */
 
 #include "LocalSimplifyCFGPass.hpp"
-#include "Static/LLVMUtils.hpp"
+#include "../LLVMUtils.hpp"
 #include "config.h"
 
 #include <llvm/ADT/STLExtras.h>

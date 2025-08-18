@@ -43,7 +43,7 @@
 #include "Config.hpp"
 #include "DepTracker.hpp"
 #include "MemAccess.hpp"
-#include "ModuleInfo.hpp"
+#include "Static/ModuleInfo.hpp"
 #include "ThreadInfo.hpp"
 #include "SAddr.hpp"
 #include "SAddrAllocator.hpp"

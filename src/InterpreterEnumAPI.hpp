@@ -135,6 +135,11 @@ inline bool isErrorFunction(const std::string &name)
 	       internalFunNames.at(name) == InternalFunctions::FN_AssertFail;
 }
 
+inline bool isSpinEndFunction(const std::string &name)
+{
+	return isInternalFunction(name) && internalFunNames.at(name) == InternalFunctions::FN_SpinEnd;
+}
+
 inline bool isAssumeFunction(const std::string &name)
 {
 	if (!isInternalFunction(name))

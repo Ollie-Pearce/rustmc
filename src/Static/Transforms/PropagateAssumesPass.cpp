@@ -19,9 +19,9 @@
  */
 
 #include "PropagateAssumesPass.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Support/Error.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../../Error.hpp"
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Dominators.h>

@@ -19,9 +19,9 @@
  */
 
 #include "EliminateAnnotationsPass.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Support/Error.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../../Error.hpp"
 #include "config.h"
 
 #include <llvm/Analysis/PostDominators.h>
@@ -45,7 +45,7 @@ auto isAnnotationBegin(Instruction *i) -> bool
 
 	auto name = getCalledFunOrStripValName(*ci);
 	return isInternalFunction(name) &&
-	       internalFunNames.at(name) == InternalFunctions::AnnotateBegin;
+	       internalFunNames.at(name) == InternalFunctions::FN_AnnotateBegin;
 }
 
 auto isAnnotationEnd(Instruction *i) -> bool
@@ -56,7 +56,7 @@ auto isAnnotationEnd(Instruction *i) -> bool
 
 	auto name = getCalledFunOrStripValName(*ci);
 	return isInternalFunction(name) &&
-	       internalFunNames.at(name) == InternalFunctions::AnnotateEnd;
+	       internalFunNames.at(name) == InternalFunctions::FN_AnnotateEnd;
 }
 
 auto getAnnotationValue(CallInst *ci) -> uint64_t

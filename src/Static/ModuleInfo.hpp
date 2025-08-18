@@ -21,18 +21,18 @@
 #ifndef GENMC_MODULE_INFO_HPP
 #define GENMC_MODULE_INFO_HPP
 
-#include "ADT/VSet.hpp"
-#include "Config/Config.hpp"
-#include "Static/ModuleID.hpp"
-#include "Support/NameInfo.hpp"
-#include "Support/SExpr.hpp"
+#include "../VSet.hpp"
+#include "../Config.hpp"
+#include "ModuleID.hpp"
+#include "../NameInfo.hpp"
+#include "../SExpr.hpp"
 #include "config.h"
 #include <llvm/ADT/BitVector.h>
 #include <llvm/ADT/IndexedMap.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Instructions.h>
 
-#include "ADT/value_ptr.hpp"
+#include "../value_ptr.hpp"
 
 #include <memory>
 #include <optional>

@@ -24,7 +24,7 @@
 #include "DriverFactory.hpp"
 #include "Error.hpp"
 #include "ExecutionGraph.hpp"
-#include "LLVMModule.hpp"
+#include "Static/LLVMModule.hpp"
 #include "ThreadPinner.hpp"
 #include "config.h"
 #include <llvm/IR/Module.h>

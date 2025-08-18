@@ -19,14 +19,14 @@
  */
 
 #include "SpinAssumePass.hpp"
-#include "ADT/VSet.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/Transforms/CallInfoCollectionPass.hpp"
-#include "Static/Transforms/EscapeCheckerPass.hpp"
-#include "Static/Transforms/InstAnnotator.hpp"
-#include "Support/Error.hpp"
-#include "Support/SExprVisitor.hpp"
+#include "../../VSet.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../Transforms/CallInfoCollectionPass.hpp"
+#include "../Transforms/EscapeCheckerPass.hpp"
+#include "../Transforms/InstAnnotator.hpp"
+#include "../../Error.hpp"
+#include "../../SExprVisitor.hpp"
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Analysis/PostDominators.h>
@@ -530,11 +530,11 @@ static auto isPathToHeaderLockZNE(BasicBlock *latch, Loop *l, ModuleAnalysisMana
 			auto name = getCalledFunOrStripValName(*ci);
 			if (isInternalFunction(name)) {
 				auto icode = internalFunNames.at(name);
-				if (icode == InternalFunctions::MutexLock) {
+				if (icode == InternalFunctions::FN_MutexLock) {
 					locks.insert(ci);
 					return;
 				}
-				if (icode == InternalFunctions::MutexUnlock) {
+				if (icode == InternalFunctions::FN_MutexUnlock) {
 					unlocks.insert(ci);
 					return;
 				}

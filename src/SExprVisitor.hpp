@@ -23,7 +23,7 @@
 
 #include "Error.hpp"
 #include "MemAccess.hpp"
-#include "ModuleID.hpp"
+#include "Static/ModuleID.hpp"
 #include "SExpr.hpp"
 #include "VSet.hpp"
 #include <llvm/Support/Casting.h>

@@ -19,7 +19,7 @@
  */
 
 #include "DeclareInternalsPass.hpp"
-#include "Support/Error.hpp"
+#include "../../Error.hpp"
 
 #include <llvm/ADT/StringRef.h>
 #include <llvm/IR/Function.h>

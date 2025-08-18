@@ -19,7 +19,7 @@
  */
 
 #include "FunctionInlinerPass.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
+#include "../../InterpreterEnumAPI.hpp"
 #include "config.h"
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Analysis/CallGraph.h>

@@ -21,7 +21,7 @@
 #ifndef GENMC_LOOP_UNROLL_PASS_HPP
 #define GENMC_LOOP_UNROLL_PASS_HPP
 
-#include "ADT/VSet.hpp"
+#include "../../VSet.hpp"
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Passes/PassBuilder.h>

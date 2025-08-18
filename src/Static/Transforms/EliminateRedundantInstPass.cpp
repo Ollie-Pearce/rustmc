@@ -19,7 +19,7 @@
  */
 
 #include "EliminateRedundantInstPass.hpp"
-#include "ADT/VSet.hpp"
+#include "../../VSet.hpp"
 #include "config.h"
 
 #include <llvm/IR/DataLayout.h>

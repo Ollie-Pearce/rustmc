@@ -19,7 +19,7 @@
  */
 
 #include "DefineLibcFunsPass.hpp"
-#include "Support/Error.hpp"
+#include "../../Error.hpp"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>

@@ -21,10 +21,10 @@
 #include "config.h"
 
 #include "InstAnnotator.hpp"
-#include "Runtime/InterpreterEnumAPI.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/ModuleInfo.hpp"
-#include "Support/SExprVisitor.hpp"
+#include "../../InterpreterEnumAPI.hpp"
+#include "../LLVMUtils.hpp"
+#include "../ModuleInfo.hpp"
+#include "../../SExprVisitor.hpp"
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/InstIterator.h>

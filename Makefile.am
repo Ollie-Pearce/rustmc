@@ -26,63 +26,69 @@ noinst_LIBRARIES = libgenmc.a
 libgenmc_a_SOURCES = \
   src/AccessFilter.cpp src/AccessFilter.hpp \
   src/ASize.cpp src/ASize.hpp \
-  src/BisimilarityCheckerPass.cpp src/BisimilarityCheckerPass.hpp \
+  src/Static/Transforms/BisimilarityCheckerPass.cpp src/Static/Transforms/BisimilarityCheckerPass.hpp \
   src/Bitmask.hpp \
   src/BoundDecider.cpp src/BoundDecider.hpp \
-  src/CallInfoCollectionPass.cpp src/CallInfoCollectionPass.hpp \
-  src/CodeCondenserPass.cpp src/CodeCondenserPass.hpp \
+  src/Static/Transforms/CallInfoCollectionPass.cpp src/Static/Transforms/CallInfoCollectionPass.hpp \
+  src/Static/Transforms/CodeCondenserPass.cpp src/Static/Transforms/CodeCondenserPass.hpp \
   src/ContextBoundDecider.cpp src/ContextBoundDecider.hpp \
   src/Calculator.hpp \
   src/CallInstWrapper.hpp \
   src/CombinatoricUtils.hpp \
-  src/ConfirmationAnnotationPass.cpp src/ConfirmationAnnotationPass.hpp \
+  src/Static/Transforms/ConfirmationAnnotationPass.cpp src/Static/Transforms/ConfirmationAnnotationPass.hpp \
   src/Config.cpp src/Config.hpp \
-  src/DeclareInternalsPass.cpp src/DeclareInternalsPass.hpp \
-  src/DefineLibcFunsPass.cpp src/DefineLibcFunsPass.hpp \
+  src/Static/Transforms/DeclareInternalsPass.cpp src/Static/Transforms/DeclareInternalsPass.hpp \
+  src/Static/Transforms/DefineLibcFunsPass.cpp src/Static/Transforms/DefineLibcFunsPass.hpp \
   src/DepExecutionGraph.cpp src/DepExecutionGraph.hpp \
   src/DepInfo.cpp src/DepInfo.hpp \
   src/DepTracker.hpp \
   src/DepView.cpp src/DepView.hpp \
   src/DriverFactory.hpp \
-  src/EliminateAnnotationsPass.cpp src/EliminateAnnotationsPass.hpp \
-  src/EliminateCASPHIsPass.cpp src/EliminateCASPHIsPass.hpp \
-  src/EliminateCastsPass.cpp src/EliminateCastsPass.hpp \
-  src/EliminateRedundantInstPass.cpp src/EliminateRedundantInstPass.hpp \
-  src/EliminateUnusedCodePass.cpp src/EliminateUnusedCodePass.hpp \
+  src/Static/Transforms/EliminateAnnotationsPass.cpp src/Static/Transforms/EliminateAnnotationsPass.hpp \
+  src/Static/Transforms/EliminateCASPHIsPass.cpp src/Static/Transforms/EliminateCASPHIsPass.hpp \
+  src/Static/Transforms/EliminateCastsPass.cpp src/Static/Transforms/EliminateCastsPass.hpp \
+  src/Static/Transforms/EliminateRedundantInstPass.cpp src/Static/Transforms/EliminateRedundantInstPass.hpp \
+  src/Static/Transforms/EliminateUnusedCodePass.cpp src/Static/Transforms/EliminateUnusedCodePass.hpp \
+  src/Static/Transforms/PromotePause.cpp src/Static/Transforms/PromotePause.hpp \
+  src/Static/Transforms/splitRW.cpp src/Static/Transforms/splitRW.hpp \
+  src/Static/Transforms/CollectIntrinsics.cpp src/Static/Transforms/CollectIntrinsics.hpp \
   src/Error.hpp \
-  src/EscapeCheckerPass.cpp src/EscapeCheckerPass.hpp \
+  src/Static/Transforms/EscapeCheckerPass.cpp src/Static/Transforms/EscapeCheckerPass.hpp \
   src/Event.cpp src/Event.hpp \
   src/EventAttr.hpp \
   src/EventLabel.cpp src/EventLabel.hpp \
   src/Execution.cpp \
   src/ExecutionGraph.cpp src/ExecutionGraph.hpp \
   src/ExternalFunctions.cpp \
-  src/FunctionInlinerPass.cpp src/FunctionInlinerPass.hpp \
+  src/Static/Transforms/FunctionInlinerPass.cpp src/Static/Transforms/FunctionInlinerPass.hpp \
   src/GenMCDriver.cpp src/GenMCDriver.hpp \
   src/GraphIterators.hpp \
   src/InstAnnotator.cpp src/InstAnnotator.hpp \
   src/Interpreter.cpp Interpreter.h \
   src/InterpreterEnumAPI.cpp src/InterpreterEnumAPI.hpp \
-  src/IntrinsicLoweringPass.cpp src/IntrinsicLoweringPass.hpp \
+  src/Static/Transforms/IntrinsicLoweringPass.cpp src/Static/Transforms/IntrinsicLoweringPass.hpp \
   src/LabelVisitor.hpp \
-  src/LoadAnnotationPass.cpp src/LoadAnnotationPass.hpp \
-  src/LocalSimplifyCFGPass.cpp src/LocalSimplifyCFGPass.hpp \
+  src/Static/Transforms/LoadAnnotationPass.cpp src/Static/Transforms/LoadAnnotationPass.hpp \
+  src/Static/Transforms/LocalSimplifyCFGPass.cpp src/Static/Transforms/LocalSimplifyCFGPass.hpp \
   src/Logger.hpp \
-  src/LLVMModule.cpp src/LLVMModule.hpp \
-  src/LLVMUtils.cpp src/LLVMUtils.hpp \
-  src/LoopUnrollPass.cpp src/LoopUnrollPass.hpp \
-  src/LoopJumpThreadingPass.cpp src/LoopJumpThreadingPass.hpp \
+  src/Static/Transforms/LoopUnrollPass.cpp src/Static/Transforms/LoopUnrollPass.hpp \
+  src/Static/Transforms/LoopJumpThreadingPass.cpp src/Static/Transforms/LoopJumpThreadingPass.hpp \
   src/Matrix2D.hpp Matrix2D.tcc \
   src/MaximalIterator.hpp \
-  src/MDataCollectionPass.hpp src/MDataCollectionPass.cpp \
+  src/Static/Transforms/MDataCollectionPass.hpp src/Static/Transforms/MDataCollectionPass.cpp \
   src/MemAccess.hpp src/MemAccess.cpp \
-  src/MMDetectorPass.cpp src/MMDetectorPass.hpp \
+  src/Static/Transforms/MMDetectorPass.cpp src/Static/Transforms/MMDetectorPass.hpp \
+  src/Static/Transforms/PromoteMemcpy.cpp \
+  src/Static/Transforms/InsertUndefs.cpp \
+  src/Static/Transforms/PromoteMemMove.cpp \
   src/ModuleID.hpp \
-  src/ModuleInfo.cpp src/ModuleInfo.hpp \
   src/NameInfo.cpp src/NameInfo.hpp \
   src/Parser.cpp src/Parser.hpp \
-  src/PromoteMemIntrinsicPass.cpp src/PromoteMemIntrinsicPass.hpp \
-  src/PropagateAssumesPass.cpp src/PropagateAssumesPass.hpp \
+  src/Static/LLVMModule.cpp \
+  src/Static/LLVMUtils.cpp src/LLVMUtils.hpp \
+  src/Static/ModuleInfo.cpp \
+  src/Static/Transforms/PromoteMemIntrinsicPass.cpp src/Static/Transforms/PromoteMemIntrinsicPass.hpp \
+  src/Static/Transforms/PropagateAssumesPass.cpp src/Static/Transforms/PropagateAssumesPass.hpp \
   src/RADriver.cpp src/RADriver.hpp \
   src/Revisit.cpp src/Revisit.hpp \
   src/RoundBoundDecider.cpp src/RoundBoundDecider.hpp \
@@ -92,7 +98,7 @@ libgenmc_a_SOURCES = \
   src/SExprVisitor.tcc src/SExprVisitor.hpp \
   src/Stamp.cpp src/Stamp.hpp \
   src/SVal.cpp src/SVal.hpp \
-  src/SpinAssumePass.cpp src/SpinAssumePass.hpp \
+  src/Static/Transforms/SpinAssumePass.cpp src/Static/Transforms/SpinAssumePass.hpp \
   src/WBIterator.hpp \
   src/ThreadInfo.hpp \
   src/ThreadPinner.cpp src/ThreadPinner.hpp \

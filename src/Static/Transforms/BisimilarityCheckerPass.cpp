@@ -19,7 +19,7 @@
  */
 
 #include "BisimilarityCheckerPass.hpp"
-#include "Support/Error.hpp"
+#include "../../Error.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Instructions.h>

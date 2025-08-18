@@ -28,7 +28,7 @@
 #include "EventAttr.hpp"
 #include "InterpreterEnumAPI.hpp"
 #include "MemAccess.hpp"
-#include "ModuleID.hpp"
+#include "Static/ModuleID.hpp"
 #include "NameInfo.hpp"
 #include "SAddr.hpp"
 #include "SExpr.hpp"

@@ -21,7 +21,7 @@
 #ifndef GENMC_ESCAPE_CHECKER_PASS_HPP
 #define GENMC_ESCAPE_CHECKER_PASS_HPP
 
-#include "ADT/VSet.hpp"
+#include "../../VSet.hpp"
 #include "CallInfoCollectionPass.hpp"
 
 #include <llvm/Passes/PassBuilder.h>

@@ -21,8 +21,8 @@
 #ifndef GENMC_INST_ANNOTATOR_HPP
 #define GENMC_INST_ANNOTATOR_HPP
 
-#include "ADT/VSet.hpp"
-#include "Support/Error.hpp"
+#include "../../VSet.hpp"
+#include "../../Error.hpp"
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Pass.h>

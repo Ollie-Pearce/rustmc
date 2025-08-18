@@ -19,8 +19,8 @@
  */
 
 #include "ModuleInfo.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Support/SExpr.hpp"
+#include "LLVMUtils.hpp"
+#include "../SExpr.hpp"
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Module.h>
 

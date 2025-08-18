@@ -27,7 +27,7 @@
 #include "CombinatoricUtils.hpp"
 #include "GraphIterators.hpp"
 #include "Interpreter.h"
-#include "LLVMModule.hpp"
+#include "Static/LLVMModule.hpp"
 #include "LabelVisitor.hpp"
 #include "Logger.hpp"
 #include "MaximalIterator.hpp"

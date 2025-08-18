@@ -21,9 +21,9 @@
 #include "config.h"
 
 #include "CodeCondenserPass.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/Transforms/BisimilarityCheckerPass.hpp"
-#include "Support/Error.hpp"
+#include "../LLVMUtils.hpp"
+#include "../Transforms/BisimilarityCheckerPass.hpp"
+#include "../../Error.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/InstIterator.h>

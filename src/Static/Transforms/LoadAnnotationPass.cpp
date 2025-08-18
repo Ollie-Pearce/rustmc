@@ -19,10 +19,10 @@
  */
 
 #include "LoadAnnotationPass.hpp"
-#include "Static/LLVMUtils.hpp"
-#include "Static/Transforms/InstAnnotator.hpp"
-#include "Support/Error.hpp"
-#include "Support/SExpr.hpp"
+#include "../LLVMUtils.hpp"
+#include "../Transforms/InstAnnotator.hpp"
+#include "../../Error.hpp"
+#include "../../SExpr.hpp"
 #include <llvm/IR/Function.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instructions.h>

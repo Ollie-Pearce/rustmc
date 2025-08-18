@@ -19,7 +19,7 @@
  */
 
 #include "EliminateCastsPass.hpp"
-#include "Static/LLVMUtils.hpp"
+#include "../LLVMUtils.hpp"
 #include "config.h"
 
 #include <llvm/Analysis/ValueTracking.h>
