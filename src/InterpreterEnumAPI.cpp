@@ -80,4 +80,6 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	/* Some C++ calls */
 	{"_Znwm", InternalFunctions::FN_Malloc},
 	{"_ZdlPv", InternalFunctions::FN_Free},
+	{"__rust_alloc", InternalFunctions::FN_Malloc},
+	{"__rust_dealloc", InternalFunctions::FN_Free},
 };
