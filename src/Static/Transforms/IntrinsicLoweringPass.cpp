@@ -31,11 +31,15 @@
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 using namespace llvm;
 
-static auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
+auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 {
+	int i = 0;
+	Value* lhs = NULL;
+    Value* rhs = NULL;
 	auto &M = *BB.getParent()->getParent();
 	auto modified = false;
 	for (auto it = BB.begin(); it != BB.end();) {
@@ -55,7 +59,168 @@ static auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		case llvm::Intrinsic::vastart:
 		case llvm::Intrinsic::vaend:
 		case llvm::Intrinsic::vacopy:
+		case llvm::Intrinsic::is_constant:
+		case llvm::Intrinsic::umax:
 			break;
+		
+		//Attempt to deal with overflow intrinsics taken from KLEE: https://github.com/klee/klee/blob/master/lib/Module/IntrinsicCleaner.cpp
+		case Intrinsic::sadd_with_overflow:
+		case Intrinsic::ssub_with_overflow:
+		case Intrinsic::smul_with_overflow:
+		case Intrinsic::uadd_with_overflow:
+		case Intrinsic::usub_with_overflow:
+		case Intrinsic::umul_with_overflow: {
+			IRBuilder<> builder(I->getParent(), I->getIterator());
+
+			Value *op1 = I->getArgOperand(0);
+			Value *op2 = I->getArgOperand(1);
+
+			Value *result = 0;
+			Value *result_ext = 0;
+			Value *overflow = 0;
+
+			unsigned int bw = op1->getType()->getPrimitiveSizeInBits();
+			unsigned int bw2 = op1->getType()->getPrimitiveSizeInBits() * 2;
+
+			if ((I->getIntrinsicID() == Intrinsic::uadd_with_overflow) ||
+				(I->getIntrinsicID() == Intrinsic::usub_with_overflow) ||
+				(I->getIntrinsicID() == Intrinsic::umul_with_overflow)) {
+
+			Value *op1ext =
+				builder.CreateZExt(op1, IntegerType::get(M.getContext(), bw2));
+			Value *op2ext =
+				builder.CreateZExt(op2, IntegerType::get(M.getContext(), bw2));
+			Value *int_max_s =
+				ConstantInt::get(op1->getType(), APInt::getMaxValue(bw));
+			Value *int_max = builder.CreateZExt(
+				int_max_s, IntegerType::get(M.getContext(), bw2));
+
+			if (I->getIntrinsicID() == Intrinsic::uadd_with_overflow) {
+				result_ext = builder.CreateAdd(op1ext, op2ext);
+			} else if (I->getIntrinsicID() == Intrinsic::usub_with_overflow) {
+				result_ext = builder.CreateSub(op1ext, op2ext);
+			} else if (I->getIntrinsicID() == Intrinsic::umul_with_overflow) {
+				result_ext = builder.CreateMul(op1ext, op2ext);
+			}
+			overflow = builder.CreateICmpUGT(result_ext, int_max);
+
+			} else if ((I->getIntrinsicID() == Intrinsic::sadd_with_overflow) ||
+					(I->getIntrinsicID() == Intrinsic::ssub_with_overflow) ||
+					(I->getIntrinsicID() == Intrinsic::smul_with_overflow)) {
+
+			Value *op1ext =
+				builder.CreateSExt(op1, IntegerType::get(M.getContext(), bw2));
+			Value *op2ext =
+				builder.CreateSExt(op2, IntegerType::get(M.getContext(), bw2));
+			Value *int_max_s =
+				ConstantInt::get(op1->getType(), APInt::getSignedMaxValue(bw));
+			Value *int_min_s =
+				ConstantInt::get(op1->getType(), APInt::getSignedMinValue(bw));
+			Value *int_max = builder.CreateSExt(
+				int_max_s, IntegerType::get(M.getContext(), bw2));
+			Value *int_min = builder.CreateSExt(
+				int_min_s, IntegerType::get(M.getContext(), bw2));
+
+			if (I->getIntrinsicID() == Intrinsic::sadd_with_overflow) {
+				result_ext = builder.CreateAdd(op1ext, op2ext);
+			} else if (I->getIntrinsicID() == Intrinsic::ssub_with_overflow) {
+				result_ext = builder.CreateSub(op1ext, op2ext);
+			} else if (I->getIntrinsicID() == Intrinsic::smul_with_overflow) {
+				result_ext = builder.CreateMul(op1ext, op2ext);
+			}
+			overflow =
+				builder.CreateOr(builder.CreateICmpSGT(result_ext, int_max),
+								builder.CreateICmpSLT(result_ext, int_min));
+			}
+
+			// This trunc cound be replaced by a more general trunc replacement
+			// that allows to detect also undefined behavior in assignments or
+			// overflow in operation with integers whose dimension is smaller than
+			// int's dimension, e.g.
+			//     uint8_t = uint8_t + uint8_t;
+			// if one desires the wrapping should write
+			//     uint8_t = (uint8_t + uint8_t) & 0xFF;
+			// before this, must check if it has side effects on other operations
+			result = builder.CreateTrunc(result_ext, op1->getType());
+			Value *resultStruct = builder.CreateInsertValue(
+				UndefValue::get(I->getType()), result, 0);
+			resultStruct = builder.CreateInsertValue(resultStruct, overflow, 1);
+
+			I->replaceAllUsesWith(resultStruct);
+			I->eraseFromParent();
+			modified = true;
+			break;
+		}
+
+		// Code taken from KLEE IntrinsicCleaner.cpp
+		case Intrinsic::sadd_sat:
+		case Intrinsic::ssub_sat:
+		case Intrinsic::uadd_sat:
+		case Intrinsic::usub_sat: {
+		  IRBuilder<> builder(I);
+  
+		  Value *op1 = I->getArgOperand(0);
+		  Value *op2 = I->getArgOperand(1);
+  
+		  unsigned int bw = op1->getType()->getPrimitiveSizeInBits();
+		  assert(bw == op2->getType()->getPrimitiveSizeInBits());
+  
+		  Value *overflow = nullptr;
+		  Value *result = nullptr;
+		  Value *saturated = nullptr;
+		  switch(I->getIntrinsicID()) {
+			case Intrinsic::usub_sat:
+			  result = builder.CreateSub(op1, op2);
+			  overflow = builder.CreateICmpULT(op1, op2); // a < b  =>  a - b < 0
+			  saturated = ConstantInt::get(M.getContext(), APInt(bw, 0));
+			  break;
+			case Intrinsic::uadd_sat:
+			  result = builder.CreateAdd(op1, op2);
+			  overflow = builder.CreateICmpULT(result, op1); // a + b < a
+			  saturated = ConstantInt::get(M.getContext(), APInt::getMaxValue(bw));
+			  break;
+			case Intrinsic::ssub_sat:
+			case Intrinsic::sadd_sat: {
+			  if (I->getIntrinsicID() == Intrinsic::ssub_sat) {
+				result = builder.CreateSub(op1, op2);
+			  } else {
+				result = builder.CreateAdd(op1, op2);
+			  }
+			  ConstantInt *zero = ConstantInt::get(M.getContext(), APInt(bw, 0));
+			  ConstantInt *smin = ConstantInt::get(M.getContext(), APInt::getSignedMinValue(bw));
+			  ConstantInt *smax = ConstantInt::get(M.getContext(), APInt::getSignedMaxValue(bw));
+  
+			  Value *sign1 = builder.CreateICmpSLT(op1, zero);
+			  Value *sign2 = builder.CreateICmpSLT(op2, zero);
+			  Value *signR = builder.CreateICmpSLT(result, zero);
+  
+			  if (I->getIntrinsicID() == Intrinsic::ssub_sat) {
+				saturated = builder.CreateSelect(sign2, smax, smin);
+			  } else {
+				saturated = builder.CreateSelect(sign2, smin, smax);
+			  }
+  
+			  // The sign of the result differs from the sign of the first operand
+			  overflow = builder.CreateXor(sign1, signR);
+			  if (I->getIntrinsicID() == Intrinsic::ssub_sat) {
+				// AND the signs of the operands differ
+				overflow = builder.CreateAnd(overflow, builder.CreateXor(sign1, sign2));
+			  } else {
+				// AND the signs of the operands are the same
+				overflow = builder.CreateAnd(overflow, builder.CreateNot(builder.CreateXor(sign1, sign2)));
+			  }
+			  break;
+			}
+			default: ;
+		  }
+  
+		  result = builder.CreateSelect(overflow, saturated, result);
+		  I->replaceAllUsesWith(result);
+		  I->eraseFromParent();
+		  modified = true;
+		  break;
+		}
+
 		case llvm::Intrinsic::dbg_value:
 		case llvm::Intrinsic::dbg_declare:
 			/* Remove useless calls to @llvm.debug.* */
@@ -72,7 +237,11 @@ static auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			 */
 			auto FC = M.getOrInsertFunction("abort",
 							llvm::Type::getVoidTy(M.getContext()));
+#if LLVM_VERSION_MAJOR < 9
+			if (auto *F = llvm::dyn_cast<llvm::Function>(FC)) {
+#else
 			if (auto *F = llvm::dyn_cast<llvm::Function>(FC.getCallee())) {
+#endif
 				F->setDoesNotReturn();
 				F->setDoesNotThrow();
 				llvm::CallInst::Create(F, llvm::Twine(), I);
@@ -82,6 +251,27 @@ static auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			modified = true;
 			break;
 		}
+		case Intrinsic::fshl: {
+			IRBuilder<> builder(I->getParent(), I->getIterator());
+		  
+			Value *op1 = I->getArgOperand(0); // a
+			Value *op2 = I->getArgOperand(1); // b
+			Value *op3 = I->getArgOperand(2); // shift amount
+		  
+			unsigned int bw = op1->getType()->getPrimitiveSizeInBits();
+			Value *bitWidthVal = ConstantInt::get(op1->getType(), bw);
+		  
+			Value *shl = builder.CreateShl(op1, op3);
+			Value *invShift = builder.CreateSub(bitWidthVal, op3);
+			Value *lshr = builder.CreateLShr(op2, invShift);
+			Value *result = builder.CreateOr(shl, lshr);
+		  
+			I->replaceAllUsesWith(result);
+			I->eraseFromParent();
+			modified = true;
+			break;
+		  }
+		  
 		default:
 			IL->LowerIntrinsicCall(I);
 			modified = true;
