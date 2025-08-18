@@ -1,5 +1,5 @@
 *.dwo
-
+*.o
 .deps
 librcmc.a
 
