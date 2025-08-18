@@ -1,3 +1,6 @@
 *.o
 src/*.o
 libgenmc.a
+mixer
+genmc
+trust
