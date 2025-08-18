@@ -289,7 +289,7 @@ bool MDataCollectionPass::runOnModule(Module &M)
 		return false;
 
 	/* First, get type information for user's global variables */
-	for (auto &v : M.getGlobalList())
+	for (auto &v : GLOBALS(M))
 		collectGlobalInfo(v, M);
 
 	/* Then for all local variables and some other special cases */

@@ -167,7 +167,7 @@ bool transformLLVMModule(llvm::Module &mod, ModuleInfo &MI,
 	modified = OptPM.run(mod);
 
 	BndPM.add(createEliminateCASPHIsPass());
-	BndPM.add(llvm::createJumpThreadingPass());
+	//BndPM.add(llvm::createJumpThreadingPass());
 	BndPM.add(createEliminateUnusedCodePass());
 	BndPM.add(createBisimilarityCheckerPass());
 	if (conf->codeCondenser && !conf->checkLiveness)

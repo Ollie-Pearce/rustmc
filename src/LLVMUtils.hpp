@@ -40,6 +40,7 @@ typedef llvm::TerminatorInst TerminatorInst;
 typedef llvm::Instruction TerminatorInst;
 #endif
 
+#define GLOBALS(M) (M).globals()
 /*
  * Returns true if o1 and o2 are the same ordering as far as a load
  * operation is concerned. This catches cases where e.g.,

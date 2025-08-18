@@ -19,6 +19,7 @@
  */
 
 #include "ModuleInfo.hpp"
+#include "LLVMUtils.hpp"
 #include "SExpr.hpp"
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Module.h>
@@ -36,7 +37,7 @@ void ModuleInfo::collectIDs()
 	clear();
 
 	auto valueCount = 0u;
-	for (auto &gv : mod.getGlobalList()) {
+	for (auto &gv : GLOBALS(mod)) {
 		auto id = valueCount++;
 		idInfo.VID[&gv] = id;
 		idInfo.IDV[id] = &gv;

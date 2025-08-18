@@ -3276,7 +3276,7 @@ void Interpreter::callThreadExit(Function *F, const std::vector<GenericValue> &A
 		freeAllocas(ECStack().back().Allocas);
 		ECStack().pop_back();
 	}
-	popStackAndReturnValueToCaller(Type::getInt8PtrTy(F->getContext()), ArgVals[0]);
+	popStackAndReturnValueToCaller(F->getReturnType(), ArgVals[0]);
 }
 
 void Interpreter::callAtExit(Function *F, const std::vector<GenericValue> &ArgVals,

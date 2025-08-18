@@ -41,6 +41,7 @@
 #include "Config.hpp"
 #include "Error.hpp"
 #include "Interpreter.h"
+#include "LLVMUtils.hpp"
 #include <cstring>
 #include <llvm/CodeGen/IntrinsicLowering.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -185,7 +186,7 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 	auto *M = Modules.back().get();
 	std::vector<std::pair<const GlobalVariable *, void *>> toReinitialize;
 
-	for (auto &v : M->getGlobalList()) {
+	for (auto &v : GLOBALS(*M)) {
 		char *ptr = static_cast<char *>(GVTOP(getConstantValue(&v)));
 		unsigned int typeSize = getDataLayout().getTypeAllocSize(v.getValueType());
 
@@ -420,7 +421,7 @@ void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
 	Array = std::make_unique<char[]>((InputArgv.size() + 1) * PtrSize);
 
 	// LLVM_DEBUG(dbgs() << "JIT: ARGV = " << (void *)Array.get() << "\n");
-	Type *SBytePtr = Type::getInt8PtrTy(C);
+	Type *SBytePtr = PointerType::getUnqual(C);
 
 	for (unsigned i = 0; i != InputArgv.size(); ++i) {
 		unsigned Size = InputArgv[i].size() + 1;
@@ -551,7 +552,7 @@ void Interpreter::setupMain(Function *Fn, const std::vector<std::string> &argv,
 	// Check main() type
 	unsigned NumArgs = Fn->getFunctionType()->getNumParams();
 	FunctionType *FTy = Fn->getFunctionType();
-	Type *PPInt8Ty = Type::getInt8PtrTy(Fn->getContext())->getPointerTo();
+	Type *PPInt8Ty = PointerType::get(Fn->getContext(), 0);
 
 	// Check the argument types.
 	if (NumArgs > 3)
