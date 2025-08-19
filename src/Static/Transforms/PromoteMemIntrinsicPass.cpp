@@ -228,19 +228,75 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 	}
 }
 
+bool IsCFunction(Function &F)
+{
+
+	for (auto &B : F) {
+		for (auto &I : B) {
+			if (auto *Inst = dyn_cast<Instruction>(&I)) {
+				if (DILocation *Loc =
+					    Inst->getDebugLoc()) { // Here I is an LLVM instruction
+					unsigned Line = Loc->getLine();
+					StringRef File = Loc->getFilename();
+					StringRef Dir = Loc->getDirectory();
+					bool ImplicitCode = Loc->isImplicitCode();
+					if (File.ends_with(".c")) {
+						errs() << "Hello I am a c function";
+						return true;
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
 auto PromoteMemIntrinsicPass::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAnalyses
 {
-	/* Locate mem intrinsics of interest */
-	SmallVector<llvm::MemIntrinsic *, 8> promoted;
-	auto modified = false;
-	for (auto &I : instructions(F)) {
-		if (auto *MI = dyn_cast<MemCpyInst>(&I))
-			modified |= tryPromoteMemCpy(MI, promoted);
-		if (auto *MS = dyn_cast<MemSetInst>(&I))
-			modified |= tryPromoteMemSet(MS, promoted);
+	if (IsCFunction(F)) {
+
+		SmallVector<llvm::MemIntrinsic *, 8> promoted;
+		auto modified = false;
+		for (auto &I : instructions(F)) {
+
+			if (auto *MI = dyn_cast<MemCpyInst>(&I))
+				modified |= tryPromoteMemCpy(MI, promoted);
+			if (auto *MS = dyn_cast<MemSetInst>(&I))
+				modified |= tryPromoteMemSet(MS, promoted);
+		}
+
+		/* Erase promoted intrinsics from the code */
+		removePromoted(promoted);
+		return modified ? PreservedAnalyses::none() : PreservedAnalyses::all();
+	} else {
+		for (auto &I : instructions(F)) {
+
+			if (auto *MI = dyn_cast<MemCpyInst>(&I)) {
+
+				// errs() << "\n in LLVM Function: ";
+				// errs() << MI->getFunction()->getName() << " \n";
+				if (DILocation *Loc = MI->getDebugLoc()) {
+					// errs() << "memcpy at " << Loc->getFilename() << ":"
+					//<< Loc->getLine() << "\n";
+
+					// Extract type info from debug metadata
+					if (auto *Scope = dyn_cast<DISubprogram>(Loc->getScope())) {
+						// errs() << "Function: " << Scope->getName() <<
+						// "\n";
+					}
+				}
+				if (Instruction *dest_inst = dyn_cast<Instruction>(MI->getDest())) {
+					if (DILocation *Loc = dest_inst->getDebugLoc()) {
+						if (auto *Scope = dyn_cast<DISubprogram>(
+							    Loc->getScope())) {
+							// errs() << "Dest: " << Scope->getName()
+							//       << "\n";
+						}
+					}
+				}
+			}
+		}
 	}
 
-	/* Erase promoted intrinsics from the code */
-	removePromoted(promoted);
-	return modified ? PreservedAnalyses::none() : PreservedAnalyses::all();
+	return PreservedAnalyses::none();
 }
