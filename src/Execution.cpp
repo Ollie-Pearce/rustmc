@@ -1805,6 +1805,12 @@ void Interpreter::visitAtomicRMWInst(AtomicRMWInst &I)
 	auto size = getTypeSize(typ);
 	auto atyp = TYPE_TO_ATYPE(typ);
 
+	if(!typ->isIntegerTy()){
+		errs() << "ABOUT TO BUG GRAPEFRUIT \n";
+		Function *F = I.getParent()->getParent();  
+		errs() << "Function: " << F->getName() << "\n";
+		errs() << "Instruction: " << I;
+	}
 	BUG_ON(!typ->isIntegerTy());
 
 	if (thr.tls.count(ptr)) {
