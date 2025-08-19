@@ -192,9 +192,193 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 
 		/* Record whether this is a thread local variable or not */
 		if (v.isThreadLocal()) {
-			for (auto i = 0u; i < typeSize; i++)
-				threadLocalVars[ptr + i] = getConstantValue(v.getInitializer());
-			continue;
+			Constant *Init = v.getInitializer();
+			if (!Init)
+				continue;
+
+			char *basePtr = static_cast<char *>(GVTOP(getConstantValue(&v))); //Get the base ptr of v
+			uint64_t totalSize = getDataLayout().getTypeAllocSize(Init->getType()); //Get total size of type (may be agregate)
+
+			if (isa<ConstantAggregateZero>(Init) || isa<UndefValue>(Init)) { //If init is "zeroinitialized" or undef zero fill it
+				// Zero-fill entire aggregate
+				for (uint64_t j = 0; j < totalSize; ++j) {
+					GenericValue ByteGV;
+					ByteGV.IntVal = APInt(8, 0);
+					threadLocalVars[basePtr + j] = ByteGV;
+				}
+			} else if (auto *CA = dyn_cast<ConstantArray>(Init)) {
+				// Iterate over array elements
+				Type *ElemTy = CA->getType()->getElementType();
+				uint64_t elemSize = getDataLayout().getTypeAllocSize(ElemTy);
+				for (unsigned i = 0; i < CA->getNumOperands(); ++i) {
+					Constant *Elem = CA->getOperand(i);
+					uint64_t elemOffset = i * elemSize;
+					if (isa<ConstantAggregateZero>(Elem) ||
+					    isa<UndefValue>(Elem)) {
+						// Element is all zeros -> zero-fill element
+						for (uint64_t j = 0; j < elemSize; ++j) {
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(8, 0);
+							threadLocalVars[basePtr + elemOffset + j] =
+								ByteGV;
+						}
+					} else if (auto *CI = dyn_cast<ConstantInt>(Elem)) {
+						// Integer element -> store each byte
+						uint64_t intVal = CI->getZExtValue();
+						for (uint64_t j = 0; j < elemSize; ++j) {
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(
+								8, (intVal >> (j * 8)) & 0xFF);
+							threadLocalVars[basePtr + elemOffset + j] =
+								ByteGV;
+						}
+					} else {
+						// If needed, handle other scalar types (e.g.,
+						// ConstantFP) or report error
+						report_fatal_error("Unsupported constant element "
+								   "in array initializer");
+					}
+				}
+			} else if (auto *CS = dyn_cast<ConstantStruct>(Init)) {
+				uint64_t offset = 0;
+				const StructLayout *SL =
+					getDataLayout().getStructLayout(CS->getType());
+				for (unsigned i = 0; i < CS->getNumOperands(); ++i) {
+					Constant *Field = CS->getOperand(i);
+					uint64_t fieldOffset = SL->getElementOffset(i);
+					Type *FieldTy = Field->getType();
+					uint64_t fieldSize =
+						getDataLayout().getTypeAllocSize(FieldTy);
+					char *fieldPtr = basePtr + fieldOffset;
+					errs() << "Processing field:\n";
+					Field->dump();
+					if (isa<ConstantAggregateZero>(Field) ||
+					    isa<UndefValue>(Field)) {
+						// Zero-fill this field
+						for (uint64_t j = 0; j < fieldSize; ++j) {
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(8, 0);
+							threadLocalVars[fieldPtr + j] = ByteGV;
+						}
+					} else if (auto *Arr = dyn_cast<ConstantArray>(Field)) {
+						// Array field: handle similarly to top-level array
+						Type *ElemTy = Arr->getType()->getElementType();
+						uint64_t elemSize =
+							getDataLayout().getTypeAllocSize(ElemTy);
+						for (unsigned a = 0; a < Arr->getNumOperands();
+						     ++a) {
+							Constant *Elem = Arr->getOperand(a);
+							if (!isa<ConstantInt>(Elem)) {
+								report_fatal_error(
+									"Only integer constants "
+									"supported in array "
+									"fields");
+							}
+							GenericValue val = getConstantValue(Elem);
+							uint64_t intVal = val.IntVal.getZExtValue();
+							for (uint64_t j = 0; j < elemSize; ++j) {
+								GenericValue ByteGV;
+								ByteGV.IntVal = APInt(
+									8,
+									(intVal >> (j * 8)) & 0xFF);
+								threadLocalVars[fieldPtr +
+										a * elemSize + j] =
+									ByteGV;
+							}
+						}
+					} else if (auto *CI = dyn_cast<ConstantInt>(Field)) {
+						// Integer field: store each byte
+						uint64_t intVal = CI->getZExtValue();
+						for (uint64_t j = 0; j < fieldSize; ++j) {
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(
+								8, (intVal >> (j * 8)) & 0xFF);
+							threadLocalVars[fieldPtr + j] = ByteGV;
+						}
+					} else {
+						report_fatal_error(
+							"Unsupported constant field in struct");
+					}
+				}
+			} else {
+				// Non-aggregate (scalar) initializer: store value byte-by-byte
+				uint64_t typeSize =
+					getDataLayout().getTypeAllocSize(Init->getType());
+				if (auto *CI = dyn_cast<ConstantInt>(Init)) {
+					// Split integer into bytes
+					uint64_t intVal = CI->getZExtValue();
+					for (uint64_t j = 0; j < typeSize; ++j) {
+						GenericValue ByteGV;
+						ByteGV.IntVal =
+							APInt(8, (intVal >> (j * 8)) & 0xFF);
+						threadLocalVars[basePtr + j] = ByteGV;
+					}
+				} else if (isa<ConstantPointerNull>(Init)) {
+					// Null pointer -> zero bytes
+					for (uint64_t j = 0; j < typeSize; ++j) {
+						GenericValue ByteGV;
+						ByteGV.IntVal = APInt(8, 0);
+						threadLocalVars[basePtr + j] = ByteGV;
+					}
+				} else if (auto *CFP = dyn_cast<ConstantFP>(Init)) {
+					// Floating-point constant -> store bit pattern
+					APInt bits = CFP->getValueAPF().bitcastToAPInt();
+					// bits.getBitWidth() should equal typeSize*8
+					uint64_t byteCount = typeSize;
+					// Store each byte of the APInt
+					for (uint64_t j = 0; j < byteCount; ++j) {
+						uint64_t byteVal =
+							bits.extractBits(8, j * 8).getZExtValue();
+						GenericValue ByteGV;
+						ByteGV.IntVal = APInt(8, byteVal);
+						threadLocalVars[basePtr + j] = ByteGV;
+					}
+				} else if (auto *CE = dyn_cast<ConstantExpr>(Init)) {
+					// Constant expression (e.g., an address computation)
+					GenericValue val = getConstantValue(CE);
+					// Handle result as int or pointer
+					if (Init->getType()->isPointerTy()) {
+						uintptr_t ptrVal =
+							reinterpret_cast<uintptr_t>(val.PointerVal);
+						for (uint64_t j = 0; j < typeSize; ++j) {
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(
+								8, (ptrVal >> (j * 8)) & 0xFF);
+							threadLocalVars[basePtr + j] = ByteGV;
+						}
+					} else if (Init->getType()->isIntegerTy()) {
+						// val.IntVal is an APInt for the result
+						APInt intBits = val.IntVal;
+						for (uint64_t j = 0; j < typeSize; ++j) {
+							uint64_t byteVal =
+								intBits.extractBits(8, j * 8)
+									.getZExtValue();
+							GenericValue ByteGV;
+							ByteGV.IntVal = APInt(8, byteVal);
+							threadLocalVars[basePtr + j] = ByteGV;
+						}
+					} else {
+						report_fatal_error(
+							"Unsupported ConstantExpr result type");
+					}
+				} else {
+					// Fallback for any other constant type
+					GenericValue GV = getConstantValue(Init);
+					// Assume it fits in typeSize bytes (e.g., small integers)
+					for (uint64_t j = 0; j < typeSize; ++j) {
+						uint64_t byteVal;
+						if (GV.IntVal.getBitWidth() >= 8) {
+							byteVal = GV.IntVal.extractBits(8, j * 8)
+									  .getZExtValue();
+						} else {
+							byteVal = 0;
+						}
+						GenericValue ByteGV;
+						ByteGV.IntVal = APInt(8, byteVal);
+						threadLocalVars[basePtr + j] = ByteGV;
+					}
+				}
+			}
 		}
 
 		/* "Allocate" an address for this global variable... */
