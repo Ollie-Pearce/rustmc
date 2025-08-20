@@ -23,9 +23,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-cd genmc
 make
-cd ..
 
 cd $TARGET_RUST_PROJECT
 
@@ -77,12 +75,15 @@ done >> "$TEST_FUNCS_FILE"
 
 cargo clean
 
-RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run --target x86_64-unknown-linux-gnu 
+RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run --target x86_64-unknown-linux-gnu
 
 #if [ "$MIXED_LANGUAGE" = "true" ]; then
 #	clang -O3 -emit-llvm -c *.c
 #	mv *.bc $(pwd)/target/x86_64-unknown-linux-gnu/debug/deps
 #fi
+
+echo "pwd is $(pwd)"
+echo "DEPDIR is $DEPDIR"
 
 find $(pwd)/target-ir/debug/deps -name "*.bc" > $DEPDIR/bitcode.txt
 
@@ -90,22 +91,22 @@ cd $DEPDIR
 
 llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
 
-cd $DEPDIR/genmc
 
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 20s ./genmc --transform-output=myout.ll \
+  timeout 20s ./genmc --mixer \
+          --transform-output=myout.ll \
           --print-exec-graphs \
           --disable-function-inliner \
           --program-entry-function="$test_func" \
           --disable-estimation \
           --print-error-trace \
           --disable-stop-on-system-error \
-          ../combined.ll > "../test_results/${test_func}_verification.txt" 2>&1
+          combined.ll > "test_results/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
-    echo "TIMEOUT" >> "../test_results/${test_func}_verification.txt"
+    echo "TIMEOUT" >> "test_results/${test_func}_verification.txt"
   fi
 done < "$TEST_FUNCS_FILE"
 
