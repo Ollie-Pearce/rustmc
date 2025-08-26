@@ -26,7 +26,7 @@ done
 make
 
 cd $TARGET_RUST_PROJECT
-
+# 1) Add #[no_mangle] to #[test] functions that do not have it
 find . -name "*.rs" | while read -r file; do
   awk '
     {
@@ -39,14 +39,22 @@ find . -name "*.rs" | while read -r file; do
   ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 done
 
+# 2) Rename #[test] functions so they are all unique
 find . -name "*.rs" | while read -r file; do
-  filename=$(basename "$file" .rs)
-  awk -v prefix="${filename}_" '
+  awk '
+    BEGIN {
+      # keep counts of test function names
+    }
     /^[[:space:]]*#\[test\]/ { in_test = 1; print; next }
+
     in_test && /^[[:space:]]*fn[[:space:]]+([a-zA-Z0-9_]+)/ {
       if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
         old_name = m[1]
-        sub(old_name, prefix old_name)
+        count[old_name]++
+        if (count[old_name] > 1) {
+          new_name = old_name "_" (count[old_name] - 1)
+          sub(old_name, new_name)
+        }
       }
       in_test = 0
     }
@@ -54,6 +62,7 @@ find . -name "*.rs" | while read -r file; do
   ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 done
 
+# 3) collect test names
 echo "Collecting #[test] function names..."
 TEST_FUNCS_FILE="$DEPDIR/test_functions.txt"
 > "$TEST_FUNCS_FILE"
@@ -75,7 +84,7 @@ done >> "$TEST_FUNCS_FILE"
 
 cargo clean
 
-RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run --target x86_64-unknown-linux-gnu
+RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run
 
 #if [ "$MIXED_LANGUAGE" = "true" ]; then
 #	clang -O3 -emit-llvm -c *.c
