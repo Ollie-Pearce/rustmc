@@ -76,7 +76,6 @@ auto promoteI64Memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *> &promote
 		} else {
 			errs() << " \n Cannot promote memset with non-constant length: ";
 			MI->dump();
-			abort();
 			return false;
 		}
 

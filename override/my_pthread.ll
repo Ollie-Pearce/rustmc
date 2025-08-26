@@ -9,8 +9,16 @@ target triple = "x86_64-unknown-linux-gnu"
 @_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
 @__dso_handle = dso_local global ptr @__dso_handle, align 8
 
-@"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h3cea3bcc94e317ffE" = dso_local global { i64, [2 x i64] } { i64 0, [2 x i64] [i64 0, i64 0] }, align 8
+@"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hd69d6c74a2a1681dE" = dso_local global { i64, [2 x i64] } { i64 0, [2 x i64] [i64 0, i64 0] }, align 8
 @"_ZN3std6thread5local17LocalKey$LT$T$GT$4with17hd5f9bec89a3fdbd3E" = dso_local global { i64, i64 } { i64 0, i64 0 }, align 8
+
+
+define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
+entry:
+  %tmp0 = insertvalue { i64, i64 } undef, i64 0, 0
+  %tmp1 = insertvalue { i64, i64 } %tmp0, i64 0, 1
+  ret { i64, i64 } %tmp1
+}
 
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17h5a1fb170aebc4dc9E() unnamed_addr {
 entry:
