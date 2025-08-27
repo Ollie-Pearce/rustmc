@@ -29,7 +29,7 @@ make
 
 cd $TARGET_RUST_PROJECT
 
-git reset --hard HEAD
+#git reset --hard HEAD
 
 # 1) Add #[no_mangle] to #[test] functions that do not have it
 find . -name "*.rs" | while read -r file; do
@@ -45,20 +45,20 @@ find . -name "*.rs" | while read -r file; do
 done
 
 # 2) Rename #[test] functions so they are all unique
-find . -name "*.rs" | while read -r file; do
-  filename=$(basename "$file" .rs)
-  awk -v prefix="${filename}_" '
-    /^[[:space:]]*#\[test\]/ { in_test = 1; print; next }
-    in_test && /^[[:space:]]*fn[[:space:]]+([a-zA-Z0-9_]+)/ {
-      if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
-        old_name = m[1]
-        sub(old_name, prefix old_name)
-      }
-      in_test = 0
-    }
-    { print }
-  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-done
+#find . -name "*.rs" | while read -r file; do
+#  filename=$(basename "$file" .rs)
+#  awk -v prefix="${filename}_" '
+#    /^[[:space:]]*#\[test\]/ { in_test = 1; print; next }
+#    in_test && /^[[:space:]]*fn[[:space:]]+([a-zA-Z0-9_]+)/ {
+#      if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
+#        old_name = m[1]
+#        sub(old_name, prefix old_name)
+#      }
+#      in_test = 0
+#    }
+#    { print }
+#  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+#done
 
 # 3) collect test names
 echo "Collecting #[test] function names..."
@@ -118,4 +118,4 @@ while read -r test_func; do
 done < "$TEST_FUNCS_FILE"
 
 
-#./genmc --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="hashmap_insert_verification.txt" --disable-estimation --print-error-trace --disable-stop-on-system-error ../combined.ll > "../test_results/hashmap_insert_verification.txt"
+#./genmc --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="smoke_once_value" --disable-estimation --print-error-trace --disable-stop-on-system-error combined.ll > "test_results/custom_verification.txt"
