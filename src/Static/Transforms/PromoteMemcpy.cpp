@@ -79,14 +79,13 @@ auto promoteI64Memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *> &promote
 			return false;
 		}
 
-		promoted.push_back(MI); // Maybe move this to the end of the function?
+		
 	} else {
 		errs() << " \n Cannot promote memset with non-constant value: ";
 		MI->dump();
-		abort();
 		return false;
 	}
-
+	promoted.push_back(MI); // Maybe move this to the end of the function?
 	return true;
 }
 
@@ -399,9 +398,14 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 			}
 		} else if (auto *MS = dyn_cast<MemSetInst>(&I)) {
 			if (auto *UV = dyn_cast<UndefValue>(MS->getArgOperand(1))) {
-				errs() << " \n EGG. EGG. EGG. EGG. EGG. EGG. EGG. EGG. EGG. EGG. ";
 				modified |= PromoteUndefMemset(MS, promoted);
 			} else {
+				auto DbgDeclares = findDbgDeclares(MS->getDest());
+				if (DbgDeclares.size() == 1) {
+					errs() << "\n Found 1 dbg declare for memset\n";
+					DbgDeclares[0]->dump();
+					errs() << "\n sauerkraut \n";
+				}
 				modified |= promoteI64Memset(MS, promoted);
 			}
 		}
