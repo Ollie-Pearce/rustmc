@@ -7,6 +7,12 @@ TARGET_RUST_PROJECT=$1
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
 
+
+p=${TARGET_RUST_PROJECT%/}
+PROJECT_NAME=${p##*/}
+printf '%s\n' "$PROJECT_NAME"
+
+
 rm test_results/*.txt
 
 shift
@@ -92,7 +98,7 @@ RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C co
 echo "pwd is $(pwd)"
 echo "DEPDIR is $DEPDIR"
 
-find $(pwd)/target-ir/debug/deps -name "*.bc" > $DEPDIR/bitcode.txt
+find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
 
 cd $DEPDIR
 
