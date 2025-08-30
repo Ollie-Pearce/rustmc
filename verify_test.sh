@@ -1,27 +1,16 @@
-if [ "$#" -lt 1 ]; then
-	echo "Target Cargo Project not supplied. Exiting"
-	exit 1
-fi
 
-TARGET_RUST_PROJECT=$1
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
 
-
-p=${TARGET_RUST_PROJECT%/}
-PROJECT_NAME=${p##*/}
-printf '%s\n' "$PROJECT_NAME"
-
-
-rm test_results/*.txt
-
-shift
-
-while [ $# -gt 0 ]; do
+while [ $# -gt 1 ]; do
   case "$1" in
-    -ffi)
+    --ffi)
       MIXED_LANGUAGE=true
       shift  # consume this argument
+      ;;
+    --include-deps)
+      INCLUDE_DEPS=true
+      shift
       ;;
     *)
       echo "Unknown argument: $1"
@@ -30,6 +19,19 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+if [ "$#" -lt 1 ]; then
+	echo "Target Cargo Project not supplied. Exiting"
+	exit 1
+fi
+
+TARGET_RUST_PROJECT=$1
+
+p=${TARGET_RUST_PROJECT%/}
+PROJECT_NAME=${p##*/}
+printf '%s\n' "$PROJECT_NAME"
+
+rm test_results/*.txt
 
 make
 
@@ -98,7 +100,11 @@ RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C co
 echo "pwd is $(pwd)"
 echo "DEPDIR is $DEPDIR"
 
-find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+if [ "$INCLUDE_DEPS" = "true" ]; then
+  find "$(pwd)/target-ir/debug/deps" -name "*.bc" > "$DEPDIR/bitcode.txt"
+else
+  find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+fi
 
 cd $DEPDIR
 
