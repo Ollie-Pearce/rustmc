@@ -52,20 +52,21 @@ find . -name "*.rs" | while read -r file; do
 done
 
 # 2) Rename #[test] functions so they are all unique
-#find . -name "*.rs" | while read -r file; do
-#  filename=$(basename "$file" .rs)
-#  awk -v prefix="${filename}_" '
-#    /^[[:space:]]*#\[test\]/ { in_test = 1; print; next }
-#    in_test && /^[[:space:]]*fn[[:space:]]+([a-zA-Z0-9_]+)/ {
-#      if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
-#        old_name = m[1]
-#        sub(old_name, prefix old_name)
-#      }
-#      in_test = 0
-#    }
-#    { print }
-#  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-#done
+python_script="rename_duplicate_rust_tests.py"
+
+# Loop until the output is not "No duplicates found or no changes required."
+while true; do
+    output=$(python3 "$python_script")
+
+    if [ "$output" = "No duplicates found or no changes required." ]; then
+        echo "Output unchanged"
+        
+        break
+    fi
+
+    echo "Output changed: $output"
+    sleep 1  # Sleep for a second to avoid running continuously without pause
+done
 
 # 3) collect test names
 echo "Collecting #[test] function names..."
