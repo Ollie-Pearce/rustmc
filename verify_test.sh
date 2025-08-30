@@ -27,15 +27,14 @@ fi
 
 TARGET_RUST_PROJECT=$1
 
-p=${TARGET_RUST_PROJECT%/}
-PROJECT_NAME=${p##*/}
-printf '%s\n' "$PROJECT_NAME"
-
 rm test_results/*.txt
 
 make
 
 cd $TARGET_RUST_PROJECT
+
+PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+echo "$PROJECT_NAME"
 
 #git reset --hard HEAD
 
