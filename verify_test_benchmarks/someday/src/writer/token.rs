@@ -112,6 +112,7 @@ impl Drop for WriterReviveToken<'_> {
 mod test {
     use super::*;
 
+#[no_mangle]
     #[test]
     /// Assure token is set to `dead` set on drop.
     fn dead_on_drop() {
@@ -124,6 +125,7 @@ mod test {
         assert!(r.is_dead());
     }
 
+#[no_mangle]
     #[test]
     /// Assure revival works.
     fn try_revive() {
@@ -138,6 +140,7 @@ mod test {
         assert!(r.try_revive().is_some());
     }
 
+#[no_mangle]
     #[test]
     /// Assure the revival token sets state correctly after drop.
     fn revive_token() {

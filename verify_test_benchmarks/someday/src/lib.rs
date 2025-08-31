@@ -30,7 +30,6 @@
     single_use_lifetimes,
     variant_size_differences,
     unused_mut,
-    unsafe_code
 )]
 #![deny(
     clippy::all,
