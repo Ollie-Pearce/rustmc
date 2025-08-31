@@ -4,7 +4,7 @@ target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:
 target triple = "x86_64-unknown-linux-gnu"
 
 %"core::sync::atomic::AtomicUsize" = type { i64 }
-
+@_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hf10d90ee4e8d5258E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
 @__dso_handle = dso_local global ptr @__dso_handle, align 8
