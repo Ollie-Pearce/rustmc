@@ -31,27 +31,7 @@ rm test_results/*.txt
 
 make
 
-cd $TARGET_RUST_PROJECT
-
-PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
-echo "$PROJECT_NAME"
-
-#git reset --hard HEAD
-
-# 1) Add #[no_mangle] to #[test] functions that do not have it
-find . -name "*.rs" | while read -r file; do
-  awk '
-    {
-      if ($0 ~ /^[[:space:]]*#\[test\]/ && prev !~ /^[[:space:]]*#\[no_mangle\]/) {
-        print "#[no_mangle]"
-      }
-      print
-      prev = $0
-    }
-  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-done
-
-# 2) Rename #[test] functions so they are all unique
+# Rename #[test] functions so they are all unique
 python_script="rename_duplicate_rust_tests.py"
 
 # Loop until the output is not "No duplicates found or no changes required."
@@ -68,7 +48,27 @@ while true; do
     sleep 1  # Sleep for a second to avoid running continuously without pause
 done
 
-# 3) collect test names
+cd $TARGET_RUST_PROJECT
+
+PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+echo "$PROJECT_NAME"
+
+#git reset --hard HEAD
+
+# Add #[no_mangle] to #[test] functions that do not have it
+find . -name "*.rs" | while read -r file; do
+  awk '
+    {
+      if ($0 ~ /^[[:space:]]*#\[test\]/ && prev !~ /^[[:space:]]*#\[no_mangle\]/) {
+        print "#[no_mangle]"
+      }
+      print
+      prev = $0
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
+
+# collect test names
 echo "Collecting #[test] function names..."
 TEST_FUNCS_FILE="$DEPDIR/test_functions.txt"
 > "$TEST_FUNCS_FILE"
