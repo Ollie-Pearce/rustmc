@@ -1,0 +1,59 @@
+# This clippys, docs, tests, builds.
+
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "full"
+  RUST_MIN_STACK: 8000000
+
+jobs:
+  # Run format separately.
+  #
+  # This will fast-cancel other CI early if this fails.
+  #
+  # `cargo fmt` checks _all_ code, regardless of the OS
+  # or any `#[cfg]`'s, so this only needs to run on Linux.
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Format
+      run: cargo fmt --all --check
+
+  ci:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Cache
+      uses: actions/cache@v3
+      with:
+        path: target
+        key: ${{ matrix.os }}
+
+    - name: Doc
+      run: cargo doc --release --all-features
+
+    - name: Clippy
+      run: cargo clippy --release --all-features
+
+    - name: Test
+      run: cargo test --release --all-features
