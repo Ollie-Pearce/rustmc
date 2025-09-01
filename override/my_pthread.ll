@@ -13,6 +13,11 @@ target triple = "x86_64-unknown-linux-gnu"
 @"_ZN3std6thread5local17LocalKey$LT$T$GT$4with17hd5f9bec89a3fdbd3E" = dso_local global { i64, i64 } { i64 0, i64 0 }, align 8
 
 
+define dso_local i32 @main() {
+  entry:
+  ret i32 0
+}
+
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
 entry:
   %tmp0 = insertvalue { i64, i64 } undef, i64 0, 0
