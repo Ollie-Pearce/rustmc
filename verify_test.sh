@@ -111,6 +111,7 @@ fi
 
 cd $DEPDIR
 
+#Maybe remove the DEPDIR var from below
 llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
 
 
@@ -131,6 +132,8 @@ while read -r test_func; do
     echo "TIMEOUT" >> "test_results/${test_func}_verification.txt"
   fi
 done < "$TEST_FUNCS_FILE"
+
+#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="double_substr_1" --disable-estimation --print-error-trace --disable-stop-on-system-error combined.ll 
 
 
 cd test_results/
@@ -165,6 +168,10 @@ echo "AtomicRMW errors: $visit_atomic_rmw_count / $file_count"
 external_address_string="LLVM ERROR: Could not resolve external global address:"
 external_address_count=$(grep -rl "$external_address_string" . | wc -l)
 echo "External address errors: $external_address_count / $file_count"
+
+memset_promotion_string="ERROR: Invalid call to memset()!"
+memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
+echo "Memset promotion errors: $memset_promotion_count / $file_count"
 
 ilist_iterator_string="llvm::ilist_iterator_w_bits"
 ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
