@@ -1,15 +1,13 @@
+use crate::ebr::{AtomicShared, Guard, Shared};
+use crate::maybe_std::AtomicUsize;
+use crate::LinkedList;
+use crate::{range_helper, Comparable};
 use std::cell::UnsafeCell;
 use std::cmp::Ordering;
 use std::fmt::{self, Debug};
-use std::mem::{MaybeUninit, needs_drop};
+use std::mem::{needs_drop, MaybeUninit};
 use std::ops::RangeBounds;
 use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
-
-use sdd::{AtomicShared, Guard, Shared};
-
-use crate::LinkedList;
-use crate::maybe_std::AtomicUsize;
-use crate::{Comparable, range_helper};
 
 /// [`Leaf`] is an ordered array of key-value pairs.
 ///
@@ -1282,7 +1280,7 @@ mod test {
                             assert!(inserted);
                             assert_eq!(retire_clone.swap(1, Relaxed), 0);
                         }
-                    }
+                    };
                 }));
             }
             for r in futures::future::join_all(task_handles).await {

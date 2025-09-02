@@ -1,21 +1,6 @@
 # Changelog
 
-## Version 3
-
-3.0.0
-
-* New API.
-
-### API update
-
-* MSRV: 1.85.0.
-* Edition: 2024.
-
 ## Version 2
-
-2.4.0
-
-* Add `Hash*::try_entry`.
 
 2.3.4
 

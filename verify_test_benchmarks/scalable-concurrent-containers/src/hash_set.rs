@@ -1,12 +1,11 @@
 //! [`HashSet`] is a concurrent and asynchronous hash set.
 
+use super::hash_table::HashTable;
+use super::{Equivalent, HashMap};
 use std::collections::hash_map::RandomState;
 use std::fmt::{self, Debug};
 use std::hash::{BuildHasher, Hash};
 use std::ops::RangeInclusive;
-
-use super::hash_table::HashTable;
-use super::{Equivalent, HashMap};
 
 /// Scalable concurrent hash set.
 ///
@@ -119,7 +118,7 @@ where
     /// assert_eq!(hashset.capacity(), 1024);
     /// ```
     #[inline]
-    pub fn reserve(&self, capacity: usize) -> Option<Reserve<'_, K, H>> {
+    pub fn reserve(&self, capacity: usize) -> Option<Reserve<K, H>> {
         self.map.reserve(capacity)
     }
 

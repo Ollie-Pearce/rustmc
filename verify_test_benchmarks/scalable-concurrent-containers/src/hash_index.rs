@@ -1,22 +1,21 @@
 //! [`HashIndex`] is a read-optimized concurrent and asynchronous hash map.
 
+use super::ebr::{AtomicShared, Guard, Shared};
+use super::hash_table::bucket::{Bucket, EntryPtr, Locker, OPTIMISTIC};
+use super::hash_table::bucket_array::BucketArray;
+use super::hash_table::{HashTable, LockedEntry};
+use super::wait_queue::AsyncWait;
+use super::Equivalent;
 use std::collections::hash_map::RandomState;
 use std::fmt::{self, Debug};
 use std::hash::{BuildHasher, Hash};
 use std::iter::FusedIterator;
 use std::ops::{Deref, RangeInclusive};
 use std::panic::UnwindSafe;
+use std::pin::Pin;
 use std::ptr;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::{Acquire, Relaxed};
-
-use sdd::{AtomicShared, Guard, Shared};
-
-use super::Equivalent;
-use super::hash_table::bucket::{Bucket, EntryPtr, OPTIMISTIC};
-use super::hash_table::bucket_array::BucketArray;
-use super::hash_table::{HashTable, LockedEntry};
-use crate::async_helper::SendableGuard;
 
 /// Scalable concurrent hash index.
 ///
@@ -38,7 +37,7 @@ use crate::async_helper::SendableGuard;
 /// * The number of entries managed by a single bucket without a linked list: 32.
 /// * The expected maximum linked list length when resize is triggered: log(capacity) / 8.
 ///
-/// ## Unwind safety
+/// ### Unwind safety
 ///
 /// [`HashIndex`] is impervious to out-of-memory errors and panics in user-specified code on one
 /// condition; `H::Hasher::hash`, `K::drop` and `V::drop` must not panic.
@@ -46,7 +45,7 @@ pub struct HashIndex<K, V, H = RandomState>
 where
     H: BuildHasher,
 {
-    bucket_array: AtomicShared<BucketArray<K, V, (), OPTIMISTIC>>,
+    array: AtomicShared<BucketArray<K, V, (), OPTIMISTIC>>,
     minimum_capacity: AtomicUsize,
     build_hasher: H,
 }
@@ -88,8 +87,8 @@ where
 /// The [`HashIndex`] does not shrink the capacity below the reserved capacity.
 pub struct Reserve<'h, K, V, H = RandomState>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     hashindex: &'h HashIndex<K, V, H>,
@@ -104,10 +103,10 @@ where
     H: BuildHasher,
 {
     hashindex: &'h HashIndex<K, V, H>,
-    bucket_array: Option<&'g BucketArray<K, V, (), OPTIMISTIC>>,
-    index: usize,
-    bucket: Option<&'g Bucket<K, V, (), OPTIMISTIC>>,
-    entry_ptr: EntryPtr<'g, K, V, OPTIMISTIC>,
+    current_array: Option<&'g BucketArray<K, V, (), OPTIMISTIC>>,
+    current_index: usize,
+    current_bucket: Option<&'g Bucket<K, V, (), OPTIMISTIC>>,
+    current_entry_ptr: EntryPtr<'g, K, V, OPTIMISTIC>,
     guard: &'g Guard,
 }
 
@@ -130,7 +129,7 @@ where
     #[inline]
     pub const fn with_hasher(build_hasher: H) -> Self {
         Self {
-            bucket_array: AtomicShared::null(),
+            array: AtomicShared::null(),
             minimum_capacity: AtomicUsize::new(0),
             build_hasher,
         }
@@ -141,7 +140,7 @@ where
     #[inline]
     pub fn with_hasher(build_hasher: H) -> Self {
         Self {
-            bucket_array: AtomicShared::null(),
+            array: AtomicShared::null(),
             minimum_capacity: AtomicUsize::new(0),
             build_hasher,
         }
@@ -174,14 +173,14 @@ where
                     AtomicShared::null(),
                 ))
             };
-            let minimum_capacity = array.num_slots();
+            let minimum_capacity = array.num_entries();
             (
                 AtomicShared::from(array),
                 AtomicUsize::new(minimum_capacity),
             )
         };
         Self {
-            bucket_array: array,
+            array,
             minimum_capacity,
             build_hasher,
         }
@@ -190,8 +189,8 @@ where
 
 impl<K, V, H> HashIndex<K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     /// Temporarily increases the minimum capacity of the [`HashIndex`].
@@ -230,7 +229,7 @@ where
     /// assert_eq!(hashindex.capacity(), 1024);
     /// ```
     #[inline]
-    pub fn reserve(&self, additional_capacity: usize) -> Option<Reserve<'_, K, V, H>> {
+    pub fn reserve(&self, additional_capacity: usize) -> Option<Reserve<K, V, H>> {
         let additional = self.reserve_capacity(additional_capacity);
         if additional == 0 {
             None
@@ -262,34 +261,27 @@ where
     /// assert!(hashindex.peek_with(&'y', |_, v| *v).is_none());
     /// ```
     #[inline]
-    pub fn entry(&self, key: K) -> Entry<'_, K, V, H> {
-        let hash = self.hash(&key);
+    pub fn entry(&self, key: K) -> Entry<K, V, H> {
         let guard = Guard::new();
-        self.writer_sync_with(hash, &guard, |writer, data_block, index, len| {
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
-                &key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                &guard,
-            );
-            let locked_entry =
-                LockedEntry::new(writer, data_block, entry_ptr.clone(), index, len, &guard)
-                    .prolong_lifetime(self);
-            if entry_ptr.is_valid() {
-                Entry::Occupied(OccupiedEntry {
-                    hashindex: self,
-                    locked_entry,
-                })
-            } else {
-                let vacant_entry = VacantEntry {
-                    hashindex: self,
-                    key,
-                    hash,
-                    locked_entry,
-                };
-                Entry::Vacant(vacant_entry)
-            }
-        })
+        let hash = self.hash(&key);
+        let locked_entry = unsafe {
+            self.reserve_entry(&key, hash, &mut (), self.prolonged_guard_ref(&guard))
+                .ok()
+                .unwrap_unchecked()
+        };
+        if locked_entry.entry_ptr.is_valid() {
+            Entry::Occupied(OccupiedEntry {
+                hashindex: self,
+                locked_entry,
+            })
+        } else {
+            Entry::Vacant(VacantEntry {
+                hashindex: self,
+                key,
+                hash,
+                locked_entry,
+            })
+        }
     }
 
     /// Gets the entry associated with the given key in the map for in-place manipulation.
@@ -306,69 +298,34 @@ where
     /// let future_entry = hashindex.entry_async('b');
     /// ```
     #[inline]
-    pub async fn entry_async(&self, key: K) -> Entry<'_, K, V, H> {
+    pub async fn entry_async(&self, key: K) -> Entry<K, V, H> {
         let hash = self.hash(&key);
-        let sendable_guard = SendableGuard::default();
-        self.writer_async_with(hash, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
-                &key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                guard,
-            );
-            let locked_entry =
-                LockedEntry::new(writer, data_block, entry_ptr.clone(), index, len, guard)
-                    .prolong_lifetime(self);
-            if entry_ptr.is_valid() {
-                Entry::Occupied(OccupiedEntry {
-                    hashindex: self,
-                    locked_entry,
-                })
-            } else {
-                let vacant_entry = VacantEntry {
-                    hashindex: self,
-                    key,
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            {
+                let guard = Guard::new();
+                if let Ok(locked_entry) = self.reserve_entry(
+                    &key,
                     hash,
-                    locked_entry,
-                };
-                Entry::Vacant(vacant_entry)
+                    &mut async_wait_pinned,
+                    self.prolonged_guard_ref(&guard),
+                ) {
+                    if locked_entry.entry_ptr.is_valid() {
+                        return Entry::Occupied(OccupiedEntry {
+                            hashindex: self,
+                            locked_entry,
+                        });
+                    }
+                    return Entry::Vacant(VacantEntry {
+                        hashindex: self,
+                        key,
+                        hash,
+                        locked_entry,
+                    });
+                }
             }
-        })
-        .await
-    }
-
-    /// Tries to get the entry associated with the given key in the map for in-place manipulation.
-    ///
-    /// Returns `None` if the entry could not be locked.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashIndex;
-    ///
-    /// let hashindex: HashIndex<usize, usize> = HashIndex::default();
-    ///
-    /// assert!(hashindex.insert(0, 1).is_ok());
-    /// assert!(hashindex.try_entry(0).is_some());
-    /// ```
-    #[inline]
-    pub fn try_entry(&self, key: K) -> Option<Entry<'_, K, V, H>> {
-        let guard = Guard::new();
-        let hash = self.hash(&key);
-        let locked_entry = self.try_reserve_entry(&key, hash, self.prolonged_guard_ref(&guard))?;
-        if locked_entry.entry_ptr.is_valid() {
-            Some(Entry::Occupied(OccupiedEntry {
-                hashindex: self,
-                locked_entry,
-            }))
-        } else {
-            Some(Entry::Vacant(VacantEntry {
-                hashindex: self,
-                key,
-                hash,
-                locked_entry,
-            }))
+            async_wait_pinned.await;
         }
     }
 
@@ -395,8 +352,16 @@ where
     /// assert_eq!(hashindex.peek_with(&1, |_, v| *v), Some(2));
     /// ```
     #[inline]
-    pub fn first_entry(&self) -> Option<OccupiedEntry<'_, K, V, H>> {
-        self.any_entry(|_, _| true)
+    pub fn first_entry(&self) -> Option<OccupiedEntry<K, V, H>> {
+        let guard = Guard::new();
+        let prolonged_guard = self.prolonged_guard_ref(&guard);
+        if let Some(locked_entry) = self.lock_first_entry(prolonged_guard) {
+            return Some(OccupiedEntry {
+                hashindex: self,
+                locked_entry,
+            });
+        }
+        None
     }
 
     /// Gets the first occupied entry for in-place manipulation.
@@ -416,8 +381,14 @@ where
     /// let future_entry = hashindex.first_entry_async();
     /// ```
     #[inline]
-    pub async fn first_entry_async(&self) -> Option<OccupiedEntry<'_, K, V, H>> {
-        self.any_entry_async(|_, _| true).await
+    pub async fn first_entry_async(&self) -> Option<OccupiedEntry<K, V, H>> {
+        if let Some(locked_entry) = LockedEntry::first_entry_async(self).await {
+            return Some(OccupiedEntry {
+                hashindex: self,
+                locked_entry,
+            });
+        }
+        None
     }
 
     /// Finds any entry satisfying the supplied predicate for in-place manipulation.
@@ -439,30 +410,14 @@ where
     /// assert_eq!(*entry.get(), 3);
     /// ```
     #[inline]
-    pub fn any_entry<P: FnMut(&K, &V) -> bool>(
-        &self,
-        mut pred: P,
-    ) -> Option<OccupiedEntry<'_, K, V, H>> {
-        let mut entry = None;
+    pub fn any_entry<P: FnMut(&K, &V) -> bool>(&self, pred: P) -> Option<OccupiedEntry<K, V, H>> {
         let guard = Guard::new();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, index, len| {
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    let locked_entry =
-                        LockedEntry::new(writer, data_block, entry_ptr, index, len, &guard)
-                            .prolong_lifetime(self);
-                    entry = Some(OccupiedEntry {
-                        hashindex: self,
-                        locked_entry,
-                    });
-                    return (true, false);
-                }
-            }
-            (false, false)
-        });
-        entry
+        let prolonged_guard = self.prolonged_guard_ref(&guard);
+        let locked_entry = self.find_entry(pred, prolonged_guard)?;
+        Some(OccupiedEntry {
+            hashindex: self,
+            locked_entry,
+        })
     }
 
     /// Finds any entry satisfying the supplied predicate for in-place manipulation.
@@ -485,29 +440,20 @@ where
     pub async fn any_entry_async<P: FnMut(&K, &V) -> bool>(
         &self,
         mut pred: P,
-    ) -> Option<OccupiedEntry<'_, K, V, H>> {
-        let mut entry = None;
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    let locked_entry =
-                        LockedEntry::new(writer, data_block, entry_ptr, index, len, guard)
-                            .prolong_lifetime(self);
-                    entry = Some(OccupiedEntry {
-                        hashindex: self,
-                        locked_entry,
-                    });
-                    return (true, false);
+    ) -> Option<OccupiedEntry<K, V, H>> {
+        if let Some(locked_entry) = LockedEntry::first_entry_async(self).await {
+            let mut entry = OccupiedEntry {
+                hashindex: self,
+                locked_entry,
+            };
+            loop {
+                if pred(entry.key(), entry.get()) {
+                    return Some(entry);
                 }
+                entry = entry.next()?;
             }
-            (false, false)
-        })
-        .await;
-        entry
+        }
+        None
     }
 
     /// Inserts a key-value pair into the [`HashIndex`].
@@ -528,20 +474,13 @@ where
     /// ```
     #[inline]
     pub fn insert(&self, key: K, val: V) -> Result<(), (K, V)> {
-        let hash = self.hash(&key);
         let guard = Guard::new();
-        self.writer_sync_with(hash, &guard, |writer, data_block, _, _| {
-            let partial_hash = BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash);
-            if writer
-                .get_entry_ptr(data_block, &key, partial_hash, &guard)
-                .is_valid()
-            {
-                Err((key, val))
-            } else {
-                writer.insert_with(data_block, partial_hash, || (key, val), &guard);
-                Ok(())
-            }
-        })
+        let hash = self.hash(&key);
+        if let Ok(Some((k, v))) = self.insert_entry(key, val, hash, &mut (), &guard) {
+            Err((k, v))
+        } else {
+            Ok(())
+        }
     }
 
     /// Inserts a key-value pair into the [`HashIndex`].
@@ -561,23 +500,21 @@ where
     /// let future_insert = hashindex.insert_async(11, 17);
     /// ```
     #[inline]
-    pub async fn insert_async(&self, key: K, val: V) -> Result<(), (K, V)> {
+    pub async fn insert_async(&self, mut key: K, mut val: V) -> Result<(), (K, V)> {
         let hash = self.hash(&key);
-        let sendable_guard = SendableGuard::default();
-        self.writer_async_with(hash, &sendable_guard, |writer, data_block, _, _| {
-            let guard = sendable_guard.guard();
-            let partial_hash = BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash);
-            if writer
-                .get_entry_ptr(data_block, &key, partial_hash, guard)
-                .is_valid()
-            {
-                Err((key, val))
-            } else {
-                writer.insert_with(data_block, partial_hash, || (key, val), guard);
-                Ok(())
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            match self.insert_entry(key, val, hash, &mut async_wait_pinned, &Guard::new()) {
+                Ok(Some(returned)) => return Err(returned),
+                Ok(None) => return Ok(()),
+                Err(returned) => {
+                    key = returned.0;
+                    val = returned.1;
+                }
             }
-        })
-        .await
+            async_wait_pinned.await;
+        }
     }
 
     /// Removes a key-value pair if the key exists.
@@ -654,24 +591,16 @@ where
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
-        let hash = self.hash(key);
-        let guard = Guard::default();
-        self.optional_writer_sync_with(hash, &guard, |writer, data_block, _, _| {
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
-                key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                &guard,
-            );
-            if entry_ptr.is_valid() && condition(&mut entry_ptr.get_mut(data_block, &writer).1) {
-                writer.mark_removed(&mut entry_ptr, &guard);
-                (true, writer.need_rebuild())
-            } else {
-                (false, false)
-            }
-        })
+        self.remove_entry(
+            key,
+            self.hash(key),
+            |v: &mut V| condition(v),
+            |r| r.is_some(),
+            &mut (),
+            &Guard::new(),
+        )
         .ok()
-        .is_some_and(|removed| removed)
+        .map_or(false, |r| r)
     }
 
     /// Removes a key-value pair if the key exists and the given condition is met.
@@ -697,24 +626,23 @@ where
         Q: Equivalent<K> + Hash + ?Sized,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.optional_writer_async_with(hash, &sendable_guard, |writer, data_block, _, _| {
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
+        let mut condition = |v: &mut V| condition(v);
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            match self.remove_entry(
                 key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                sendable_guard.guard(),
-            );
-            if entry_ptr.is_valid() && condition(&mut entry_ptr.get_mut(data_block, &writer).1) {
-                writer.mark_removed(&mut entry_ptr, sendable_guard.guard());
-                (true, writer.need_rebuild())
-            } else {
-                (false, false)
+                hash,
+                condition,
+                |r| r.is_some(),
+                &mut async_wait_pinned,
+                &Guard::new(),
+            ) {
+                Ok(r) => return r,
+                Err(c) => condition = c,
             }
-        })
-        .await
-        .ok()
-        .is_some_and(|removed| removed)
+            async_wait_pinned.await;
+        }
     }
 
     /// Gets an [`OccupiedEntry`] corresponding to the key for in-place modification.
@@ -737,35 +665,24 @@ where
     /// assert_eq!(*hashindex.get(&1).unwrap(), 10);
     /// ```
     #[inline]
-    pub fn get<Q>(&self, key: &Q) -> Option<OccupiedEntry<'_, K, V, H>>
+    pub fn get<Q>(&self, key: &Q) -> Option<OccupiedEntry<K, V, H>>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
-        let hash = self.hash(key);
-        let guard = Guard::default();
-        self.optional_writer_sync_with(hash, &guard, |writer, data_block, index, len| {
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
+        let guard = Guard::new();
+        let locked_entry = self
+            .get_entry(
                 key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                &guard,
-            );
-            if entry_ptr.is_valid() {
-                let locked_entry =
-                    LockedEntry::new(writer, data_block, entry_ptr, index, len, &guard)
-                        .prolong_lifetime(self);
-                return (
-                    Some(OccupiedEntry {
-                        hashindex: self,
-                        locked_entry,
-                    }),
-                    false,
-                );
-            }
-            (None, false)
+                self.hash(key),
+                &mut (),
+                self.prolonged_guard_ref(&guard),
+            )
+            .ok()
+            .flatten()?;
+        Some(OccupiedEntry {
+            hashindex: self,
+            locked_entry,
         })
-        .ok()
-        .flatten()
     }
 
     /// Gets an [`OccupiedEntry`] corresponding to the key for in-place modification.
@@ -786,37 +703,30 @@ where
     /// let future_get = hashindex.get_async(&11);
     /// ```
     #[inline]
-    pub async fn get_async<Q>(&self, key: &Q) -> Option<OccupiedEntry<'_, K, V, H>>
+    pub async fn get_async<Q>(&self, key: &Q) -> Option<OccupiedEntry<K, V, H>>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.optional_writer_async_with(hash, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            if let Ok(result) = self.get_entry(
                 key,
-                BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(hash),
-                guard,
-            );
-            if entry_ptr.is_valid() {
-                let locked_entry =
-                    LockedEntry::new(writer, data_block, entry_ptr, index, len, guard)
-                        .prolong_lifetime(self);
-                return (
-                    Some(OccupiedEntry {
+                hash,
+                &mut async_wait_pinned,
+                self.prolonged_guard_ref(&Guard::new()),
+            ) {
+                if let Some(locked_entry) = result {
+                    return Some(OccupiedEntry {
                         hashindex: self,
                         locked_entry,
-                    }),
-                    false,
-                );
+                    });
+                }
+                return None;
             }
-            (None, false)
-        })
-        .await
-        .ok()
-        .flatten()
+            async_wait_pinned.await;
+        }
     }
 
     /// Returns a guarded reference to the value for the specified key without acquiring locks.
@@ -824,16 +734,11 @@ where
     /// Returns `None` if the key does not exist. The returned reference can survive as long as the
     /// associated [`Guard`] is alive.
     ///
-    /// # Note
-    ///
-    /// The returned reference may point to an old snapshot of the value if the entry has recently
-    /// been relocated due to resizing. This means that the effect of use of interior mutability,
-    /// e.g., `Mutex<T>` or `UnsafeCell<T>` may not be observable through the reference.
-    ///
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, HashIndex};
+    /// use scc::ebr::Guard;
+    /// use scc::HashIndex;
     ///
     /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
     ///
@@ -854,12 +759,6 @@ where
     /// Peeks a key-value pair without acquiring locks.
     ///
     /// Returns `None` if the key does not exist.
-    ///
-    /// # Note
-    ///
-    /// The closure may see an old snapshot of the value if the entry has recently been relocated
-    /// due to resizing. This means that the effect of use of interior mutability, e.g., `Mutex<T>`
-    /// or `UnsafeCell<T>` may not be observable in the closure.
     ///
     /// # Examples
     ///
@@ -928,19 +827,7 @@ where
     /// ```
     #[inline]
     pub fn retain<F: FnMut(&K, &V) -> bool>(&self, mut pred: F) {
-        let guard = Guard::new();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                if !pred(k, v) {
-                    writer.mark_removed(&mut entry_ptr, &guard);
-                    removed = true;
-                }
-            }
-            (false, removed)
-        });
+        self.retain_entries(|k, v| pred(k, v));
     }
 
     /// Retains the entries specified by the predicate.
@@ -963,21 +850,51 @@ where
     /// ```
     #[inline]
     pub async fn retain_async<F: FnMut(&K, &V) -> bool>(&self, mut pred: F) {
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                if !pred(k, v) {
-                    writer.mark_removed(&mut entry_ptr, guard);
-                    removed = true;
+        let mut removed = false;
+        let mut current_array_holder = self.array.get_shared(Acquire, &Guard::new());
+        while let Some(current_array) = current_array_holder.take() {
+            self.cleanse_old_array_async(&current_array).await;
+            for index in 0..current_array.num_buckets() {
+                loop {
+                    let mut async_wait = AsyncWait::default();
+                    let mut async_wait_pinned = Pin::new(&mut async_wait);
+                    {
+                        let guard = Guard::new();
+                        let bucket = current_array.bucket_mut(index);
+                        if let Ok(locker) =
+                            Locker::try_lock_or_wait(bucket, &mut async_wait_pinned, &guard)
+                        {
+                            if let Some(mut locker) = locker {
+                                let data_block_mut = current_array.data_block_mut(index);
+                                let mut entry_ptr = EntryPtr::new(&guard);
+                                while entry_ptr.move_to_next(&locker, &guard) {
+                                    let (k, v) = entry_ptr.get(data_block_mut);
+                                    if !pred(k, v) {
+                                        locker.mark_removed(&mut entry_ptr, &guard);
+                                        removed = true;
+                                    }
+                                }
+                            }
+                            break;
+                        };
+                    }
+                    async_wait_pinned.await;
                 }
             }
-            (false, removed)
-        })
-        .await;
+
+            if let Some(new_current_array) = self.array.get_shared(Acquire, &Guard::new()) {
+                if new_current_array.as_ptr() == current_array.as_ptr() {
+                    break;
+                }
+                current_array_holder.replace(new_current_array);
+                continue;
+            }
+            break;
+        }
+
+        if removed {
+            self.try_resize(0, &Guard::new());
+        }
     }
 
     /// Clears the [`HashIndex`] by removing all key-value pairs.
@@ -1129,7 +1046,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, HashIndex};
+    /// use scc::ebr::Guard;
+    /// use scc::HashIndex;
     ///
     /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
     ///
@@ -1153,11 +1071,28 @@ where
     pub fn iter<'h, 'g>(&'h self, guard: &'g Guard) -> Iter<'h, 'g, K, V, H> {
         Iter {
             hashindex: self,
-            bucket_array: None,
-            index: 0,
-            bucket: None,
-            entry_ptr: EntryPtr::new(guard),
+            current_array: None,
+            current_index: 0,
+            current_bucket: None,
+            current_entry_ptr: EntryPtr::new(guard),
             guard,
+        }
+    }
+
+    /// Clears the old array asynchronously.
+    async fn cleanse_old_array_async(&self, current_array: &BucketArray<K, V, (), OPTIMISTIC>) {
+        while current_array.has_old_array() {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            if self.incremental_rehash::<K, _, false>(
+                current_array,
+                &mut async_wait_pinned,
+                &Guard::new(),
+            ) == Ok(true)
+            {
+                break;
+            }
+            async_wait_pinned.await;
         }
     }
 }
@@ -1172,7 +1107,7 @@ where
     fn clone(&self) -> Self {
         let self_clone = Self::with_capacity_and_hasher(self.capacity(), self.hasher().clone());
         for (k, v) in self.iter(&Guard::new()) {
-            let _result = self_clone.insert(k.clone(), v.clone());
+            let _reuslt = self_clone.insert(k.clone(), v.clone());
         }
         self_clone
     }
@@ -1180,8 +1115,8 @@ where
 
 impl<K, V, H> Debug for HashIndex<K, V, H>
 where
-    K: 'static + Debug + Eq + Hash,
-    V: 'static + Debug,
+    K: 'static + Clone + Debug + Eq + Hash,
+    V: 'static + Clone + Debug,
     H: BuildHasher,
 {
     #[inline]
@@ -1193,8 +1128,8 @@ where
 
 impl<K, V> HashIndex<K, V, RandomState>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
 {
     /// Creates an empty default [`HashIndex`].
     ///
@@ -1263,8 +1198,8 @@ where
 
 impl<K, V, H> FromIterator<(K, V)> for HashIndex<K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher + Default,
 {
     #[inline]
@@ -1283,8 +1218,8 @@ where
 
 impl<K, V, H> HashTable<K, V, H, (), OPTIMISTIC> for HashIndex<K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     #[inline]
@@ -1292,8 +1227,12 @@ where
         &self.build_hasher
     }
     #[inline]
+    fn try_clone(entry: &(K, V)) -> Option<(K, V)> {
+        Some((entry.0.clone(), entry.1.clone()))
+    }
+    #[inline]
     fn bucket_array(&self) -> &AtomicShared<BucketArray<K, V, (), OPTIMISTIC>> {
-        &self.bucket_array
+        &self.array
     }
     #[inline]
     fn minimum_capacity(&self) -> &AtomicUsize {
@@ -1307,8 +1246,8 @@ where
 
 impl<K, V, H> PartialEq for HashIndex<K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static + PartialEq,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone + PartialEq,
     H: BuildHasher,
 {
     #[inline]
@@ -1328,8 +1267,8 @@ where
 
 impl<'h, K, V, H> Entry<'h, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     /// Ensures a value is in the entry by inserting the supplied instance if empty.
@@ -1445,22 +1384,20 @@ where
     where
         F: FnOnce(&mut V),
     {
-        unsafe {
-            match self {
-                Self::Occupied(mut o) => {
-                    f(o.get_mut());
-                    Self::Occupied(o)
-                }
-                Self::Vacant(_) => self,
+        match self {
+            Self::Occupied(mut o) => {
+                f(o.get_mut());
+                Self::Occupied(o)
             }
+            Self::Vacant(_) => self,
         }
     }
 }
 
 impl<'h, K, V, H> Entry<'h, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static + Default,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone + Default,
     H: BuildHasher,
 {
     /// Ensures a value is in the entry by inserting the default value if empty.
@@ -1485,8 +1422,8 @@ where
 
 impl<K, V, H> Debug for Entry<'_, K, V, H>
 where
-    K: 'static + Debug + Eq + Hash,
-    V: 'static + Debug,
+    K: 'static + Clone + Debug + Eq + Hash,
+    V: 'static + Clone + Debug,
     H: BuildHasher,
 {
     #[inline]
@@ -1500,8 +1437,8 @@ where
 
 impl<'h, K, V, H> OccupiedEntry<'h, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     /// Gets a reference to the key in the entry.
@@ -1521,7 +1458,7 @@ where
         &self
             .locked_entry
             .entry_ptr
-            .get(self.locked_entry.data_block)
+            .get(self.locked_entry.data_block_mut)
             .0
     }
 
@@ -1545,14 +1482,22 @@ where
     #[inline]
     pub fn remove_entry(mut self) {
         let guard = Guard::new();
-        self.locked_entry.writer.mark_removed(
+        self.locked_entry.locker.mark_removed(
             &mut self.locked_entry.entry_ptr,
             self.hashindex.prolonged_guard_ref(&guard),
         );
-        let hashindex = self.hashindex;
-        let index = self.locked_entry.index;
-        drop(self);
-        hashindex.entry_removed(index, &guard);
+        if self.locked_entry.locker.num_entries() <= 1 || self.locked_entry.locker.need_rebuild() {
+            let hashindex = self.hashindex;
+            if let Some(current_array) = hashindex.bucket_array().load(Acquire, &guard).as_ref() {
+                if !current_array.has_old_array() {
+                    let index = self.locked_entry.index;
+                    if current_array.within_sampling_range(index) {
+                        drop(self);
+                        hashindex.try_shrink_or_rebuild(current_array, index, &guard);
+                    }
+                }
+            }
+        }
     }
 
     /// Gets a reference to the value in the entry.
@@ -1577,7 +1522,7 @@ where
         &self
             .locked_entry
             .entry_ptr
-            .get(self.locked_entry.data_block)
+            .get(self.locked_entry.data_block_mut)
             .1
     }
 
@@ -1613,8 +1558,49 @@ where
         &mut self
             .locked_entry
             .entry_ptr
-            .get_mut(self.locked_entry.data_block, &self.locked_entry.writer)
+            .get_mut(
+                self.locked_entry.data_block_mut,
+                &mut self.locked_entry.locker,
+            )
             .1
+    }
+
+    /// Updates the entry by inserting a new entry and marking the existing entry removed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use scc::HashIndex;
+    /// use scc::hash_index::Entry;
+    ///
+    /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
+    ///
+    /// hashindex.entry(37).or_insert(11);
+    ///
+    /// if let Entry::Occupied(mut o) = hashindex.entry(37) {
+    ///     o.update(29);
+    /// }
+    ///
+    /// assert_eq!(hashindex.peek_with(&37, |_, v| *v), Some(29));
+    /// ```
+    #[inline]
+    pub fn update(mut self, val: V) {
+        let key = self.key().clone();
+        let partial_hash = self
+            .locked_entry
+            .entry_ptr
+            .partial_hash(&self.locked_entry.locker);
+        let guard = Guard::new();
+        self.locked_entry.locker.insert_with(
+            self.locked_entry.data_block_mut,
+            partial_hash,
+            || (key, val),
+            self.hashindex.prolonged_guard_ref(&guard),
+        );
+        self.locked_entry.locker.mark_removed(
+            &mut self.locked_entry.entry_ptr,
+            self.hashindex.prolonged_guard_ref(&guard),
+        );
     }
 
     /// Gets the next closest occupied entry.
@@ -1647,7 +1633,7 @@ where
     #[must_use]
     pub fn next(self) -> Option<Self> {
         let hashindex = self.hashindex;
-        if let Some(locked_entry) = self.locked_entry.next_sync(hashindex) {
+        if let Some(locked_entry) = self.locked_entry.next(hashindex) {
             return Some(OccupiedEntry {
                 hashindex,
                 locked_entry,
@@ -1689,143 +1675,12 @@ where
         }
         None
     }
-
-    /// Gets the next closest occupied entry after removing the entry.
-    ///
-    /// [`HashIndex::first_entry`], [`HashIndex::first_entry_async`], and this method together enables
-    /// the [`OccupiedEntry`] to effectively act as a mutable iterator over entries. The method
-    /// never acquires more than one lock even when it searches other buckets for the next closest
-    /// occupied entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashIndex;
-    /// use scc::hash_index::Entry;
-    ///
-    /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
-    ///
-    /// assert!(hashindex.insert(1, 0).is_ok());
-    /// assert!(hashindex.insert(2, 0).is_ok());
-    ///
-    /// let first_entry = hashindex.first_entry().unwrap();
-    /// let first_key = *first_entry.key();
-    /// let second_entry = first_entry.remove_next().unwrap();
-    /// assert_eq!(hashindex.len(),  1);
-    ///
-    /// let second_key = *second_entry.key();
-    ///
-    /// assert!(second_entry.remove_next().is_none());
-    /// assert_eq!(first_key + second_key, 3);
-    /// assert_eq!(hashindex.len(),  0);
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn remove_next(mut self) -> Option<Self> {
-        let guard = Guard::new();
-        self.locked_entry.writer.mark_removed(
-            &mut self.locked_entry.entry_ptr,
-            self.hashindex.prolonged_guard_ref(&guard),
-        );
-        let hashindex = self.hashindex;
-        if let Some(locked_entry) = self.locked_entry.next_sync(hashindex) {
-            return Some(OccupiedEntry {
-                hashindex,
-                locked_entry,
-            });
-        }
-        None
-    }
-
-    /// Gets the next closest occupied entry after removing the entry.
-    ///
-    /// [`HashIndex::first_entry`], [`HashIndex::first_entry_async`], and this method together enables
-    /// the [`OccupiedEntry`] to effectively act as a mutable iterator over entries. The method
-    /// never acquires more than one lock even when it searches other buckets for the next closest
-    /// occupied entry.
-    ///
-    /// It is an asynchronous method returning an `impl Future` for the caller to await.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashIndex;
-    /// use scc::hash_index::Entry;
-    ///
-    /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
-    ///
-    /// assert!(hashindex.insert(1, 0).is_ok());
-    /// assert!(hashindex.insert(2, 0).is_ok());
-    ///
-    /// let second_entry_future = hashindex.first_entry().unwrap().remove_next_async();
-    /// ```
-    #[inline]
-    pub async fn remove_next_async(mut self) -> Option<OccupiedEntry<'h, K, V, H>> {
-        let guard = Guard::new();
-        self.locked_entry.writer.mark_removed(
-            &mut self.locked_entry.entry_ptr,
-            self.hashindex.prolonged_guard_ref(&guard),
-        );
-        let hashindex = self.hashindex;
-        if let Some(locked_entry) = self.locked_entry.next_async(hashindex).await {
-            return Some(OccupiedEntry {
-                hashindex,
-                locked_entry,
-            });
-        }
-        None
-    }
-}
-
-impl<K, V, H> OccupiedEntry<'_, K, V, H>
-where
-    K: 'static + Clone + Eq + Hash,
-    V: 'static,
-    H: BuildHasher,
-{
-    /// Updates the entry by inserting a new entry and marking the existing entry removed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashIndex;
-    /// use scc::hash_index::Entry;
-    ///
-    /// let hashindex: HashIndex<u64, u32> = HashIndex::default();
-    ///
-    /// hashindex.entry(37).or_insert(11);
-    ///
-    /// if let Entry::Occupied(mut o) = hashindex.entry(37) {
-    ///     o.update(29);
-    /// }
-    ///
-    /// assert_eq!(hashindex.peek_with(&37, |_, v| *v), Some(29));
-    /// ```
-    #[inline]
-    pub fn update(mut self, val: V) {
-        let key = self.key().clone();
-        let partial_hash = self
-            .locked_entry
-            .entry_ptr
-            .partial_hash(&self.locked_entry.writer);
-        let guard = Guard::new();
-        self.locked_entry.writer.insert_with(
-            self.locked_entry.data_block,
-            partial_hash,
-            || (key, val),
-            self.hashindex.prolonged_guard_ref(&guard),
-        );
-        self.locked_entry.writer.mark_removed(
-            &mut self.locked_entry.entry_ptr,
-            self.hashindex.prolonged_guard_ref(&guard),
-        );
-    }
 }
 
 impl<K, V, H> Debug for OccupiedEntry<'_, K, V, H>
 where
-    K: 'static + Debug + Eq + Hash,
-    V: 'static + Debug,
+    K: 'static + Clone + Debug + Eq + Hash,
+    V: 'static + Clone + Debug,
     H: BuildHasher,
 {
     #[inline]
@@ -1839,8 +1694,8 @@ where
 
 impl<K, V, H> Deref for OccupiedEntry<'_, K, V, H>
 where
-    K: 'static + Debug + Eq + Hash,
-    V: 'static + Debug,
+    K: 'static + Clone + Debug + Eq + Hash,
+    V: 'static + Clone + Debug,
     H: BuildHasher,
 {
     type Target = V;
@@ -1853,8 +1708,8 @@ where
 
 impl<'h, K, V, H> VacantEntry<'h, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     /// Gets a reference to the key.
@@ -1908,10 +1763,10 @@ where
     /// assert_eq!(hashindex.peek_with(&19, |_, v| *v), Some(29));
     /// ```
     #[inline]
-    pub fn insert_entry(self, val: V) -> OccupiedEntry<'h, K, V, H> {
+    pub fn insert_entry(mut self, val: V) -> OccupiedEntry<'h, K, V, H> {
         let guard = Guard::new();
-        let entry_ptr = self.locked_entry.writer.insert_with(
-            self.locked_entry.data_block,
+        let entry_ptr = self.locked_entry.locker.insert_with(
+            self.locked_entry.data_block_mut,
             BucketArray::<K, V, (), OPTIMISTIC>::partial_hash(self.hash),
             || (self.key, val),
             self.hashindex.prolonged_guard_ref(&guard),
@@ -1920,10 +1775,9 @@ where
             hashindex: self.hashindex,
             locked_entry: LockedEntry {
                 index: self.locked_entry.index,
-                data_block: self.locked_entry.data_block,
-                writer: self.locked_entry.writer,
+                data_block_mut: self.locked_entry.data_block_mut,
+                locker: self.locked_entry.locker,
                 entry_ptr,
-                len: 0,
             },
         }
     }
@@ -1931,8 +1785,8 @@ where
 
 impl<K, V, H> Debug for VacantEntry<'_, K, V, H>
 where
-    K: 'static + Debug + Eq + Hash,
-    V: 'static + Debug,
+    K: 'static + Clone + Debug + Eq + Hash,
+    V: 'static + Clone + Debug,
     H: BuildHasher,
 {
     #[inline]
@@ -1943,8 +1797,8 @@ where
 
 impl<K, V, H> Reserve<'_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     /// Returns the number of reserved slots.
@@ -1957,8 +1811,8 @@ where
 
 impl<K, V, H> AsRef<HashIndex<K, V, H>> for Reserve<'_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     #[inline]
@@ -1969,8 +1823,8 @@ where
 
 impl<K, V, H> Debug for Reserve<'_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     #[inline]
@@ -1981,8 +1835,8 @@ where
 
 impl<K, V, H> Deref for Reserve<'_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     type Target = HashIndex<K, V, H>;
@@ -1995,8 +1849,8 @@ where
 
 impl<K, V, H> Drop for Reserve<'_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     #[inline]
@@ -2005,41 +1859,37 @@ where
             .hashindex
             .minimum_capacity
             .fetch_sub(self.additional, Relaxed);
+        self.hashindex.try_resize(0, &Guard::new());
         debug_assert!(result >= self.additional);
-
-        let guard = Guard::new();
-        if let Some(current_array) = self.hashindex.bucket_array.load(Acquire, &guard).as_ref() {
-            self.try_shrink_or_rebuild(current_array, 0, &guard);
-        }
     }
 }
 
 impl<K, V, H> Debug for Iter<'_, '_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Iter")
-            .field("current_index", &self.index)
-            .field("current_entry_ptr", &self.entry_ptr)
+            .field("current_index", &self.current_index)
+            .field("current_entry_ptr", &self.current_entry_ptr)
             .finish()
     }
 }
 
 impl<'g, K, V, H> Iterator for Iter<'_, 'g, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
     type Item = (&'g K, &'g V);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let mut array = if let Some(&array) = self.bucket_array.as_ref() {
+        let mut array = if let Some(array) = self.current_array.as_ref().copied() {
             array
         } else {
             // Start scanning.
@@ -2054,63 +1904,71 @@ where
             } else {
                 current_array
             };
-            self.bucket_array.replace(array);
-            self.bucket.replace(array.bucket(0));
+            self.current_array.replace(array);
+            self.current_bucket.replace(array.bucket(0));
+            self.current_entry_ptr = EntryPtr::new(self.guard);
             array
         };
 
-        // Move to the next entry.
+        // Go to the next bucket.
         loop {
-            if let Some(bucket) = self.bucket.take() {
-                // Move to the next entry in the bucket.
-                if bucket.len() != 0 && self.entry_ptr.move_to_next(bucket, self.guard) {
-                    let (k, v) = self.entry_ptr.get(array.data_block(self.index));
-                    self.bucket.replace(bucket);
+            if let Some(bucket) = self.current_bucket.take() {
+                // Go to the next entry in the bucket.
+                if self.current_entry_ptr.move_to_next(bucket, self.guard) {
+                    let (k, v) = self
+                        .current_entry_ptr
+                        .get(array.data_block(self.current_index));
+                    self.current_bucket.replace(bucket);
                     return Some((k, v));
                 }
             }
-            self.entry_ptr = EntryPtr::new(self.guard);
-
-            if self.index + 1 == array.len() {
-                // Move to a newer bucket array.
-                self.index = 0;
+            self.current_index += 1;
+            if self.current_index == array.num_buckets() {
                 let current_array = self
                     .hashindex
                     .bucket_array()
                     .load(Acquire, self.guard)
                     .as_ref()?;
                 if self
-                    .bucket_array
+                    .current_array
                     .as_ref()
-                    .is_some_and(|&a| ptr::eq(a, current_array))
+                    .copied()
+                    .map_or(false, |a| ptr::eq(a, current_array))
                 {
-                    // Finished scanning.
+                    // Finished scanning the entire array.
                     break;
                 }
+                let old_array_ptr = current_array.old_array(self.guard);
+                if self
+                    .current_array
+                    .as_ref()
+                    .copied()
+                    .map_or(false, |a| ptr::eq(a, old_array_ptr.as_ptr()))
+                {
+                    // Start scanning the current array.
+                    array = current_array;
+                    self.current_array.replace(array);
+                    self.current_index = 0;
+                    self.current_bucket.replace(array.bucket(0));
+                    self.current_entry_ptr = EntryPtr::new(self.guard);
+                    continue;
+                }
 
-                array = if let Some(old_array) = current_array.old_array(self.guard).as_ref() {
-                    if self
-                        .bucket_array
-                        .as_ref()
-                        .is_some_and(|&a| ptr::eq(a, old_array))
-                    {
-                        // Start scanning the current array.
-                        array = current_array;
-                        self.bucket_array.replace(current_array);
-                        self.bucket.replace(current_array.bucket(0));
-                        continue;
-                    }
+                // Start from the very beginning.
+                array = if let Some(old_array) = old_array_ptr.as_ref() {
                     old_array
                 } else {
                     current_array
                 };
-
-                self.bucket_array.replace(array);
-                self.bucket.replace(array.bucket(0));
-            } else {
-                self.index += 1;
-                self.bucket.replace(array.bucket(self.index));
+                self.current_array.replace(array);
+                self.current_index = 0;
+                self.current_bucket.replace(array.bucket(0));
+                self.current_entry_ptr = EntryPtr::new(self.guard);
+                continue;
             }
+            self.current_bucket
+                .replace(array.bucket(self.current_index));
+            self.current_entry_ptr = EntryPtr::new(self.guard);
         }
         None
     }
@@ -2118,16 +1976,16 @@ where
 
 impl<K, V, H> FusedIterator for Iter<'_, '_, K, V, H>
 where
-    K: 'static + Eq + Hash,
-    V: 'static,
+    K: 'static + Clone + Eq + Hash,
+    V: 'static + Clone,
     H: BuildHasher,
 {
 }
 
 impl<K, V, H> UnwindSafe for Iter<'_, '_, K, V, H>
 where
-    K: 'static + Eq + Hash + UnwindSafe,
-    V: 'static + UnwindSafe,
+    K: 'static + Clone + Eq + Hash + UnwindSafe,
+    V: 'static + Clone + UnwindSafe,
     H: BuildHasher + UnwindSafe,
 {
 }

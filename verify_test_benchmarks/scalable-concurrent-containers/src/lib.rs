@@ -31,11 +31,13 @@ pub use linked_list::LinkedList;
 #[cfg(feature = "loom")]
 mod maybe_std {
     pub(crate) use loom::sync::atomic::{AtomicU8, AtomicUsize};
+    pub(crate) use loom::thread::yield_now;
 }
 
 #[cfg(not(feature = "loom"))]
 mod maybe_std {
     pub(crate) use std::sync::atomic::{AtomicU8, AtomicUsize};
+    pub(crate) use std::thread::yield_now;
 }
 
 pub mod queue;
@@ -63,7 +65,8 @@ mod range_helper {
     }
 }
 
-pub use sdd::{AtomicShared, Guard, Shared, Tag};
+/// Re-exports the [`sdd`](https://crates.io/crates/sdd) crate for backward compatibility.
+pub use sdd as ebr;
 
 #[cfg(feature = "serde")]
 mod serde;
@@ -77,4 +80,4 @@ mod tests;
 pub mod tree_index;
 pub use tree_index::TreeIndex;
 
-mod async_helper;
+mod wait_queue;

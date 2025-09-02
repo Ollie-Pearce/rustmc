@@ -1,7 +1,6 @@
-use std::time::{Duration, Instant};
-
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, Criterion};
 use scc::HashMap;
+use std::time::{Duration, Instant};
 
 fn insert_cold(c: &mut Criterion) {
     c.bench_function("HashMap: insert, cold", |b| {

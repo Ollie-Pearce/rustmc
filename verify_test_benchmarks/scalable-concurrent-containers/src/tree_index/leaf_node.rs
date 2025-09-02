@@ -1,19 +1,17 @@
+use super::leaf::{InsertResult, RemoveResult, Scanner, DIMENSION};
+use super::node::Node;
+use super::Leaf;
+use crate::ebr::{AtomicShared, Guard, Ptr, Shared, Tag};
+use crate::exit_guard::ExitGuard;
+use crate::maybe_std::AtomicU8;
+use crate::wait_queue::{DeriveAsyncWait, WaitQueue};
+use crate::LinkedList;
+use crate::{range_helper, Comparable};
 use std::cmp::Ordering::{Equal, Greater, Less};
 use std::ops::{Bound, RangeBounds};
 use std::ptr;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
-
-use sdd::{AtomicShared, Guard, Ptr, Shared, Tag};
-
-use super::Leaf;
-use super::leaf::{DIMENSION, InsertResult, RemoveResult, Scanner};
-use super::node::Node;
-use crate::LinkedList;
-use crate::async_helper::{DeriveAsyncWait, WaitQueue};
-use crate::exit_guard::ExitGuard;
-use crate::maybe_std::AtomicU8;
-use crate::{Comparable, range_helper};
 
 /// [`Tag::First`] indicates the corresponding node has retired.
 pub const RETIRED: Tag = Tag::First;
@@ -584,12 +582,14 @@ where
         // It is safe to keep the pointers to the new leaf nodes in this full leaf node since the
         // whole split operation is protected under a single `ebr::Guard`, and the pointers are
         // only dereferenced during the operation.
-        self.split_op
-            .low_key_leaf_node
-            .swap(ptr::from_ref(low_key_leaf_node).cast_mut(), Relaxed);
-        self.split_op
-            .high_key_leaf_node
-            .swap(ptr::from_ref(high_key_leaf_node).cast_mut(), Relaxed);
+        self.split_op.low_key_leaf_node.swap(
+            (low_key_leaf_node as *const LeafNode<K, V>).cast_mut(),
+            Relaxed,
+        );
+        self.split_op.high_key_leaf_node.swap(
+            (high_key_leaf_node as *const LeafNode<K, V>).cast_mut(),
+            Relaxed,
+        );
 
         // Builds a list of valid leaves
         #[allow(clippy::type_complexity)]
@@ -784,12 +784,12 @@ where
     ///
     /// If the target leaf does not exist in the [`LeafNode`], returns `false`.
     #[inline]
-    pub(super) fn cleanup_link<'g, Q>(&self, key: &Q, traverse_max: bool, guard: &'g Guard) -> bool
+    pub(super) fn cleanup_link<'g, Q>(&self, key: &Q, tranverse_max: bool, guard: &'g Guard) -> bool
     where
         K: 'g,
         Q: Comparable<K> + ?Sized,
     {
-        let scanner = if traverse_max {
+        let scanner = if tranverse_max {
             if let Some(unbounded) = self.unbounded_child.load(Acquire, guard).as_ref() {
                 Scanner::new(unbounded)
             } else {
@@ -854,7 +854,7 @@ where
         if let Some(full_leaf_key) = full_leaf_key {
             self.split_op
                 .origin_leaf_key
-                .store(ptr::from_ref(full_leaf_key).cast_mut(), Relaxed);
+                .store((full_leaf_key as *const K).cast_mut(), Relaxed);
         }
 
         let target = full_leaf_ptr.as_ref().unwrap();
@@ -1246,6 +1246,7 @@ mod test {
             match result.unwrap() {
                 InsertResult::Success => {
                     assert_eq!(leaf_node.search_entry(&k, &guard), Some((&k, &k)));
+                    continue;
                 }
                 InsertResult::Duplicate(..)
                 | InsertResult::Frozen(..)
@@ -1254,11 +1255,9 @@ mod test {
                     leaf_node.rollback(&guard);
                     for r in 0..(k - 1) {
                         assert_eq!(leaf_node.search_entry(&r, &guard), Some((&r, &r)));
-                        assert!(
-                            leaf_node
-                                .remove_if::<_, _, _>(&r, &mut |_| true, &mut (), &guard)
-                                .is_ok()
-                        );
+                        assert!(leaf_node
+                            .remove_if::<_, _, _>(&r, &mut |_| true, &mut (), &guard)
+                            .is_ok());
                         assert_eq!(leaf_node.search_entry(&r, &guard), None);
                     }
                     assert_eq!(
@@ -1287,11 +1286,9 @@ mod test {
         let barrier = Shared::new(Barrier::new(num_tasks));
         for _ in 0..16 {
             let leaf_node = Shared::new(LeafNode::new());
-            assert!(
-                leaf_node
-                    .insert(usize::MAX, usize::MAX, &mut (), &Guard::new())
-                    .is_ok()
-            );
+            assert!(leaf_node
+                .insert(usize::MAX, usize::MAX, &mut (), &Guard::new())
+                .is_ok());
             let mut task_handles = Vec::with_capacity(num_tasks);
             for task_id in 0..num_tasks {
                 let barrier_clone = barrier.clone();
@@ -1317,7 +1314,9 @@ mod test {
                                         max_key.replace(id);
                                         break;
                                     }
-                                    InsertResult::Frozen(..) | InsertResult::Retry(..) => (),
+                                    InsertResult::Frozen(..) | InsertResult::Retry(..) => {
+                                        continue;
+                                    }
                                     _ => unreachable!(),
                                 }
                             }
@@ -1327,13 +1326,13 @@ mod test {
                         }
                     }
                     for id in range.clone() {
-                        if max_key == Some(id) {
+                        if max_key.map_or(false, |m| m == id) {
                             break;
                         }
                         assert_eq!(leaf_node_clone.search_entry(&id, &guard), Some((&id, &id)));
                     }
                     for id in range {
-                        if max_key == Some(id) {
+                        if max_key.map_or(false, |m| m == id) {
                             break;
                         }
                         loop {
@@ -1371,18 +1370,16 @@ mod test {
             for r in futures::future::join_all(task_handles).await {
                 assert!(r.is_ok());
             }
-            assert!(
-                leaf_node
-                    .remove_if::<_, _, _>(&usize::MAX, &mut |_| true, &mut (), &Guard::new())
-                    .is_ok()
-            );
+            assert!(leaf_node
+                .remove_if::<_, _, _>(&usize::MAX, &mut |_| true, &mut (), &Guard::new())
+                .is_ok());
         }
     }
 
     #[cfg_attr(miri, ignore)]
     #[tokio::test(flavor = "multi_thread", worker_threads = 16)]
     async fn durability() {
-        let num_tasks = 8_usize;
+        let num_tasks = 16_usize;
         let workload_size = 64_usize;
         for _ in 0..16 {
             for k in 0..=workload_size {
@@ -1406,7 +1403,7 @@ mod test {
                                     leaf_node_clone.rollback(&guard);
                                 }
                                 _ => (),
-                            }
+                            };
                         }
                         {
                             barrier_clone.wait().await;

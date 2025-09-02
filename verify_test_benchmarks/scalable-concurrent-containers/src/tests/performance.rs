@@ -1,7 +1,11 @@
 #![allow(clippy::inline_always)]
 #![allow(clippy::needless_pass_by_value)]
 
-mod sync_benchmarks {
+#[cfg(not(feature = "loom"))]
+#[cfg(test)]
+mod benchmark {
+    use crate::ebr::Guard;
+    use crate::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
     use std::hash::{BuildHasher, Hash};
     use std::ptr::addr_of;
@@ -10,10 +14,6 @@ mod sync_benchmarks {
     use std::sync::{Arc, Barrier};
     use std::thread;
     use std::time::{Duration, Instant};
-
-    use sdd::Guard;
-
-    use crate::{HashIndex, HashMap, TreeIndex};
 
     #[derive(Clone)]
     struct Workload {
@@ -56,10 +56,10 @@ mod sync_benchmarks {
     }
 
     impl<
-        K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
-        V: 'static + Clone + Send + Sync,
-        H: BuildHasher,
-    > BenchmarkOperation<K, V, H> for HashMap<K, V, H>
+            K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
+            V: 'static + Clone + Send + Sync,
+            H: BuildHasher,
+        > BenchmarkOperation<K, V, H> for HashMap<K, V, H>
     {
         #[inline(always)]
         fn insert_test(&self, k: K, v: V) -> bool {
@@ -87,10 +87,10 @@ mod sync_benchmarks {
     }
 
     impl<
-        K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
-        V: 'static + Clone + Send + Sync,
-        H: 'static + BuildHasher,
-    > BenchmarkOperation<K, V, H> for HashIndex<K, V, H>
+            K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
+            V: 'static + Clone + Send + Sync,
+            H: 'static + BuildHasher,
+        > BenchmarkOperation<K, V, H> for HashIndex<K, V, H>
     {
         #[inline(always)]
         fn insert_test(&self, k: K, v: V) -> bool {
@@ -114,10 +114,10 @@ mod sync_benchmarks {
     }
 
     impl<
-        K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
-        V: 'static + Clone + Send + Sync,
-        H: BuildHasher,
-    > BenchmarkOperation<K, V, H> for TreeIndex<K, V>
+            K: 'static + Clone + Eq + Hash + Ord + Send + Sync,
+            V: 'static + Clone + Send + Sync,
+            H: BuildHasher,
+        > BenchmarkOperation<K, V, H> for TreeIndex<K, V>
     {
         #[inline(always)]
         fn insert_test(&self, k: K, v: V) -> bool {
@@ -666,7 +666,7 @@ mod sync_benchmarks {
         treeindex_benchmark::<usize>(65536, vec![1, 2, 4]);
     }
 
-    #[ignore = "too long"]
+    #[ignore]
     #[test]
     fn full_scale_benchmarks_sync() {
         hashmap_benchmark::<usize>(
@@ -686,17 +686,17 @@ mod sync_benchmarks {
     }
 }
 
-mod async_benchmarks {
+#[cfg(not(feature = "loom"))]
+#[cfg(test)]
+mod benchmark_async {
+    use crate::ebr::Guard;
+    use crate::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
-    use std::sync::Arc;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering::Relaxed;
+    use std::sync::Arc;
     use std::time::{Duration, Instant};
-
-    use sdd::Guard;
     use tokio::sync::Barrier;
-
-    use crate::{HashIndex, HashMap, TreeIndex};
 
     #[derive(Clone)]
     struct Workload {
@@ -1426,7 +1426,6 @@ mod async_benchmarks {
             assert_eq!(treeindex.len(), 0);
         }
     }
-
     #[cfg_attr(miri, ignore)]
     #[tokio::test(flavor = "multi_thread", worker_threads = 6)]
     async fn benchmarks_async() {
@@ -1435,7 +1434,7 @@ mod async_benchmarks {
         treeindex_benchmark(65536, vec![1, 2, 4]).await;
     }
 
-    #[ignore = "too long"]
+    #[ignore]
     #[tokio::test(flavor = "multi_thread", worker_threads = 96)]
     async fn full_scale_benchmarks_async() {
         hashmap_benchmark(
