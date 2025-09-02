@@ -4,6 +4,7 @@ mod examples {
     use std::sync::Arc;
     use std::thread;
 
+#[no_mangle]
     #[test]
     fn single_threaded() {
         let workload_size = 256;
@@ -38,6 +39,7 @@ mod examples {
         assert!(hashmap.is_empty());
     }
 
+#[no_mangle]
     #[test]
     fn multi_threaded() {
         let workload_size = 256;

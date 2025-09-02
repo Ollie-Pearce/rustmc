@@ -4,8 +4,9 @@ mod examples {
     use std::sync::Arc;
     use std::thread;
 
+#[no_mangle]
     #[test]
-    fn single_threaded() {
+    fn single_threaded_3() {
         let workload_size = 256;
         let treeindex: TreeIndex<isize, isize> = TreeIndex::new();
         for i in 1..workload_size {
@@ -38,8 +39,9 @@ mod examples {
         assert!(treeindex.is_empty());
     }
 
+#[no_mangle]
     #[test]
-    fn multi_threaded() {
+    fn multi_threaded_1() {
         let workload_size = 256;
         let treeindex: Arc<TreeIndex<isize, isize>> = Arc::default();
 

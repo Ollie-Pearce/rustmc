@@ -993,6 +993,7 @@ mod test {
     use std::sync::atomic::AtomicBool;
     use tokio::sync::Barrier;
 
+#[no_mangle]
     #[test]
     fn basic() {
         let leaf: Leaf<String, String> = Leaf::new();
@@ -1073,6 +1074,7 @@ mod test {
         ));
     }
 
+#[no_mangle]
     #[test]
     fn calculate_boundary() {
         let leaf: Leaf<usize, usize> = Leaf::new();
@@ -1117,6 +1119,7 @@ mod test {
         }
     }
 
+#[no_mangle]
     #[test]
     fn special() {
         let leaf: Leaf<usize, usize> = Leaf::new();
@@ -1151,6 +1154,7 @@ mod test {
 
     proptest! {
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
         fn general(insert in 0_usize..DIMENSION.num_entries, remove in 0_usize..DIMENSION.num_entries) {
             let leaf: Leaf<usize, usize> = Leaf::new();
@@ -1200,8 +1204,9 @@ mod test {
         }
 
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
-        fn range(start in 0_usize..DIMENSION.num_entries, end in 0_usize..DIMENSION.num_entries) {
+        fn range_1(start in 0_usize..DIMENSION.num_entries, end in 0_usize..DIMENSION.num_entries) {
             let leaf: Leaf<usize, usize> = Leaf::new();
             for i in 1..DIMENSION.num_entries - 1 {
                 prop_assert!(matches!(leaf.insert(i, i), InsertResult::Success));

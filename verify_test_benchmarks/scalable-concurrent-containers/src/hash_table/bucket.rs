@@ -1251,6 +1251,7 @@ mod test {
 
     proptest! {
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
         fn evict_untracked(xs in 0..BUCKET_LEN * 2) {
             let mut data_block: DataBlock<usize, usize, BUCKET_LEN> =
@@ -1267,6 +1268,7 @@ mod test {
         }
 
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
         fn evict_overflowed(xs in 1..BUCKET_LEN * 2) {
             let mut data_block: DataBlock<usize, usize, BUCKET_LEN> =
@@ -1305,6 +1307,7 @@ mod test {
         }
 
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
         fn evict_tracked(xs in 0..BUCKET_LEN * 2) {
             let mut data_block: DataBlock<usize, usize, BUCKET_LEN> =
@@ -1341,6 +1344,7 @@ mod test {
         }
 
         #[cfg_attr(miri, ignore)]
+#[no_mangle]
         #[test]
         fn removed(xs in 0..BUCKET_LEN) {
             let mut data_block: DataBlock<usize, usize, BUCKET_LEN> =

@@ -659,6 +659,7 @@ mod benchmark {
     }
 
     #[cfg_attr(miri, ignore)]
+#[no_mangle]
     #[test]
     fn benchmarks_sync() {
         hashmap_benchmark::<usize>(65536, vec![1, 2, 4]);
@@ -667,6 +668,7 @@ mod benchmark {
     }
 
     #[ignore]
+#[no_mangle]
     #[test]
     fn full_scale_benchmarks_sync() {
         hashmap_benchmark::<usize>(

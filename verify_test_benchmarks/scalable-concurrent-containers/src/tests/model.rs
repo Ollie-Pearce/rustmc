@@ -33,8 +33,9 @@ mod test_model {
     static SERIALIZER: Mutex<()> = Mutex::new(());
 
     // Checks if keys are visible while the leaf node is being split.
+#[no_mangle]
     #[test]
-    fn tree_index_split_leaf_node() {
+    fn tree_index_split_leaf_node_1() {
         let _guard = SERIALIZER.lock().unwrap();
 
         let keys = 14;
@@ -82,8 +83,9 @@ mod test_model {
     }
 
     // Checks if keys are visible while the internal node is being split.
+#[no_mangle]
     #[test]
-    fn tree_index_split_internal_node() {
+    fn tree_index_split_internal_node_1() {
         let _guard = SERIALIZER.lock().unwrap();
 
         let keys = 365;
@@ -128,8 +130,9 @@ mod test_model {
     }
 
     // Checks if keys are visible while a leaf node is being removed.
+#[no_mangle]
     #[test]
-    fn tree_index_remove_leaf_node() {
+    fn tree_index_remove_leaf_node_1() {
         let _guard = SERIALIZER.lock().unwrap();
 
         let keys = 15;
@@ -173,8 +176,9 @@ mod test_model {
     }
 
     // Check if keys are visible while a node is being deallocated.
+#[no_mangle]
     #[test]
-    fn tree_index_remove_internal_node() {
+    fn tree_index_remove_internal_node_1() {
         let _guard = SERIALIZER.lock().unwrap();
 
         let keys = 366;

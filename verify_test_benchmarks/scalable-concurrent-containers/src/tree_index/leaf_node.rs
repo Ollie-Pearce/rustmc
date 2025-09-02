@@ -1177,8 +1177,9 @@ mod test {
     use std::sync::atomic::AtomicBool;
     use tokio::sync::Barrier;
 
+#[no_mangle]
     #[test]
-    fn basic() {
+    fn basic_1() {
         let guard = Guard::new();
         let leaf_node: LeafNode<String, String> = LeafNode::new();
         assert!(matches!(
@@ -1234,6 +1235,7 @@ mod test {
         ));
     }
 
+#[no_mangle]
     #[test]
     fn bulk() {
         let guard = Guard::new();
