@@ -1,4 +1,4 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, Criterion};
 use scc::Bag;
 
 fn bag_push_pop(c: &mut Criterion) {

@@ -1,12 +1,10 @@
 //! [`Queue`] is a lock-free concurrent first-in-first-out container.
 
+use super::ebr::{AtomicShared, Guard, Ptr, Shared, Tag};
+use super::linked_list::{Entry, LinkedList};
 use std::fmt::{self, Debug};
 use std::iter::FusedIterator;
 use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed};
-
-use sdd::{AtomicShared, Guard, Ptr, Shared, Tag};
-
-use super::linked_list::{Entry, LinkedList};
 
 /// [`Queue`] is a lock-free concurrent first-in-first-out container.
 pub struct Queue<T> {
@@ -84,7 +82,8 @@ impl<T: 'static> Queue<T> {
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, Queue};
+    /// use scc::ebr::Guard;
+    /// use scc::Queue;
     ///
     /// let queue: Queue<usize> = Queue::default();
     ///
@@ -321,7 +320,8 @@ impl<T> Queue<T> {
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, Queue};
+    /// use scc::ebr::Guard;
+    /// use scc::Queue;
     ///
     /// let queue: Queue<usize> = Queue::default();
     /// assert_eq!(queue.iter(&Guard::new()).count(), 0);

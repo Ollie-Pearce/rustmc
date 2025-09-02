@@ -1,20 +1,19 @@
 //! [`HashMap`] is a concurrent and asynchronous hash map.
 
+use super::ebr::{AtomicShared, Guard, Shared, Tag};
+use super::hash_table::bucket::{EntryPtr, Locker, Reader, SEQUENTIAL};
+use super::hash_table::bucket_array::BucketArray;
+use super::hash_table::{HashTable, LockedEntry};
+use super::wait_queue::AsyncWait;
+use super::Equivalent;
 use std::collections::hash_map::RandomState;
 use std::fmt::{self, Debug};
 use std::hash::{BuildHasher, Hash};
 use std::mem::replace;
 use std::ops::{Deref, DerefMut, RangeInclusive};
+use std::pin::Pin;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::{Acquire, Relaxed};
-
-use sdd::{AtomicShared, Guard, Shared, Tag};
-
-use super::Equivalent;
-use super::hash_table::bucket::{EntryPtr, SEQUENTIAL};
-use super::hash_table::bucket_array::BucketArray;
-use super::hash_table::{HashTable, LockedEntry};
-use crate::async_helper::SendableGuard;
 
 /// Scalable concurrent hash map.
 ///
@@ -44,7 +43,7 @@ use crate::async_helper::SendableGuard;
 ///
 /// ### Bucket access
 ///
-/// Bucket arrays are protected by [`sdd`], thus allowing lock-free access to them.
+/// Bucket arrays are protected by [`ebr`](super::ebr), thus allowing lock-free access to them.
 ///
 /// ### Entry access
 ///
@@ -60,13 +59,7 @@ use crate::async_helper::SendableGuard;
 /// incrementally relocated to the new bucket array on future access to the [`HashMap`], and the old
 /// bucket array gets dropped when it becomes empty and unreachable.
 ///
-/// ### Blocking methods in an asynchronous code block
-///
-/// It is generally not recommended to use blocking methods, such as [`HashMap::insert`], in an
-/// asynchronous code block or [`poll`](std::future::Future::poll), since it may lead to deadlocks
-/// or performance degradation.
-///
-/// ## Unwind safety
+/// ### Unwind safety
 ///
 /// [`HashMap`] is impervious to out-of-memory errors and panics in user-specified code on one
 /// condition; `H::Hasher::hash`, `K::drop` and `V::drop` must not panic.
@@ -74,7 +67,7 @@ pub struct HashMap<K, V, H = RandomState>
 where
     H: BuildHasher,
 {
-    bucket_array: AtomicShared<BucketArray<K, V, (), SEQUENTIAL>>,
+    array: AtomicShared<BucketArray<K, V, (), SEQUENTIAL>>,
     minimum_capacity: AtomicUsize,
     build_hasher: H,
 }
@@ -141,7 +134,7 @@ where
     #[inline]
     pub const fn with_hasher(build_hasher: H) -> Self {
         Self {
-            bucket_array: AtomicShared::null(),
+            array: AtomicShared::null(),
             minimum_capacity: AtomicUsize::new(0),
             build_hasher,
         }
@@ -152,7 +145,7 @@ where
     #[inline]
     pub fn with_hasher(build_hasher: H) -> Self {
         Self {
-            bucket_array: AtomicShared::null(),
+            array: AtomicShared::null(),
             minimum_capacity: AtomicUsize::new(0),
             build_hasher,
         }
@@ -185,14 +178,14 @@ where
                     AtomicShared::null(),
                 ))
             };
-            let minimum_capacity = array.num_slots();
+            let minimum_capacity = array.num_entries();
             (
                 AtomicShared::from(array),
                 AtomicUsize::new(minimum_capacity),
             )
         };
         Self {
-            bucket_array: array,
+            array,
             minimum_capacity,
             build_hasher,
         }
@@ -240,7 +233,7 @@ where
     /// assert_eq!(hashmap.capacity(), 1024);
     /// ```
     #[inline]
-    pub fn reserve(&self, additional_capacity: usize) -> Option<Reserve<'_, K, V, H>> {
+    pub fn reserve(&self, additional_capacity: usize) -> Option<Reserve<K, V, H>> {
         let additional = self.reserve_capacity(additional_capacity);
         if additional == 0 {
             None
@@ -270,34 +263,27 @@ where
     /// assert!(hashmap.read(&'y', |_, v| *v).is_none());
     /// ```
     #[inline]
-    pub fn entry(&self, key: K) -> Entry<'_, K, V, H> {
-        let hash = self.hash(&key);
+    pub fn entry(&self, key: K) -> Entry<K, V, H> {
         let guard = Guard::new();
-        self.writer_sync_with(hash, &guard, |writer, data_block, index, len| {
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
-                &key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                &guard,
-            );
-            let locked_entry =
-                LockedEntry::new(writer, data_block, entry_ptr.clone(), index, len, &guard)
-                    .prolong_lifetime(self);
-            if entry_ptr.is_valid() {
-                Entry::Occupied(OccupiedEntry {
-                    hashmap: self,
-                    locked_entry,
-                })
-            } else {
-                let vacant_entry = VacantEntry {
-                    hashmap: self,
-                    key,
-                    hash,
-                    locked_entry,
-                };
-                Entry::Vacant(vacant_entry)
-            }
-        })
+        let hash = self.hash(&key);
+        let locked_entry = unsafe {
+            self.reserve_entry(&key, hash, &mut (), self.prolonged_guard_ref(&guard))
+                .ok()
+                .unwrap_unchecked()
+        };
+        if locked_entry.entry_ptr.is_valid() {
+            Entry::Occupied(OccupiedEntry {
+                hashmap: self,
+                locked_entry,
+            })
+        } else {
+            Entry::Vacant(VacantEntry {
+                hashmap: self,
+                key,
+                hash,
+                locked_entry,
+            })
+        }
     }
 
     /// Gets the entry associated with the given key in the map for in-place manipulation.
@@ -314,69 +300,34 @@ where
     /// let future_entry = hashmap.entry_async('b');
     /// ```
     #[inline]
-    pub async fn entry_async(&self, key: K) -> Entry<'_, K, V, H> {
+    pub async fn entry_async(&self, key: K) -> Entry<K, V, H> {
         let hash = self.hash(&key);
-        let sendable_guard = SendableGuard::default();
-        self.writer_async_with(hash, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
-                &key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                guard,
-            );
-            let locked_entry =
-                LockedEntry::new(writer, data_block, entry_ptr.clone(), index, len, guard)
-                    .prolong_lifetime(self);
-            if entry_ptr.is_valid() {
-                Entry::Occupied(OccupiedEntry {
-                    hashmap: self,
-                    locked_entry,
-                })
-            } else {
-                let vacant_entry = VacantEntry {
-                    hashmap: self,
-                    key,
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            {
+                let guard = Guard::new();
+                if let Ok(locked_entry) = self.reserve_entry(
+                    &key,
                     hash,
-                    locked_entry,
-                };
-                Entry::Vacant(vacant_entry)
+                    &mut async_wait_pinned,
+                    self.prolonged_guard_ref(&guard),
+                ) {
+                    if locked_entry.entry_ptr.is_valid() {
+                        return Entry::Occupied(OccupiedEntry {
+                            hashmap: self,
+                            locked_entry,
+                        });
+                    }
+                    return Entry::Vacant(VacantEntry {
+                        hashmap: self,
+                        key,
+                        hash,
+                        locked_entry,
+                    });
+                }
             }
-        })
-        .await
-    }
-
-    /// Tries to get the entry associated with the given key in the map for in-place manipulation.
-    ///
-    /// Returns `None` if the entry could not be locked.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashMap;
-    ///
-    /// let hashmap: HashMap<usize, usize> = HashMap::default();
-    ///
-    /// assert!(hashmap.insert(0, 1).is_ok());
-    /// assert!(hashmap.try_entry(0).is_some());
-    /// ```
-    #[inline]
-    pub fn try_entry(&self, key: K) -> Option<Entry<'_, K, V, H>> {
-        let hash = self.hash(&key);
-        let locked_entry =
-            self.try_reserve_entry(&key, hash, self.prolonged_guard_ref(&Guard::new()))?;
-        if locked_entry.entry_ptr.is_valid() {
-            Some(Entry::Occupied(OccupiedEntry {
-                hashmap: self,
-                locked_entry,
-            }))
-        } else {
-            Some(Entry::Vacant(VacantEntry {
-                hashmap: self,
-                key,
-                hash,
-                locked_entry,
-            }))
+            async_wait_pinned.await;
         }
     }
 
@@ -401,8 +352,16 @@ where
     /// assert_eq!(hashmap.read(&1, |_, v| *v), Some(2));
     /// ```
     #[inline]
-    pub fn first_entry(&self) -> Option<OccupiedEntry<'_, K, V, H>> {
-        self.any_entry(|_, _| true)
+    pub fn first_entry(&self) -> Option<OccupiedEntry<K, V, H>> {
+        let guard = Guard::new();
+        let prolonged_guard = self.prolonged_guard_ref(&guard);
+        if let Some(locked_entry) = self.lock_first_entry(prolonged_guard) {
+            return Some(OccupiedEntry {
+                hashmap: self,
+                locked_entry,
+            });
+        }
+        None
     }
 
     /// Gets the first occupied entry for in-place manipulation.
@@ -422,8 +381,14 @@ where
     /// let future_entry = hashmap.first_entry_async();
     /// ```
     #[inline]
-    pub async fn first_entry_async(&self) -> Option<OccupiedEntry<'_, K, V, H>> {
-        self.any_entry_async(|_, _| true).await
+    pub async fn first_entry_async(&self) -> Option<OccupiedEntry<K, V, H>> {
+        if let Some(locked_entry) = LockedEntry::first_entry_async(self).await {
+            return Some(OccupiedEntry {
+                hashmap: self,
+                locked_entry,
+            });
+        }
+        None
     }
 
     /// Finds any entry satisfying the supplied predicate for in-place manipulation.
@@ -445,30 +410,14 @@ where
     /// assert_eq!(*entry.get(), 3);
     /// ```
     #[inline]
-    pub fn any_entry<P: FnMut(&K, &V) -> bool>(
-        &self,
-        mut pred: P,
-    ) -> Option<OccupiedEntry<'_, K, V, H>> {
-        let mut entry = None;
+    pub fn any_entry<P: FnMut(&K, &V) -> bool>(&self, pred: P) -> Option<OccupiedEntry<K, V, H>> {
         let guard = Guard::new();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, index, len| {
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    let locked_entry =
-                        LockedEntry::new(writer, data_block, entry_ptr, index, len, &guard)
-                            .prolong_lifetime(self);
-                    entry = Some(OccupiedEntry {
-                        hashmap: self,
-                        locked_entry,
-                    });
-                    return (true, false);
-                }
-            }
-            (false, false)
-        });
-        entry
+        let prolonged_guard = self.prolonged_guard_ref(&guard);
+        let locked_entry = self.find_entry(pred, prolonged_guard)?;
+        Some(OccupiedEntry {
+            hashmap: self,
+            locked_entry,
+        })
     }
 
     /// Finds any entry satisfying the supplied predicate for in-place manipulation.
@@ -491,29 +440,20 @@ where
     pub async fn any_entry_async<P: FnMut(&K, &V) -> bool>(
         &self,
         mut pred: P,
-    ) -> Option<OccupiedEntry<'_, K, V, H>> {
-        let mut entry = None;
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    let locked_entry =
-                        LockedEntry::new(writer, data_block, entry_ptr, index, len, guard)
-                            .prolong_lifetime(self);
-                    entry = Some(OccupiedEntry {
-                        hashmap: self,
-                        locked_entry,
-                    });
-                    return (true, false);
+    ) -> Option<OccupiedEntry<K, V, H>> {
+        if let Some(locked_entry) = LockedEntry::first_entry_async(self).await {
+            let mut entry = OccupiedEntry {
+                hashmap: self,
+                locked_entry,
+            };
+            loop {
+                if pred(entry.key(), entry.get()) {
+                    return Some(entry);
                 }
+                entry = entry.next()?;
             }
-            (false, false)
-        })
-        .await;
-        entry
+        }
+        None
     }
 
     /// Inserts a key-value pair into the [`HashMap`].
@@ -534,20 +474,13 @@ where
     /// ```
     #[inline]
     pub fn insert(&self, key: K, val: V) -> Result<(), (K, V)> {
-        let hash = self.hash(&key);
         let guard = Guard::new();
-        self.writer_sync_with(hash, &guard, |writer, data_block, _, _| {
-            let partial_hash = BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash);
-            if writer
-                .get_entry_ptr(data_block, &key, partial_hash, &guard)
-                .is_valid()
-            {
-                Err((key, val))
-            } else {
-                writer.insert_with(data_block, partial_hash, || (key, val), &guard);
-                Ok(())
-            }
-        })
+        let hash = self.hash(&key);
+        if let Ok(Some((k, v))) = self.insert_entry(key, val, hash, &mut (), &guard) {
+            Err((k, v))
+        } else {
+            Ok(())
+        }
     }
 
     /// Inserts a key-value pair into the [`HashMap`].
@@ -567,23 +500,21 @@ where
     /// let future_insert = hashmap.insert_async(11, 17);
     /// ```
     #[inline]
-    pub async fn insert_async(&self, key: K, val: V) -> Result<(), (K, V)> {
+    pub async fn insert_async(&self, mut key: K, mut val: V) -> Result<(), (K, V)> {
         let hash = self.hash(&key);
-        let sendable_guard = SendableGuard::default();
-        self.writer_async_with(hash, &sendable_guard, |writer, data_block, _, _| {
-            let guard = sendable_guard.guard();
-            let partial_hash = BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash);
-            if writer
-                .get_entry_ptr(data_block, &key, partial_hash, guard)
-                .is_valid()
-            {
-                Err((key, val))
-            } else {
-                writer.insert_with(data_block, partial_hash, || (key, val), guard);
-                Ok(())
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            match self.insert_entry(key, val, hash, &mut async_wait_pinned, &Guard::new()) {
+                Ok(Some(returned)) => return Err(returned),
+                Ok(None) => return Ok(()),
+                Err(returned) => {
+                    key = returned.0;
+                    val = returned.1;
+                }
             }
-        })
-        .await
+            async_wait_pinned.await;
+        }
     }
 
     /// Upserts a key-value pair into the [`HashMap`].
@@ -658,24 +589,18 @@ where
         Q: Equivalent<K> + Hash + ?Sized,
         U: FnOnce(&K, &mut V) -> R,
     {
-        let hash = self.hash(key);
-        let guard = Guard::default();
-        self.optional_writer_sync_with(hash, &guard, |writer, data_block, _, _| {
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
-                key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                &guard,
-            );
-            if entry_ptr.is_valid() {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                (Some(updater(k, v)), false)
-            } else {
-                (None, false)
-            }
-        })
-        .ok()
-        .flatten()
+        let guard = Guard::new();
+        let LockedEntry {
+            mut locker,
+            data_block_mut,
+            mut entry_ptr,
+            index: _,
+        } = self
+            .get_entry(key, self.hash(key), &mut (), &guard)
+            .ok()
+            .flatten()?;
+        let (k, v) = entry_ptr.get_mut(data_block_mut, &mut locker);
+        Some(updater(k, v))
     }
 
     /// Updates an existing key-value pair in-place.
@@ -700,25 +625,24 @@ where
         U: FnOnce(&K, &mut V) -> R,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.optional_writer_async_with(hash, &sendable_guard, |writer, data_block, _, _| {
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
-                key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                guard,
-            );
-            if entry_ptr.is_valid() {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                (Some(updater(k, v)), false)
-            } else {
-                (None, false)
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            if let Ok(result) = self.get_entry(key, hash, &mut async_wait_pinned, &Guard::new()) {
+                if let Some(LockedEntry {
+                    mut locker,
+                    data_block_mut,
+                    mut entry_ptr,
+                    index: _,
+                }) = result
+                {
+                    let (k, v) = entry_ptr.get_mut(data_block_mut, &mut locker);
+                    return Some(updater(k, v));
+                }
+                return None;
             }
-        })
-        .await
-        .ok()
-        .flatten()
+            async_wait_pinned.await;
+        }
     }
 
     /// Removes a key-value pair if the key exists.
@@ -786,24 +710,14 @@ where
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
-        let hash = self.hash(key);
-        let guard = Guard::default();
-        self.optional_writer_sync_with(hash, &guard, |writer, data_block, _, _| {
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
-                key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                &guard,
-            );
-            if entry_ptr.is_valid() && condition(&mut entry_ptr.get_mut(data_block, &writer).1) {
-                (
-                    Some(writer.remove(data_block, &mut entry_ptr, &guard)),
-                    writer.len() <= 1,
-                )
-            } else {
-                (None, false)
-            }
-        })
+        self.remove_entry(
+            key,
+            self.hash(key),
+            condition,
+            Option::flatten,
+            &mut (),
+            &Guard::new(),
+        )
         .ok()
         .flatten()
     }
@@ -826,32 +740,28 @@ where
     pub async fn remove_if_async<Q, F: FnOnce(&mut V) -> bool>(
         &self,
         key: &Q,
-        condition: F,
+        mut condition: F,
     ) -> Option<(K, V)>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.optional_writer_async_with(hash, &sendable_guard, |writer, data_block, _, _| {
-            let mut entry_ptr = writer.get_entry_ptr(
-                data_block,
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            match self.remove_entry(
                 key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                sendable_guard.guard(),
-            );
-            if entry_ptr.is_valid() && condition(&mut entry_ptr.get_mut(data_block, &writer).1) {
-                (
-                    Some(writer.remove(data_block, &mut entry_ptr, sendable_guard.guard())),
-                    writer.len() <= 1,
-                )
-            } else {
-                (None, false)
+                hash,
+                condition,
+                Option::flatten,
+                &mut async_wait_pinned,
+                &Guard::new(),
+            ) {
+                Ok(r) => return r,
+                Err(c) => condition = c,
             }
-        })
-        .await
-        .ok()
-        .flatten()
+            async_wait_pinned.await;
+        }
     }
 
     /// Gets an [`OccupiedEntry`] corresponding to the key for in-place modification.
@@ -876,35 +786,24 @@ where
     /// assert_eq!(*hashmap.get(&1).unwrap(), 11);
     /// ```
     #[inline]
-    pub fn get<Q>(&self, key: &Q) -> Option<OccupiedEntry<'_, K, V, H>>
+    pub fn get<Q>(&self, key: &Q) -> Option<OccupiedEntry<K, V, H>>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
-        let hash = self.hash(key);
-        let guard = Guard::default();
-        self.optional_writer_sync_with(hash, &guard, |writer, data_block, index, len| {
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
+        let guard = Guard::new();
+        let locked_entry = self
+            .get_entry(
                 key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                &guard,
-            );
-            if entry_ptr.is_valid() {
-                let locked_entry =
-                    LockedEntry::new(writer, data_block, entry_ptr, index, len, &guard)
-                        .prolong_lifetime(self);
-                return (
-                    Some(OccupiedEntry {
-                        hashmap: self,
-                        locked_entry,
-                    }),
-                    false,
-                );
-            }
-            (None, false)
+                self.hash(key),
+                &mut (),
+                self.prolonged_guard_ref(&guard),
+            )
+            .ok()
+            .flatten()?;
+        Some(OccupiedEntry {
+            hashmap: self,
+            locked_entry,
         })
-        .ok()
-        .flatten()
     }
 
     /// Gets an [`OccupiedEntry`] corresponding to the key for in-place modification.
@@ -925,37 +824,30 @@ where
     /// let future_get = hashmap.get_async(&11);
     /// ```
     #[inline]
-    pub async fn get_async<Q>(&self, key: &Q) -> Option<OccupiedEntry<'_, K, V, H>>
+    pub async fn get_async<Q>(&self, key: &Q) -> Option<OccupiedEntry<K, V, H>>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.optional_writer_async_with(hash, &sendable_guard, |writer, data_block, index, len| {
-            let guard = sendable_guard.guard();
-            let entry_ptr = writer.get_entry_ptr(
-                data_block,
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            if let Ok(result) = self.get_entry(
                 key,
-                BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(hash),
-                guard,
-            );
-            if entry_ptr.is_valid() {
-                let locked_entry =
-                    LockedEntry::new(writer, data_block, entry_ptr, index, len, guard)
-                        .prolong_lifetime(self);
-                return (
-                    Some(OccupiedEntry {
+                hash,
+                &mut async_wait_pinned,
+                self.prolonged_guard_ref(&Guard::new()),
+            ) {
+                if let Some(locked_entry) = result {
+                    return Some(OccupiedEntry {
                         hashmap: self,
                         locked_entry,
-                    }),
-                    false,
-                );
+                    });
+                }
+                return None;
             }
-            (None, false)
-        })
-        .await
-        .ok()
-        .flatten()
+            async_wait_pinned.await;
+        }
     }
 
     /// Reads a key-value pair.
@@ -978,9 +870,9 @@ where
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
-        let hash = self.hash(key);
-        let guard = Guard::new();
-        self.reader_sync_with(key, hash, reader, &guard)
+        self.read_entry(key, self.hash(key), reader, &mut (), &Guard::new())
+            .ok()
+            .flatten()
     }
 
     /// Reads a key-value pair.
@@ -998,14 +890,25 @@ where
     /// let future_read = hashmap.read_async(&11, |_, v| *v);
     /// ```
     #[inline]
-    pub async fn read_async<Q, R, F: FnOnce(&K, &V) -> R>(&self, key: &Q, reader: F) -> Option<R>
+    pub async fn read_async<Q, R, F: FnOnce(&K, &V) -> R>(
+        &self,
+        key: &Q,
+        mut reader: F,
+    ) -> Option<R>
     where
         Q: Equivalent<K> + Hash + ?Sized,
     {
         let hash = self.hash(key);
-        let sendable_guard = SendableGuard::default();
-        self.reader_async_with(key, hash, reader, &sendable_guard)
-            .await
+        loop {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            match self.read_entry(key, hash, reader, &mut async_wait_pinned, &Guard::new()) {
+                Ok(result) => return result,
+                Err(f) => reader = f,
+            }
+
+            async_wait_pinned.await;
+        }
     }
 
     /// Returns `true` if the [`HashMap`] contains a value for the specified key.
@@ -1126,22 +1029,8 @@ where
     /// assert!(!hashmap.any(|k, v| *k == 2 && *v == 0));
     /// ```
     #[inline]
-    pub fn any<P: FnMut(&K, &V) -> bool>(&self, mut pred: P) -> bool {
-        let mut found = false;
-        let guard = Guard::new();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, _, _| {
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    // Found one entry satisfying the predicate.
-                    found = true;
-                    return (true, false);
-                }
-            }
-            (false, false)
-        });
-        found
+    pub fn any<P: FnMut(&K, &V) -> bool>(&self, pred: P) -> bool {
+        self.contains_entry(pred)
     }
 
     /// Searches for any entry that satisfies the given predicate.
@@ -1166,23 +1055,48 @@ where
     /// ```
     #[inline]
     pub async fn any_async<P: FnMut(&K, &V) -> bool>(&self, mut pred: P) -> bool {
-        let mut found = false;
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, _, _| {
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                let (k, v) = entry_ptr.get(data_block);
-                if pred(k, v) {
-                    // Found one entry satisfying the predicate.
-                    found = true;
-                    return (true, false);
+        let mut current_array_holder = self.array.get_shared(Acquire, &Guard::new());
+        while let Some(current_array) = current_array_holder.take() {
+            self.cleanse_old_array_async(&current_array).await;
+            for index in 0..current_array.num_buckets() {
+                loop {
+                    let mut async_wait = AsyncWait::default();
+                    let mut async_wait_pinned = Pin::new(&mut async_wait);
+                    {
+                        let guard = Guard::new();
+                        let bucket = current_array.bucket(index);
+                        if let Ok(reader) =
+                            Reader::try_lock_or_wait(bucket, &mut async_wait_pinned, &guard)
+                        {
+                            if let Some(reader) = reader {
+                                let data_block = current_array.data_block(index);
+                                let mut entry_ptr = EntryPtr::new(&guard);
+                                while entry_ptr.move_to_next(*reader, &guard) {
+                                    let (k, v) = entry_ptr.get(data_block);
+                                    if pred(k, v) {
+                                        // Found one entry satisfying the predicate.
+                                        return true;
+                                    }
+                                }
+                            }
+                            break;
+                        };
+                    }
+                    async_wait_pinned.await;
                 }
             }
-            (false, false)
-        })
-        .await;
-        found
+
+            if let Some(new_current_array) = self.array.get_shared(Acquire, &Guard::new()) {
+                if new_current_array.as_ptr() == current_array.as_ptr() {
+                    break;
+                }
+                current_array_holder.replace(new_current_array);
+                continue;
+            }
+            break;
+        }
+
+        false
     }
 
     /// Retains the entries specified by the predicate.
@@ -1211,20 +1125,8 @@ where
     /// assert!(!hashmap.contains(&3));
     /// ```
     #[inline]
-    pub fn retain<F: FnMut(&K, &mut V) -> bool>(&self, mut pred: F) {
-        let guard = Guard::new();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                if !pred(k, v) {
-                    writer.remove(data_block, &mut entry_ptr, &guard);
-                    removed = true;
-                }
-            }
-            (false, removed)
-        });
+    pub fn retain<F: FnMut(&K, &mut V) -> bool>(&self, pred: F) {
+        self.retain_entries(pred);
     }
 
     /// Retains the entries specified by the predicate.
@@ -1249,21 +1151,51 @@ where
     /// ```
     #[inline]
     pub async fn retain_async<F: FnMut(&K, &mut V) -> bool>(&self, mut pred: F) {
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                let (k, v) = entry_ptr.get_mut(data_block, &writer);
-                if !pred(k, v) {
-                    writer.remove(data_block, &mut entry_ptr, guard);
-                    removed = true;
+        let mut removed = false;
+        let mut current_array_holder = self.array.get_shared(Acquire, &Guard::new());
+        while let Some(current_array) = current_array_holder.take() {
+            self.cleanse_old_array_async(&current_array).await;
+            for index in 0..current_array.num_buckets() {
+                loop {
+                    let mut async_wait = AsyncWait::default();
+                    let mut async_wait_pinned = Pin::new(&mut async_wait);
+                    {
+                        let guard = Guard::new();
+                        let bucket = current_array.bucket_mut(index);
+                        if let Ok(locker) =
+                            Locker::try_lock_or_wait(bucket, &mut async_wait_pinned, &guard)
+                        {
+                            if let Some(mut locker) = locker {
+                                let data_block_mut = current_array.data_block_mut(index);
+                                let mut entry_ptr = EntryPtr::new(&guard);
+                                while entry_ptr.move_to_next(&locker, &guard) {
+                                    let (k, v) = entry_ptr.get_mut(data_block_mut, &mut locker);
+                                    if !pred(k, v) {
+                                        locker.remove(data_block_mut, &mut entry_ptr, &guard);
+                                        removed = true;
+                                    }
+                                }
+                            }
+                            break;
+                        };
+                    }
+                    async_wait_pinned.await;
                 }
             }
-            (false, removed)
-        })
-        .await;
+
+            if let Some(new_current_array) = self.array.get_shared(Acquire, &Guard::new()) {
+                if new_current_array.as_ptr() == current_array.as_ptr() {
+                    break;
+                }
+                current_array_holder.replace(new_current_array);
+                continue;
+            }
+            break;
+        }
+
+        if removed {
+            self.try_resize(0, &Guard::new());
+        }
     }
 
     /// Prunes the entries specified by the predicate.
@@ -1290,18 +1222,8 @@ where
     /// assert_eq!(hashmap.len(), 1);
     /// ```
     #[inline]
-    pub fn prune<F: FnMut(&K, V) -> Option<V>>(&self, mut pred: F) {
-        let guard = Guard::default();
-        self.for_each_writer_sync_with(0, 0, &guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let mut entry_ptr = EntryPtr::new(&guard);
-            while entry_ptr.move_to_next(&writer, &guard) {
-                if writer.keep_or_consume(data_block, &mut entry_ptr, &mut pred, &guard) {
-                    removed = true;
-                }
-            }
-            (false, removed)
-        });
+    pub fn prune<F: FnMut(&K, V) -> Option<V>>(&self, pred: F) {
+        self.prune_entries(pred);
     }
 
     /// Prunes the entries specified by the predicate.
@@ -1327,19 +1249,54 @@ where
     /// ```
     #[inline]
     pub async fn prune_async<F: FnMut(&K, V) -> Option<V>>(&self, mut pred: F) {
-        let sendable_guard = SendableGuard::default();
-        self.for_each_writer_async_with(0, 0, &sendable_guard, |writer, data_block, _, _| {
-            let mut removed = false;
-            let guard = sendable_guard.guard();
-            let mut entry_ptr = EntryPtr::new(guard);
-            while entry_ptr.move_to_next(&writer, guard) {
-                if writer.keep_or_consume(data_block, &mut entry_ptr, &mut pred, guard) {
-                    removed = true;
+        let mut removed = false;
+        let mut current_array_holder = self.array.get_shared(Acquire, &Guard::new());
+        while let Some(current_array) = current_array_holder.take() {
+            self.cleanse_old_array_async(&current_array).await;
+            for index in 0..current_array.num_buckets() {
+                loop {
+                    let mut async_wait = AsyncWait::default();
+                    let mut async_wait_pinned = Pin::new(&mut async_wait);
+                    {
+                        let guard = Guard::new();
+                        let bucket = current_array.bucket_mut(index);
+                        if let Ok(locker) =
+                            Locker::try_lock_or_wait(bucket, &mut async_wait_pinned, &guard)
+                        {
+                            if let Some(mut locker) = locker {
+                                let data_block_mut = current_array.data_block_mut(index);
+                                let mut entry_ptr = EntryPtr::new(&guard);
+                                while entry_ptr.move_to_next(&locker, &guard) {
+                                    if locker.keep_or_consume(
+                                        data_block_mut,
+                                        &mut entry_ptr,
+                                        &mut pred,
+                                        &guard,
+                                    ) {
+                                        removed = true;
+                                    }
+                                }
+                            }
+                            break;
+                        };
+                    }
+                    async_wait_pinned.await;
                 }
             }
-            (false, removed)
-        })
-        .await;
+
+            if let Some(new_current_array) = self.array.get_shared(Acquire, &Guard::new()) {
+                if new_current_array.as_ptr() == current_array.as_ptr() {
+                    break;
+                }
+                current_array_holder.replace(new_current_array);
+                continue;
+            }
+            break;
+        }
+
+        if removed {
+            self.try_resize(0, &Guard::new());
+        }
     }
 
     /// Clears the [`HashMap`] by removing all key-value pairs.
@@ -1481,6 +1438,23 @@ where
     {
         self.calculate_bucket_index(key)
     }
+
+    /// Clears the old array asynchronously.
+    async fn cleanse_old_array_async(&self, current_array: &BucketArray<K, V, (), SEQUENTIAL>) {
+        while current_array.has_old_array() {
+            let mut async_wait = AsyncWait::default();
+            let mut async_wait_pinned = Pin::new(&mut async_wait);
+            if self.incremental_rehash::<K, _, false>(
+                current_array,
+                &mut async_wait_pinned,
+                &Guard::new(),
+            ) == Ok(true)
+            {
+                break;
+            }
+            async_wait_pinned.await;
+        }
+    }
 }
 
 impl<K, V> HashMap<K, V, RandomState>
@@ -1536,7 +1510,7 @@ where
     fn clone(&self) -> Self {
         let self_clone = Self::with_capacity_and_hasher(self.capacity(), self.hasher().clone());
         self.scan(|k, v| {
-            let _result = self_clone.insert(k.clone(), v.clone());
+            let _reuslt = self_clone.insert(k.clone(), v.clone());
         });
         self_clone
     }
@@ -1592,7 +1566,7 @@ where
 {
     #[inline]
     fn drop(&mut self) {
-        self.bucket_array
+        self.array
             .swap((None, Tag::None), Relaxed)
             .0
             .map(|a| unsafe {
@@ -1632,8 +1606,12 @@ where
         &self.build_hasher
     }
     #[inline]
+    fn try_clone(_: &(K, V)) -> Option<(K, V)> {
+        None
+    }
+    #[inline]
     fn bucket_array(&self) -> &AtomicShared<BucketArray<K, V, (), SEQUENTIAL>> {
-        &self.bucket_array
+        &self.array
     }
     #[inline]
     fn minimum_capacity(&self) -> &AtomicUsize {
@@ -1868,7 +1846,7 @@ where
         &self
             .locked_entry
             .entry_ptr
-            .get(self.locked_entry.data_block)
+            .get(self.locked_entry.data_block_mut)
             .0
     }
 
@@ -1892,15 +1870,23 @@ where
     #[must_use]
     pub fn remove_entry(mut self) -> (K, V) {
         let guard = Guard::new();
-        let entry = self.locked_entry.writer.remove(
-            self.locked_entry.data_block,
+        let entry = self.locked_entry.locker.remove(
+            self.locked_entry.data_block_mut,
             &mut self.locked_entry.entry_ptr,
             self.hashmap.prolonged_guard_ref(&guard),
         );
-        let hashmap = self.hashmap;
-        let index = self.locked_entry.index;
-        drop(self);
-        hashmap.entry_removed(index, &guard);
+        if self.locked_entry.locker.num_entries() <= 1 || self.locked_entry.locker.need_rebuild() {
+            let hashmap = self.hashmap;
+            if let Some(current_array) = hashmap.bucket_array().load(Acquire, &guard).as_ref() {
+                if !current_array.has_old_array() {
+                    let index = self.locked_entry.index;
+                    if current_array.within_sampling_range(index) {
+                        drop(self);
+                        hashmap.try_shrink_or_rebuild(current_array, index, &guard);
+                    }
+                }
+            }
+        }
         entry
     }
 
@@ -1926,7 +1912,7 @@ where
         &self
             .locked_entry
             .entry_ptr
-            .get(self.locked_entry.data_block)
+            .get(self.locked_entry.data_block_mut)
             .1
     }
 
@@ -1954,7 +1940,10 @@ where
         &mut self
             .locked_entry
             .entry_ptr
-            .get_mut(self.locked_entry.data_block, &self.locked_entry.writer)
+            .get_mut(
+                self.locked_entry.data_block_mut,
+                &mut self.locked_entry.locker,
+            )
             .1
     }
 
@@ -2033,7 +2022,7 @@ where
     #[must_use]
     pub fn next(self) -> Option<Self> {
         let hashmap = self.hashmap;
-        if let Some(locked_entry) = self.locked_entry.next_sync(hashmap) {
+        if let Some(locked_entry) = self.locked_entry.next(hashmap) {
             return Some(OccupiedEntry {
                 hashmap,
                 locked_entry,
@@ -2074,101 +2063,6 @@ where
             });
         }
         None
-    }
-
-    /// Gets the next closest occupied entry after removing the entry.
-    ///
-    /// [`HashMap::first_entry`], [`HashMap::first_entry_async`], and this method together enables
-    /// the [`OccupiedEntry`] to effectively act as a mutable iterator over entries. The method
-    /// never acquires more than one lock even when it searches other buckets for the next closest
-    /// occupied entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashMap;
-    /// use scc::hash_map::Entry;
-    ///
-    /// let hashmap: HashMap<u64, u32> = HashMap::default();
-    ///
-    /// assert!(hashmap.insert(1, 0).is_ok());
-    /// assert!(hashmap.insert(2, 0).is_ok());
-    ///
-    /// let first_entry = hashmap.first_entry().unwrap();
-    /// let first_key = *first_entry.key();
-    /// let (removed, second_entry) = first_entry.remove_next();
-    /// assert_eq!(removed.1, 0);
-    /// assert_eq!(hashmap.len(), 1);
-    ///
-    /// let second_entry = second_entry.unwrap();
-    /// let second_key = *second_entry.key();
-    ///
-    /// assert!(second_entry.remove_next().1.is_none());
-    /// assert_eq!(first_key + second_key, 3);
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn remove_next(mut self) -> ((K, V), Option<Self>) {
-        let guard = Guard::new();
-        let entry = self.locked_entry.writer.remove(
-            self.locked_entry.data_block,
-            &mut self.locked_entry.entry_ptr,
-            self.hashmap.prolonged_guard_ref(&guard),
-        );
-        let hashmap = self.hashmap;
-        if let Some(locked_entry) = self.locked_entry.next_sync(hashmap) {
-            return (
-                entry,
-                Some(OccupiedEntry {
-                    hashmap,
-                    locked_entry,
-                }),
-            );
-        }
-        (entry, None)
-    }
-
-    /// Gets the next closest occupied entry after removing the entry.
-    ///
-    /// [`HashMap::first_entry`], [`HashMap::first_entry_async`], and this method together enables
-    /// the [`OccupiedEntry`] to effectively act as a mutable iterator over entries. The method
-    /// never acquires more than one lock even when it searches other buckets for the next closest
-    /// occupied entry.
-    ///
-    /// It is an asynchronous method returning an `impl Future` for the caller to await.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use scc::HashMap;
-    /// use scc::hash_map::Entry;
-    ///
-    /// let hashmap: HashMap<u64, u32> = HashMap::default();
-    ///
-    /// assert!(hashmap.insert(1, 0).is_ok());
-    /// assert!(hashmap.insert(2, 0).is_ok());
-    ///
-    /// let second_entry_future = hashmap.first_entry().unwrap().remove_next_async();
-    /// ```
-    #[inline]
-    pub async fn remove_next_async(mut self) -> ((K, V), Option<OccupiedEntry<'h, K, V, H>>) {
-        let guard = Guard::new();
-        let entry = self.locked_entry.writer.remove(
-            self.locked_entry.data_block,
-            &mut self.locked_entry.entry_ptr,
-            self.hashmap.prolonged_guard_ref(&guard),
-        );
-        let hashmap = self.hashmap;
-        if let Some(locked_entry) = self.locked_entry.next_async(hashmap).await {
-            return (
-                entry,
-                Some(OccupiedEntry {
-                    hashmap,
-                    locked_entry,
-                }),
-            );
-        }
-        (entry, None)
     }
 }
 
@@ -2267,10 +2161,10 @@ where
     /// assert_eq!(hashmap.read(&19, |_, v| *v), Some(29));
     /// ```
     #[inline]
-    pub fn insert_entry(self, val: V) -> OccupiedEntry<'h, K, V, H> {
+    pub fn insert_entry(mut self, val: V) -> OccupiedEntry<'h, K, V, H> {
         let guard = Guard::new();
-        let entry_ptr = self.locked_entry.writer.insert_with(
-            self.locked_entry.data_block,
+        let entry_ptr = self.locked_entry.locker.insert_with(
+            self.locked_entry.data_block_mut,
             BucketArray::<K, V, (), SEQUENTIAL>::partial_hash(self.hash),
             || (self.key, val),
             self.hashmap.prolonged_guard_ref(&guard),
@@ -2279,10 +2173,9 @@ where
             hashmap: self.hashmap,
             locked_entry: LockedEntry {
                 index: self.locked_entry.index,
-                data_block: self.locked_entry.data_block,
-                writer: self.locked_entry.writer,
+                data_block_mut: self.locked_entry.data_block_mut,
+                locker: self.locked_entry.locker,
                 entry_ptr,
-                len: 0,
             },
         }
     }
@@ -2359,11 +2252,7 @@ where
             .hashmap
             .minimum_capacity
             .fetch_sub(self.additional, Relaxed);
+        self.hashmap.try_resize(0, &Guard::new());
         debug_assert!(result >= self.additional);
-
-        let guard = Guard::new();
-        if let Some(current_array) = self.hashmap.bucket_array.load(Acquire, &guard).as_ref() {
-            self.try_shrink_or_rebuild(current_array, 0, &guard);
-        }
     }
 }

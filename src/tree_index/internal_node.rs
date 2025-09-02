@@ -1,20 +1,18 @@
+use super::leaf::{InsertResult, Leaf, RemoveResult, Scanner, DIMENSION};
+use super::leaf_node::RemoveRangeState;
+use super::leaf_node::{LOCKED, RETIRED};
+use super::node::Node;
+use crate::ebr::{AtomicShared, Guard, Ptr, Shared, Tag};
+use crate::exit_guard::ExitGuard;
+use crate::maybe_std::AtomicU8;
+use crate::wait_queue::{DeriveAsyncWait, WaitQueue};
+use crate::Comparable;
 use std::cmp::Ordering::{Equal, Greater, Less};
 use std::mem::forget;
 use std::ops::RangeBounds;
 use std::ptr;
 use std::sync::atomic::AtomicPtr;
 use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
-
-use sdd::{AtomicShared, Guard, Ptr, Shared, Tag};
-
-use super::leaf::{DIMENSION, InsertResult, Leaf, RemoveResult, Scanner};
-use super::leaf_node::RemoveRangeState;
-use super::leaf_node::{LOCKED, RETIRED};
-use super::node::Node;
-use crate::Comparable;
-use crate::async_helper::{DeriveAsyncWait, WaitQueue};
-use crate::exit_guard::ExitGuard;
-use crate::maybe_std::AtomicU8;
 
 /// Internal node.
 ///
@@ -652,7 +650,7 @@ where
         if let Some(full_node_key) = full_node_key {
             self.split_op
                 .origin_node_key
-                .store(ptr::from_ref(full_node_key).cast_mut(), Relaxed);
+                .store((full_node_key as *const K).cast_mut(), Relaxed);
         }
 
         let mut exit_guard = ExitGuard::new(true, |rollback| {
@@ -803,7 +801,7 @@ where
                                 if let Some(&k) = k.as_ref() {
                                     self.split_op
                                         .middle_key
-                                        .store(ptr::from_ref(k).cast_mut(), Relaxed);
+                                        .store((k as *const K).cast_mut(), Relaxed);
                                 }
                                 low_key_nodes
                                     .unbounded_child
@@ -856,12 +854,12 @@ where
                     };
 
                 self.split_op.middle_key.store(
-                    ptr::from_ref(full_leaf_node.split_leaf_node(
+                    (full_leaf_node.split_leaf_node(
                         low_key_leaf_node.unwrap(),
                         high_key_leaf_node.unwrap(),
                         guard,
-                    ))
-                    .cast_mut(),
+                    ) as *const K)
+                        .cast_mut(),
                     Relaxed,
                 );
 
@@ -1194,11 +1192,9 @@ mod test {
                                     Ok(RemoveResult::Retired)
                                 ));
                             } else {
-                                assert!(
-                                    internal_node
-                                        .remove_if::<_, _, _>(&j, &mut |_| true, &mut (), &guard)
-                                        .is_ok(),
-                                );
+                                assert!(internal_node
+                                    .remove_if::<_, _, _>(&j, &mut |_| true, &mut (), &guard)
+                                    .is_ok(),);
                             }
                             assert_eq!(internal_node.search_entry(&j, &guard), None);
                         }
@@ -1227,11 +1223,9 @@ mod test {
         let barrier = Shared::new(Barrier::new(num_tasks));
         for _ in 0..64 {
             let internal_node = Shared::new(new_level_3_node());
-            assert!(
-                internal_node
-                    .insert(usize::MAX, usize::MAX, &mut (), &Guard::new())
-                    .is_ok()
-            );
+            assert!(internal_node
+                .insert(usize::MAX, usize::MAX, &mut (), &Guard::new())
+                .is_ok());
             let mut task_handles = Vec::with_capacity(num_tasks);
             for task_id in 0..num_tasks {
                 let barrier_clone = barrier.clone();
@@ -1257,7 +1251,9 @@ mod test {
                                         max_key.replace(id);
                                         break;
                                     }
-                                    InsertResult::Frozen(..) | InsertResult::Retry(..) => (),
+                                    InsertResult::Frozen(..) | InsertResult::Retry(..) => {
+                                        continue;
+                                    }
                                     _ => unreachable!(),
                                 }
                             }
@@ -1267,7 +1263,7 @@ mod test {
                         }
                     }
                     for id in range.clone() {
-                        if max_key == Some(id) {
+                        if max_key.map_or(false, |m| m == id) {
                             break;
                         }
                         assert_eq!(
@@ -1276,7 +1272,7 @@ mod test {
                         );
                     }
                     for id in range {
-                        if max_key == Some(id) {
+                        if max_key.map_or(false, |m| m == id) {
                             break;
                         }
                         loop {
@@ -1310,18 +1306,16 @@ mod test {
             for r in futures::future::join_all(task_handles).await {
                 assert!(r.is_ok());
             }
-            assert!(
-                internal_node
-                    .remove_if::<_, _, _>(&usize::MAX, &mut |_| true, &mut (), &Guard::new())
-                    .is_ok()
-            );
+            assert!(internal_node
+                .remove_if::<_, _, _>(&usize::MAX, &mut |_| true, &mut (), &Guard::new())
+                .is_ok());
         }
     }
 
     #[cfg_attr(miri, ignore)]
     #[tokio::test(flavor = "multi_thread", worker_threads = 16)]
     async fn durability() {
-        let num_tasks = 8_usize;
+        let num_tasks = 16_usize;
         let num_iterations = 64;
         let workload_size = 64_usize;
         for k in 0..64 {
@@ -1352,7 +1346,7 @@ mod test {
                                     internal_node_clone.rollback(&guard);
                                 }
                                 _ => (),
-                            }
+                            };
                             assert_eq!(
                                 internal_node_clone
                                     .search_entry(&fixed_point, &guard)

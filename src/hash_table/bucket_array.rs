@@ -1,20 +1,17 @@
-use std::alloc::{Layout, alloc, alloc_zeroed, dealloc};
-use std::mem::{align_of, size_of};
-use std::panic::UnwindSafe;
+use super::bucket::{Bucket, DataBlock, LruList, BUCKET_LEN, OPTIMISTIC};
+use crate::ebr::{AtomicShared, Guard, Ptr, Tag};
+use std::alloc::{alloc, alloc_zeroed, dealloc, Layout};
+use std::mem::{align_of, needs_drop, size_of};
 use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
-
-use sdd::{AtomicShared, Guard, Ptr, Tag};
-
-use super::bucket::{BUCKET_LEN, Bucket, DataBlock, LruList, OPTIMISTIC};
+use std::sync::atomic::Ordering::Relaxed;
 
 /// [`BucketArray`] is a special purpose array to manage [`Bucket`] and [`DataBlock`].
 pub struct BucketArray<K, V, L: LruList, const TYPE: char> {
-    bucket_ptr: *const Bucket<K, V, L, TYPE>,
-    data_block_ptr: *const DataBlock<K, V, BUCKET_LEN>,
+    bucket_ptr: *mut Bucket<K, V, L, TYPE>,
+    data_block_ptr: *mut DataBlock<K, V, BUCKET_LEN>,
     array_len: usize,
     hash_offset: u32,
-    sample_size_mask: u16,
+    sample_size: u16,
     bucket_ptr_offset: u16,
     old_array: AtomicShared<BucketArray<K, V, L, TYPE>>,
     num_cleared_buckets: AtomicUsize,
@@ -23,22 +20,38 @@ pub struct BucketArray<K, V, L: LruList, const TYPE: char> {
 impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     /// Returns the number of [`Bucket`] instances in the [`BucketArray`].
     #[inline]
-    pub(crate) const fn len(&self) -> usize {
+    pub(crate) const fn num_buckets(&self) -> usize {
         self.array_len
     }
 
     /// Returns a reference to a [`Bucket`] at the given position.
     #[inline]
     pub(crate) fn bucket(&self, index: usize) -> &Bucket<K, V, L, TYPE> {
-        debug_assert!(index < self.len());
+        debug_assert!(index < self.num_buckets());
         unsafe { &(*(self.bucket_ptr.add(index))) }
+    }
+
+    /// Returns a mutable reference to a [`Bucket`] at the given position.
+    #[allow(clippy::mut_from_ref)]
+    #[inline]
+    pub(crate) fn bucket_mut(&self, index: usize) -> &mut Bucket<K, V, L, TYPE> {
+        debug_assert!(index < self.num_buckets());
+        unsafe { &mut *self.bucket_ptr.add(index) }
     }
 
     /// Returns a mutable reference to a [`DataBlock`] at the given position.
     #[inline]
     pub(crate) fn data_block(&self, index: usize) -> &DataBlock<K, V, BUCKET_LEN> {
-        debug_assert!(index < self.len());
+        debug_assert!(index < self.num_buckets());
         unsafe { &*self.data_block_ptr.add(index) }
+    }
+
+    /// Returns a mutable reference to a [`DataBlock`] at the given position.
+    #[allow(clippy::mut_from_ref)]
+    #[inline]
+    pub(crate) fn data_block_mut(&self, index: usize) -> &mut DataBlock<K, V, BUCKET_LEN> {
+        debug_assert!(index < self.num_buckets());
+        unsafe { &mut *self.data_block_ptr.add(index) }
     }
 
     /// Calculates the layout of the memory block for an array of `T`.
@@ -47,7 +60,7 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         let aligned_size = size_of_t.next_power_of_two();
         let allocation_size = aligned_size + array_len * size_of_t;
         (size_of_t, allocation_size, unsafe {
-            // Intentionally misaligned in order to take full advantage of demand paging.
+            // Intentionally mis-aligned in order to take full advantage of demand paging.
             Layout::from_size_align_unchecked(allocation_size, 1)
         })
     }
@@ -106,14 +119,14 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
                 data_block_array_layout.size(),
             );
 
-            let sample_size_mask = u16::from(log2_array_len).next_power_of_two() - 1;
+            let sample_size = u16::from(log2_array_len).next_power_of_two();
 
             Self {
                 bucket_ptr: bucket_array_ptr,
                 data_block_ptr: data_block_array_ptr,
                 array_len,
                 hash_offset: 64 - u32::from(log2_array_len),
-                sample_size_mask,
+                sample_size,
                 bucket_ptr_offset: bucket_array_ptr_offset,
                 old_array,
                 num_cleared_buckets: AtomicUsize::new(0),
@@ -121,9 +134,9 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         }
     }
 
-    /// Returns the number of entry slots in the bucket array.
+    /// Returns the number of total entries.
     #[inline]
-    pub(crate) const fn num_slots(&self) -> usize {
+    pub(crate) const fn num_entries(&self) -> usize {
         self.array_len * BUCKET_LEN
     }
 
@@ -133,7 +146,7 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     pub(crate) const fn calculate_bucket_index(&self, hash: u64) -> usize {
         // Take the upper n-bits to make sure that a single bucket is spread across a few adjacent
         // buckets when the hash table is resized.
-        (hash >> self.hash_offset) as usize
+        hash.wrapping_shr(self.hash_offset) as usize
     }
 
     /// Returns the minimum capacity.
@@ -146,7 +159,7 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     #[allow(clippy::cast_possible_truncation)]
     #[inline]
     pub(crate) const fn partial_hash(hash: u64) -> u8 {
-        (hash & (u8::MAX as u64)) as u8
+        (hash % (1 << 8)) as u8
     }
 
     /// Returns a reference to its rehashing metadata.
@@ -155,47 +168,40 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
         &self.num_cleared_buckets
     }
 
-    /// Checks if the bucket is allowed to initiate sampling.
+    /// Checks if the index is within the sampling range of the array.
     #[inline]
-    pub(crate) const fn initiate_sampling(&self, index: usize) -> bool {
-        (index & self.sample_size_mask as usize) == 0
+    pub(crate) const fn within_sampling_range(&self, index: usize) -> bool {
+        (index % self.sample_size()) == 0
     }
 
     /// Returns the recommended sampling size.
     #[inline]
     pub(crate) const fn sample_size(&self) -> usize {
-        (self.sample_size_mask + 1) as usize
+        self.sample_size as usize
     }
 
     /// Returns the recommended sampling size.
     #[inline]
     pub(crate) fn full_sample_size(&self) -> usize {
-        (self.sample_size() * self.sample_size()).min(self.len())
+        ((self.sample_size as usize) * (self.sample_size as usize)).min(self.num_buckets())
     }
 
     /// Returns a [`Ptr`] to the old array.
     #[inline]
     pub(crate) fn has_old_array(&self) -> bool {
-        !self.old_array.is_null(Acquire)
-    }
-
-    /// Returns a reference to the old array pointer.
-    #[inline]
-    pub(crate) fn old_array_ptr(&self) -> &AtomicShared<BucketArray<K, V, L, TYPE>> {
-        &self.old_array
+        !self.old_array.is_null(Relaxed)
     }
 
     /// Returns a [`Ptr`] to the old array.
     #[inline]
     pub(crate) fn old_array<'g>(&self, guard: &'g Guard) -> Ptr<'g, BucketArray<K, V, L, TYPE>> {
-        self.old_array.load(Acquire, guard)
+        self.old_array.load(Relaxed, guard)
     }
 
     /// Drops the old array.
     #[inline]
     pub(crate) fn drop_old_array(&self) {
-        debug_assert!(!self.old_array.is_null(Relaxed));
-        self.old_array.swap((None, Tag::None), Release).0.map(|a| {
+        self.old_array.swap((None, Tag::None), Relaxed).0.map(|a| {
             // It is OK to pass the old array instance to the garbage collector, deferring destruction.
             debug_assert_eq!(
                 a.num_cleared_buckets.load(Relaxed),
@@ -211,7 +217,8 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
     #[allow(clippy::cast_possible_truncation)]
     fn calculate_log2_array_size(capacity: usize) -> u8 {
         let adjusted_capacity = capacity.clamp(64, (usize::MAX / 2) - (BUCKET_LEN - 1));
-        let required_buckets = adjusted_capacity.div_ceil(BUCKET_LEN).next_power_of_two();
+        let required_buckets =
+            ((adjusted_capacity + BUCKET_LEN - 1) / BUCKET_LEN).next_power_of_two();
         let log2_capacity = usize::BITS as usize - (required_buckets.leading_zeros() as usize) - 1;
 
         // `2^log2_capacity * BUCKET_LEN >= capacity`.
@@ -224,8 +231,7 @@ impl<K, V, L: LruList, const TYPE: char> BucketArray<K, V, L, TYPE> {
 impl<K, V, L: LruList, const TYPE: char> Drop for BucketArray<K, V, L, TYPE> {
     fn drop(&mut self) {
         if TYPE != OPTIMISTIC && !self.old_array.is_null(Relaxed) {
-            // The `BucketArray` cannot be dropped immediately if `TYPE == OPTIMISTIC`, because
-            // entry references can be held as long as the associated guard is alive.
+            // The `BucketArray` should be dropped immediately.
             unsafe {
                 self.old_array
                     .swap((None, Tag::None), Relaxed)
@@ -234,11 +240,18 @@ impl<K, V, L: LruList, const TYPE: char> Drop for BucketArray<K, V, L, TYPE> {
             }
         }
 
-        // `LinkedBucket` instances should be cleaned up.
-        let num_cleared_buckets = self.num_cleared_buckets.load(Relaxed);
+        let num_cleared_buckets = if TYPE == OPTIMISTIC && needs_drop::<(K, V)>() {
+            // No instances are dropped when the array is reachable.
+            0
+        } else {
+            // `LinkedBucket` instances should be cleaned up.
+            self.num_cleared_buckets.load(Relaxed)
+        };
+
         if num_cleared_buckets < self.array_len {
             for index in num_cleared_buckets..self.array_len {
-                self.bucket(index).drop_entries(self.data_block(index));
+                self.bucket_mut(index)
+                    .drop_entries(self.data_block_mut(index));
             }
         }
 
@@ -246,12 +259,11 @@ impl<K, V, L: LruList, const TYPE: char> Drop for BucketArray<K, V, L, TYPE> {
             dealloc(
                 self.bucket_ptr
                     .cast::<u8>()
-                    .cast_mut()
                     .sub(self.bucket_ptr_offset as usize),
                 Self::calculate_memory_layout::<Bucket<K, V, L, TYPE>>(self.array_len).2,
             );
             dealloc(
-                self.data_block_ptr.cast::<u8>().cast_mut(),
+                self.data_block_ptr.cast::<u8>(),
                 Layout::from_size_align(
                     size_of::<DataBlock<K, V, BUCKET_LEN>>() * self.array_len,
                     align_of::<[DataBlock<K, V, BUCKET_LEN>; 0]>(),
@@ -268,15 +280,26 @@ unsafe impl<K: Send + Sync, V: Send + Sync, L: LruList, const TYPE: char> Sync
 {
 }
 
-impl<K: UnwindSafe, V: UnwindSafe, L: LruList, const TYPE: char> UnwindSafe
-    for BucketArray<K, V, L, TYPE>
-{
-}
-
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use std::time::Instant;
+
+    #[test]
+    fn alloc() {
+        let start = Instant::now();
+        let array: BucketArray<usize, usize, (), OPTIMISTIC> =
+            BucketArray::new(1024 * 1024 * 32, AtomicShared::default());
+        assert_eq!(array.num_buckets(), 1024 * 1024);
+        let after_alloc = Instant::now();
+        println!("allocation took {:?}", after_alloc - start);
+        array.num_cleared_buckets.store(array.array_len, Relaxed);
+        drop(array);
+        let after_dealloc = Instant::now();
+        println!("de-allocation took {:?}", after_dealloc - after_alloc);
+    }
 
     #[test]
     fn array() {
@@ -284,22 +307,22 @@ mod test {
             let array: BucketArray<usize, usize, (), OPTIMISTIC> =
                 BucketArray::new(s, AtomicShared::default());
             assert!(
-                array.len() >= s.max(1).div_ceil(BUCKET_LEN),
+                array.num_buckets() >= (s.max(1) + BUCKET_LEN - 1) / BUCKET_LEN,
                 "{s} {}",
-                array.len()
+                array.num_buckets()
             );
             assert!(
-                array.len() <= 2 * (s.max(1) + BUCKET_LEN - 1) / BUCKET_LEN,
+                array.num_buckets() <= 2 * (s.max(1) + BUCKET_LEN - 1) / BUCKET_LEN,
                 "{s} {}",
-                array.len()
+                array.num_buckets()
             );
             assert!(
-                array.full_sample_size() <= array.len(),
+                array.full_sample_size() <= array.num_buckets(),
                 "{} {}",
                 array.full_sample_size(),
-                array.len()
+                array.num_buckets()
             );
-            assert!(array.num_slots() >= s, "{s} {}", array.num_slots());
+            assert!(array.num_entries() >= s, "{s} {}", array.num_entries());
             array.num_cleared_buckets.store(array.array_len, Relaxed);
         }
     }

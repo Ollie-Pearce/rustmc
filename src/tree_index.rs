@@ -5,6 +5,11 @@ mod leaf;
 mod leaf_node;
 mod node;
 
+use crate::ebr::{AtomicShared, Guard, Ptr, Shared, Tag};
+use crate::wait_queue::AsyncWait;
+use crate::Comparable;
+use leaf::{InsertResult, Leaf, RemoveResult, Scanner};
+use node::Node;
 use std::fmt::{self, Debug};
 use std::iter::FusedIterator;
 use std::marker::PhantomData;
@@ -13,13 +18,6 @@ use std::ops::RangeBounds;
 use std::panic::UnwindSafe;
 use std::pin::Pin;
 use std::sync::atomic::Ordering::{AcqRel, Acquire};
-
-use sdd::{AtomicShared, Guard, Ptr, Shared, Tag};
-
-use crate::Comparable;
-use crate::async_helper::AsyncWait;
-use leaf::{InsertResult, Leaf, RemoveResult, Scanner};
-use node::Node;
 
 /// Scalable concurrent B-plus tree.
 ///
@@ -74,7 +72,7 @@ pub struct Iter<'t, 'g, K, V> {
 pub struct Range<'t, 'g, K, V, Q: ?Sized, R: RangeBounds<Q>> {
     root: &'t AtomicShared<Node<K, V>>,
     leaf_scanner: Option<Scanner<'g, K, V>>,
-    bounds: R,
+    range: R,
     check_lower_bound: bool,
     check_upper_bound: bool,
     guard: &'g Guard,
@@ -140,7 +138,6 @@ impl<K, V> TreeIndex<K, V> {
     /// assert_eq!(treeindex.depth(), 0);
     /// ```
     #[inline]
-    #[must_use]
     pub fn depth(&self) -> usize {
         let guard = Guard::new();
         self.root
@@ -606,9 +603,9 @@ where
     /// # Examples
     ///
     /// ```
+    /// use scc::ebr::Guard;
     /// use std::sync::Arc;
-    ///
-    /// use scc::{Guard, TreeIndex};
+    /// use scc::TreeIndex;
     ///
     /// let treeindex: TreeIndex<Arc<str>, u32> = TreeIndex::new();
     ///
@@ -665,9 +662,9 @@ where
     /// # Examples
     ///
     /// ```
+    /// use scc::ebr::Guard;
     /// use std::sync::Arc;
-    ///
-    /// use scc::{Guard, TreeIndex};
+    /// use scc::TreeIndex;
     ///
     /// let treeindex: TreeIndex<Arc<str>, u32> = TreeIndex::new();
     ///
@@ -758,7 +755,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, TreeIndex};
+    /// use scc::TreeIndex;
+    /// use scc::ebr::Guard;
     ///
     /// let treeindex: TreeIndex<u64, u32> = TreeIndex::new();
     ///
@@ -780,7 +778,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use scc::{Guard, TreeIndex};
+    /// use scc::TreeIndex;
+    /// use scc::ebr::Guard;
     ///
     /// let treeindex: TreeIndex<u64, u32> = TreeIndex::new();
     ///
@@ -809,7 +808,7 @@ where
     fn clone(&self) -> Self {
         let self_clone = Self::default();
         for (k, v) in self.iter(&Guard::new()) {
-            let _result: Result<(), (K, V)> = self_clone.insert(k.clone(), v.clone());
+            let _reuslt = self_clone.insert(k.clone(), v.clone());
         }
         self_clone
     }
@@ -944,7 +943,7 @@ impl<'t, 'g, K, V, Q: ?Sized, R: RangeBounds<Q>> Range<'t, 'g, K, V, Q, R> {
         Range::<'t, 'g, K, V, Q, R> {
             root,
             leaf_scanner: None,
-            bounds: range,
+            range,
             check_lower_bound: true,
             check_upper_bound: false,
             guard,
@@ -966,7 +965,7 @@ where
             // Start scanning.
             let root_ptr = self.root.load(Acquire, self.guard);
             if let Some(root_ref) = root_ptr.as_ref() {
-                let min_allowed_key = match self.bounds.start_bound() {
+                let min_allowed_key = match self.range.start_bound() {
                     Excluded(key) | Included(key) => Some(key),
                     Unbounded => {
                         self.check_lower_bound = false;
@@ -1019,13 +1018,13 @@ where
 
     #[inline]
     fn set_check_upper_bound(&mut self, scanner: &Scanner<K, V>) {
-        self.check_upper_bound = match self.bounds.end_bound() {
+        self.check_upper_bound = match self.range.end_bound() {
             Excluded(key) => scanner
                 .max_key()
-                .is_some_and(|max_key| key.compare(max_key).is_le()),
+                .map_or(false, |max_key| key.compare(max_key).is_le()),
             Included(key) => scanner
                 .max_key()
-                .is_some_and(|max_key| key.compare(max_key).is_lt()),
+                .map_or(false, |max_key| key.compare(max_key).is_lt()),
             Unbounded => false,
         };
     }
@@ -1056,7 +1055,7 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         while let Some((k, v)) = self.next_unbounded() {
             if self.check_lower_bound {
-                match self.bounds.start_bound() {
+                match self.range.start_bound() {
                     Excluded(key) => {
                         if key.compare(k).is_ge() {
                             continue;
@@ -1072,7 +1071,7 @@ where
             }
             self.check_lower_bound = false;
             if self.check_upper_bound {
-                match self.bounds.end_bound() {
+                match self.range.end_bound() {
                     Excluded(key) => {
                         if key.compare(k).is_gt() {
                             return Some((k, v));

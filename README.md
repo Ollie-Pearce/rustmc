@@ -206,7 +206,8 @@ if let Some(mut o) = hashindex.get(&1) {
 An [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html) is implemented for [`HashIndex`](#hashindex) because any derived references can survive as long as the associated `ebr::Guard` lives.
 
 ```rust
-use scc::{Guard, HashIndex};
+use scc::ebr::Guard;
+use scc::HashIndex;
 
 let hashindex: HashIndex<u64, u32> = HashIndex::default();
 
@@ -313,7 +314,8 @@ assert!(iter.next().is_none());
 A specific range of keys can be scanned.
 
 ```rust
-use scc::{Guard, TreeIndex};
+use scc::ebr::Guard;
+use scc::TreeIndex;
 
 let treeindex: TreeIndex<u64, u32> = TreeIndex::new();
 
@@ -389,9 +391,9 @@ assert!(stack.pop().is_none());
 ### Examples
 
 ```rust
+use scc::ebr::{AtomicShared, Guard, Shared};
+use scc::LinkedList;
 use std::sync::atomic::Ordering::Relaxed;
-
-use scc::{AtomicShared, Guard, LinkedList, Shared};
 
 #[derive(Default)]
 struct L(AtomicShared<L>, usize);
