@@ -196,9 +196,11 @@ namespace LLVMModule {
 			/* Run after the inliner because it might generate new memcpys */
 			//
 			
+			fpm.addPass(PromoteMemcpy());
+			
 			fpm.addPass(PromoteMemIntrinsicPass());
 
-			fpm.addPass(PromoteMemcpy());
+			
 			
 			fpm.addPass(PromoteMemMove());
 			
