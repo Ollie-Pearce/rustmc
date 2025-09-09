@@ -1,5 +1,6 @@
 
 MIXED_LANGUAGE=false
+INCLUDE_DEPS=true
 DEPDIR=$(pwd)
 
 while [ $# -gt 1 ]; do
@@ -49,6 +50,8 @@ while true; do
 done
 
 cd $TARGET_RUST_PROJECT
+
+rm -rf target-ir/
 
 PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
 PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr '-' '_')
@@ -112,13 +115,14 @@ fi
 cd $DEPDIR
 
 #Maybe remove the DEPDIR var from below
-llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
+#llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
 
-
+llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
+opt -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 20s ./genmc --mixer \
+  timeout 80s ./genmc --mixer \
           --transform-output=myout.ll \
           --print-exec-graphs \
           --disable-function-inliner \
