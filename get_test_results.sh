@@ -31,6 +31,10 @@ external_address_string="LLVM ERROR: Could not resolve external global address:"
 external_address_count=$(grep -rl "$external_address_string" . | wc -l)
 echo "External address errors: $external_address_count / $file_count"
 
+memset_promotion_string="ERROR: Invalid call to memset()!"
+memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
+echo "Memset promotion errors: $memset_promotion_count / $file_count"
+
 ilist_iterator_string="llvm::ilist_iterator_w_bits"
 ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
 echo "ilist iterator errors: $ilist_iterator_count / $file_count"
