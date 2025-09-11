@@ -1,0 +1,27 @@
+[package]
+name = "someday"
+version = "0.6.0"
+edition = "2021"
+authors = ["hinto.janai <hinto.janai@protonmail.com>"]
+description = "Lock-free MVCC primitive"
+documentation = "https://docs.rs/someday"
+repository = "https://github.com/hinto-janai/someday"
+readme = "README.md"
+keywords = ["mvcc", "lock-free", "atomic", "multi-version", "concurrency"]
+categories = ["concurrency"]
+license = "MIT"
+ignore = [
+	"examples"
+]
+rust-version =  "1.70.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = []
+
+[dependencies]
+arc-swap = { version = "1", default-features = false }
+
