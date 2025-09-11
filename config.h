@@ -2,10 +2,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Path of clang executable. */
-#define CLANGPATH "/usr/bin/clang-16"
+#define CLANGPATH "/home/ollie/llvm-project/build/bin/clang-18"
 
 /* The hash of HEAD in the build repository */
-#define GIT_COMMIT "a26b098a"
+#define GIT_COMMIT "6b8064e"
 
 /* define if the compiler supports basic C++20 syntax */
 #define HAVE_CXX20 1
@@ -26,7 +26,7 @@
 #define HAVE_LIBFFI 1
 
 /* Define to 1 if you have the `hwloc' library (-lhwloc). */
-#define HAVE_LIBHWLOC 1
+/* #undef HAVE_LIBHWLOC */
 
 /* Define if there is a working LLVM library. */
 #define HAVE_LLVM 1
@@ -69,13 +69,13 @@
 #define HAVE_UNISTD_H 1
 
 /* Build mode of the LLVM library. */
-#define LLVM_BUILDMODE "RelWithDebInfo"
+#define LLVM_BUILDMODE "Release"
 
 /* Define if LLVM was compiled with NDEBUG. */
-#define LLVM_NDEBUG 1
+/* #undef LLVM_NDEBUG */
 
 /* Version of the LLVM library. */
-#define LLVM_VERSION "16.0.6"
+#define LLVM_VERSION "18.1.7"
 
 /* Name of package */
 #define PACKAGE "genmc"
