@@ -121,42 +121,56 @@ libgenmc_a_AR = $(AR) $(ARFLAGS)
 libgenmc_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libgenmc_a_OBJECTS = src/AccessFilter.$(OBJEXT) src/ASize.$(OBJEXT) \
-	src/BisimilarityCheckerPass.$(OBJEXT) \
+	src/Static/Transforms/BisimilarityCheckerPass.$(OBJEXT) \
 	src/BoundDecider.$(OBJEXT) \
-	src/CallInfoCollectionPass.$(OBJEXT) \
-	src/CodeCondenserPass.$(OBJEXT) \
+	src/Static/Transforms/CallInfoCollectionPass.$(OBJEXT) \
+	src/Static/Transforms/CodeCondenserPass.$(OBJEXT) \
 	src/ContextBoundDecider.$(OBJEXT) \
-	src/ConfirmationAnnotationPass.$(OBJEXT) src/Config.$(OBJEXT) \
-	src/DeclareInternalsPass.$(OBJEXT) \
-	src/DefineLibcFunsPass.$(OBJEXT) \
+	src/Static/Transforms/ConfirmationAnnotationPass.$(OBJEXT) \
+	src/Config.$(OBJEXT) \
+	src/Static/Transforms/DeclareInternalsPass.$(OBJEXT) \
+	src/Static/Transforms/DefineLibcFunsPass.$(OBJEXT) \
 	src/DepExecutionGraph.$(OBJEXT) src/DepInfo.$(OBJEXT) \
-	src/DepView.$(OBJEXT) src/EliminateAnnotationsPass.$(OBJEXT) \
-	src/EliminateCASPHIsPass.$(OBJEXT) \
-	src/EliminateCastsPass.$(OBJEXT) \
-	src/EliminateRedundantInstPass.$(OBJEXT) \
-	src/EliminateUnusedCodePass.$(OBJEXT) \
-	src/EscapeCheckerPass.$(OBJEXT) src/Event.$(OBJEXT) \
-	src/EventLabel.$(OBJEXT) src/Execution.$(OBJEXT) \
-	src/ExecutionGraph.$(OBJEXT) src/ExternalFunctions.$(OBJEXT) \
-	src/FunctionInlinerPass.$(OBJEXT) src/GenMCDriver.$(OBJEXT) \
-	src/InstAnnotator.$(OBJEXT) src/Interpreter.$(OBJEXT) \
-	src/InterpreterEnumAPI.$(OBJEXT) \
-	src/IntrinsicLoweringPass.$(OBJEXT) \
-	src/LoadAnnotationPass.$(OBJEXT) \
-	src/LocalSimplifyCFGPass.$(OBJEXT) src/LLVMModule.$(OBJEXT) \
-	src/LLVMUtils.$(OBJEXT) src/LoopUnrollPass.$(OBJEXT) \
-	src/LoopJumpThreadingPass.$(OBJEXT) \
-	src/MDataCollectionPass.$(OBJEXT) src/MemAccess.$(OBJEXT) \
-	src/MMDetectorPass.$(OBJEXT) src/ModuleInfo.$(OBJEXT) \
+	src/DepView.$(OBJEXT) \
+	src/Static/Transforms/EliminateAnnotationsPass.$(OBJEXT) \
+	src/Static/Transforms/EliminateCASPHIsPass.$(OBJEXT) \
+	src/Static/Transforms/EliminateCastsPass.$(OBJEXT) \
+	src/Static/Transforms/EliminateRedundantInstPass.$(OBJEXT) \
+	src/Static/Transforms/EliminateUnusedCodePass.$(OBJEXT) \
+	src/Static/Transforms/PromotePause.$(OBJEXT) \
+	src/Static/Transforms/splitRW.$(OBJEXT) \
+	src/Static/Transforms/CollectIntrinsics.$(OBJEXT) \
+	src/Static/Transforms/EscapeCheckerPass.$(OBJEXT) \
+	src/Event.$(OBJEXT) src/EventLabel.$(OBJEXT) \
+	src/Execution.$(OBJEXT) src/ExecutionGraph.$(OBJEXT) \
+	src/ExternalFunctions.$(OBJEXT) \
+	src/Static/Transforms/FunctionInlinerPass.$(OBJEXT) \
+	src/GenMCDriver.$(OBJEXT) src/InstAnnotator.$(OBJEXT) \
+	src/Interpreter.$(OBJEXT) src/InterpreterEnumAPI.$(OBJEXT) \
+	src/Static/Transforms/IntrinsicLoweringPass.$(OBJEXT) \
+	src/Static/Transforms/LoadAnnotationPass.$(OBJEXT) \
+	src/Static/Transforms/LocalSimplifyCFGPass.$(OBJEXT) \
+	src/Static/Transforms/LoopUnrollPass.$(OBJEXT) \
+	src/Static/Transforms/LoopJumpThreadingPass.$(OBJEXT) \
+	src/Static/Transforms/MDataCollectionPass.$(OBJEXT) \
+	src/MemAccess.$(OBJEXT) \
+	src/Static/Transforms/MMDetectorPass.$(OBJEXT) \
+	src/Static/Transforms/PromoteMemcpy.$(OBJEXT) \
+	src/Static/Transforms/InsertUndefs.$(OBJEXT) \
+	src/Static/Transforms/PromoteMemMove.$(OBJEXT) \
 	src/NameInfo.$(OBJEXT) src/Parser.$(OBJEXT) \
-	src/PromoteMemIntrinsicPass.$(OBJEXT) \
-	src/PropagateAssumesPass.$(OBJEXT) src/RADriver.$(OBJEXT) \
-	src/Revisit.$(OBJEXT) src/RoundBoundDecider.$(OBJEXT) \
-	src/SAddr.$(OBJEXT) src/Stamp.$(OBJEXT) src/SVal.$(OBJEXT) \
-	src/SpinAssumePass.$(OBJEXT) src/ThreadPinner.$(OBJEXT) \
-	src/ThreadPool.$(OBJEXT) src/WorkSet.$(OBJEXT) \
-	src/Verbosity.$(OBJEXT) src/VectorClock.$(OBJEXT) \
-	src/VerificationError.$(OBJEXT) src/View.$(OBJEXT)
+	src/Static/LLVMModule.$(OBJEXT) src/Static/LLVMUtils.$(OBJEXT) \
+	src/Static/ModuleInfo.$(OBJEXT) \
+	src/Static/Transforms/PromoteMemIntrinsicPass.$(OBJEXT) \
+	src/Static/Transforms/PropagateAssumesPass.$(OBJEXT) \
+	src/RADriver.$(OBJEXT) src/Revisit.$(OBJEXT) \
+	src/RoundBoundDecider.$(OBJEXT) src/SAddr.$(OBJEXT) \
+	src/Stamp.$(OBJEXT) src/SVal.$(OBJEXT) \
+	src/Static/Transforms/SpinAssumePass.$(OBJEXT) \
+	src/ThreadPinner.$(OBJEXT) src/ThreadPool.$(OBJEXT) \
+	src/WorkSet.$(OBJEXT) src/Verbosity.$(OBJEXT) \
+	src/VectorClock.$(OBJEXT) src/VerificationError.$(OBJEXT) \
+	src/View.$(OBJEXT)
 libgenmc_a_OBJECTS = $(am_libgenmc_a_OBJECTS)
 am_genmc_OBJECTS = src/main.$(OBJEXT)
 genmc_OBJECTS = $(am_genmc_OBJECTS)
@@ -178,50 +192,56 @@ DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = src/$(DEPDIR)/ASize.Po \
-	src/$(DEPDIR)/AccessFilter.Po \
-	src/$(DEPDIR)/BisimilarityCheckerPass.Po \
-	src/$(DEPDIR)/BoundDecider.Po \
-	src/$(DEPDIR)/CallInfoCollectionPass.Po \
-	src/$(DEPDIR)/CodeCondenserPass.Po src/$(DEPDIR)/Config.Po \
-	src/$(DEPDIR)/ConfirmationAnnotationPass.Po \
-	src/$(DEPDIR)/ContextBoundDecider.Po \
-	src/$(DEPDIR)/DeclareInternalsPass.Po \
-	src/$(DEPDIR)/DefineLibcFunsPass.Po \
+	src/$(DEPDIR)/AccessFilter.Po src/$(DEPDIR)/BoundDecider.Po \
+	src/$(DEPDIR)/Config.Po src/$(DEPDIR)/ContextBoundDecider.Po \
 	src/$(DEPDIR)/DepExecutionGraph.Po src/$(DEPDIR)/DepInfo.Po \
-	src/$(DEPDIR)/DepView.Po \
-	src/$(DEPDIR)/EliminateAnnotationsPass.Po \
-	src/$(DEPDIR)/EliminateCASPHIsPass.Po \
-	src/$(DEPDIR)/EliminateCastsPass.Po \
-	src/$(DEPDIR)/EliminateRedundantInstPass.Po \
-	src/$(DEPDIR)/EliminateUnusedCodePass.Po \
-	src/$(DEPDIR)/EscapeCheckerPass.Po src/$(DEPDIR)/Event.Po \
+	src/$(DEPDIR)/DepView.Po src/$(DEPDIR)/Event.Po \
 	src/$(DEPDIR)/EventLabel.Po src/$(DEPDIR)/Execution.Po \
 	src/$(DEPDIR)/ExecutionGraph.Po \
 	src/$(DEPDIR)/ExternalFunctions.Po \
-	src/$(DEPDIR)/FunctionInlinerPass.Po \
 	src/$(DEPDIR)/GenMCDriver.Po src/$(DEPDIR)/InstAnnotator.Po \
 	src/$(DEPDIR)/Interpreter.Po \
-	src/$(DEPDIR)/InterpreterEnumAPI.Po \
-	src/$(DEPDIR)/IntrinsicLoweringPass.Po \
-	src/$(DEPDIR)/LLVMModule.Po src/$(DEPDIR)/LLVMUtils.Po \
-	src/$(DEPDIR)/LoadAnnotationPass.Po \
-	src/$(DEPDIR)/LocalSimplifyCFGPass.Po \
-	src/$(DEPDIR)/LoopJumpThreadingPass.Po \
-	src/$(DEPDIR)/LoopUnrollPass.Po \
-	src/$(DEPDIR)/MDataCollectionPass.Po \
-	src/$(DEPDIR)/MMDetectorPass.Po src/$(DEPDIR)/MemAccess.Po \
-	src/$(DEPDIR)/ModuleInfo.Po src/$(DEPDIR)/NameInfo.Po \
-	src/$(DEPDIR)/Parser.Po \
-	src/$(DEPDIR)/PromoteMemIntrinsicPass.Po \
-	src/$(DEPDIR)/PropagateAssumesPass.Po \
+	src/$(DEPDIR)/InterpreterEnumAPI.Po src/$(DEPDIR)/MemAccess.Po \
+	src/$(DEPDIR)/NameInfo.Po src/$(DEPDIR)/Parser.Po \
 	src/$(DEPDIR)/RADriver.Po src/$(DEPDIR)/Revisit.Po \
 	src/$(DEPDIR)/RoundBoundDecider.Po src/$(DEPDIR)/SAddr.Po \
-	src/$(DEPDIR)/SVal.Po src/$(DEPDIR)/SpinAssumePass.Po \
-	src/$(DEPDIR)/Stamp.Po src/$(DEPDIR)/ThreadPinner.Po \
-	src/$(DEPDIR)/ThreadPool.Po src/$(DEPDIR)/VectorClock.Po \
-	src/$(DEPDIR)/Verbosity.Po src/$(DEPDIR)/VerificationError.Po \
-	src/$(DEPDIR)/View.Po src/$(DEPDIR)/WorkSet.Po \
-	src/$(DEPDIR)/main.Po
+	src/$(DEPDIR)/SVal.Po src/$(DEPDIR)/Stamp.Po \
+	src/$(DEPDIR)/ThreadPinner.Po src/$(DEPDIR)/ThreadPool.Po \
+	src/$(DEPDIR)/VectorClock.Po src/$(DEPDIR)/Verbosity.Po \
+	src/$(DEPDIR)/VerificationError.Po src/$(DEPDIR)/View.Po \
+	src/$(DEPDIR)/WorkSet.Po src/$(DEPDIR)/main.Po \
+	src/Static/$(DEPDIR)/LLVMModule.Po \
+	src/Static/$(DEPDIR)/LLVMUtils.Po \
+	src/Static/$(DEPDIR)/ModuleInfo.Po \
+	src/Static/Transforms/$(DEPDIR)/BisimilarityCheckerPass.Po \
+	src/Static/Transforms/$(DEPDIR)/CallInfoCollectionPass.Po \
+	src/Static/Transforms/$(DEPDIR)/CodeCondenserPass.Po \
+	src/Static/Transforms/$(DEPDIR)/CollectIntrinsics.Po \
+	src/Static/Transforms/$(DEPDIR)/ConfirmationAnnotationPass.Po \
+	src/Static/Transforms/$(DEPDIR)/DeclareInternalsPass.Po \
+	src/Static/Transforms/$(DEPDIR)/DefineLibcFunsPass.Po \
+	src/Static/Transforms/$(DEPDIR)/EliminateAnnotationsPass.Po \
+	src/Static/Transforms/$(DEPDIR)/EliminateCASPHIsPass.Po \
+	src/Static/Transforms/$(DEPDIR)/EliminateCastsPass.Po \
+	src/Static/Transforms/$(DEPDIR)/EliminateRedundantInstPass.Po \
+	src/Static/Transforms/$(DEPDIR)/EliminateUnusedCodePass.Po \
+	src/Static/Transforms/$(DEPDIR)/EscapeCheckerPass.Po \
+	src/Static/Transforms/$(DEPDIR)/FunctionInlinerPass.Po \
+	src/Static/Transforms/$(DEPDIR)/InsertUndefs.Po \
+	src/Static/Transforms/$(DEPDIR)/IntrinsicLoweringPass.Po \
+	src/Static/Transforms/$(DEPDIR)/LoadAnnotationPass.Po \
+	src/Static/Transforms/$(DEPDIR)/LocalSimplifyCFGPass.Po \
+	src/Static/Transforms/$(DEPDIR)/LoopJumpThreadingPass.Po \
+	src/Static/Transforms/$(DEPDIR)/LoopUnrollPass.Po \
+	src/Static/Transforms/$(DEPDIR)/MDataCollectionPass.Po \
+	src/Static/Transforms/$(DEPDIR)/MMDetectorPass.Po \
+	src/Static/Transforms/$(DEPDIR)/PromoteMemIntrinsicPass.Po \
+	src/Static/Transforms/$(DEPDIR)/PromoteMemMove.Po \
+	src/Static/Transforms/$(DEPDIR)/PromoteMemcpy.Po \
+	src/Static/Transforms/$(DEPDIR)/PromotePause.Po \
+	src/Static/Transforms/$(DEPDIR)/PropagateAssumesPass.Po \
+	src/Static/Transforms/$(DEPDIR)/SpinAssumePass.Po \
+	src/Static/Transforms/$(DEPDIR)/splitRW.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -501,29 +521,29 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} '/root/genmc-tool/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/ollie/Desktop/mixer/genmc-tool/missing' aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} '/root/genmc-tool/missing' autoconf
-AUTOHEADER = ${SHELL} '/root/genmc-tool/missing' autoheader
-AUTOMAKE = ${SHELL} '/root/genmc-tool/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/ollie/Desktop/mixer/genmc-tool/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/ollie/Desktop/mixer/genmc-tool/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/ollie/Desktop/mixer/genmc-tool/missing' automake-1.16
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
-CLANG = /usr/bin/clang-16
-CLANGXX = /usr/bin/clang++-16
+CLANG = /home/ollie/llvm-project/build/bin/clang-18
+CLANGXX = /usr/bin/clang++-18
 COVERAGE_CFLAGS = 
 COVERAGE_CXXFLAGS = 
 COVERAGE_LDFLAGS = 
 CPPFLAGS = 
-CPPLINT = no
+CPPLINT = /home/ollie/llvm-project/build/bin/clang-tidy
 CSCOPE = cscope
 CTAGS = ctags
 CXX = g++ -std=c++20
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -I/usr/lib/llvm-16/include    -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+CXXFLAGS = -g -O2 -I/home/ollie/llvm-project/llvm/include -I/home/ollie/llvm-project/build/include    -fno-exceptions -funwind-tables -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -565,12 +585,12 @@ INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LCOV = 
-LDFLAGS =  -L/usr/lib/llvm-16/lib  
+LDFLAGS =  -L/home/ollie/llvm-project/build/lib  -lrt -ldl -lm -lz -lzstd -ltinfo -lxml2
 LIBOBJS = 
-LIBS = -lhwloc -lffi -ldl  -lLLVM-16
-LLVMCONFIG = /usr/lib/llvm-16/bin/llvm-config
+LIBS = -lffi -ldl  -lLLVMWindowsManifest -lLLVMXRay -lLLVMLibDriver -lLLVMDlltoolDriver -lLLVMTextAPIBinaryReader -lLLVMCoverage -lLLVMLineEditor -lLLVMX86TargetMCA -lLLVMX86Disassembler -lLLVMX86AsmParser -lLLVMX86CodeGen -lLLVMX86Desc -lLLVMX86Info -lLLVMOrcDebugging -lLLVMOrcJIT -lLLVMWindowsDriver -lLLVMMCJIT -lLLVMJITLink -lLLVMInterpreter -lLLVMExecutionEngine -lLLVMRuntimeDyld -lLLVMOrcTargetProcess -lLLVMOrcShared -lLLVMDWP -lLLVMDebugInfoLogicalView -lLLVMDebugInfoGSYM -lLLVMOption -lLLVMObjectYAML -lLLVMObjCopy -lLLVMMCA -lLLVMMCDisassembler -lLLVMLTO -lLLVMFrontendOpenACC -lLLVMFrontendHLSL -lLLVMFrontendDriver -lLLVMExtensions -lPolly -lPollyISL -lLLVMPasses -lLLVMHipStdPar -lLLVMCoroutines -lLLVMCFGuard -lLLVMipo -lLLVMInstrumentation -lLLVMVectorize -lLLVMLinker -lLLVMFrontendOpenMP -lLLVMFrontendOffloading -lLLVMDWARFLinkerParallel -lLLVMDWARFLinkerClassic -lLLVMDWARFLinker -lLLVMGlobalISel -lLLVMMIRParser -lLLVMAsmPrinter -lLLVMSelectionDAG -lLLVMCodeGen -lLLVMTarget -lLLVMObjCARCOpts -lLLVMCodeGenTypes -lLLVMIRPrinter -lLLVMInterfaceStub -lLLVMFileCheck -lLLVMFuzzMutate -lLLVMScalarOpts -lLLVMInstCombine -lLLVMAggressiveInstCombine -lLLVMTransformUtils -lLLVMBitWriter -lLLVMAnalysis -lLLVMProfileData -lLLVMSymbolize -lLLVMDebugInfoBTF -lLLVMDebugInfoPDB -lLLVMDebugInfoMSF -lLLVMDebugInfoDWARF -lLLVMObject -lLLVMTextAPI -lLLVMMCParser -lLLVMIRReader -lLLVMAsmParser -lLLVMMC -lLLVMDebugInfoCodeView -lLLVMBitReader -lLLVMFuzzerCLI -lLLVMCore -lLLVMRemarks -lLLVMBitstreamReader -lLLVMBinaryFormat -lLLVMTargetParser -lLLVMTableGen -lLLVMSupport -lLLVMDemangle -L/home/ollie/llvm-project/build/lib  -lrt -ldl -lm -lz -lzstd -ltinfo -lxml2
+LLVMCONFIG = /home/ollie/llvm-project/build/bin/llvm-config
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/root/genmc-tool/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/ollie/Desktop/mixer/genmc-tool/missing' makeinfo
 MKDIR_P = /usr/bin/mkdir -p
 OBJEXT = o
 PACKAGE = genmc
@@ -587,10 +607,10 @@ SHELL = /bin/bash
 SHTOOL = 
 STRIP = 
 VERSION = 0.10.1
-abs_builddir = /root/genmc-tool
-abs_srcdir = /root/genmc-tool
-abs_top_builddir = /root/genmc-tool
-abs_top_srcdir = /root/genmc-tool
+abs_builddir = /home/ollie/Desktop/mixer/genmc-tool
+abs_srcdir = /home/ollie/Desktop/mixer/genmc-tool
+abs_top_builddir = /home/ollie/Desktop/mixer/genmc-tool
+abs_top_srcdir = /home/ollie/Desktop/mixer/genmc-tool
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -611,7 +631,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /root/genmc-tool/install-sh
+install_sh = ${SHELL} /home/ollie/Desktop/mixer/genmc-tool/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -661,63 +681,69 @@ noinst_LIBRARIES = libgenmc.a
 libgenmc_a_SOURCES = \
   src/AccessFilter.cpp src/AccessFilter.hpp \
   src/ASize.cpp src/ASize.hpp \
-  src/BisimilarityCheckerPass.cpp src/BisimilarityCheckerPass.hpp \
+  src/Static/Transforms/BisimilarityCheckerPass.cpp src/Static/Transforms/BisimilarityCheckerPass.hpp \
   src/Bitmask.hpp \
   src/BoundDecider.cpp src/BoundDecider.hpp \
-  src/CallInfoCollectionPass.cpp src/CallInfoCollectionPass.hpp \
-  src/CodeCondenserPass.cpp src/CodeCondenserPass.hpp \
+  src/Static/Transforms/CallInfoCollectionPass.cpp src/Static/Transforms/CallInfoCollectionPass.hpp \
+  src/Static/Transforms/CodeCondenserPass.cpp src/Static/Transforms/CodeCondenserPass.hpp \
   src/ContextBoundDecider.cpp src/ContextBoundDecider.hpp \
   src/Calculator.hpp \
   src/CallInstWrapper.hpp \
   src/CombinatoricUtils.hpp \
-  src/ConfirmationAnnotationPass.cpp src/ConfirmationAnnotationPass.hpp \
+  src/Static/Transforms/ConfirmationAnnotationPass.cpp src/Static/Transforms/ConfirmationAnnotationPass.hpp \
   src/Config.cpp src/Config.hpp \
-  src/DeclareInternalsPass.cpp src/DeclareInternalsPass.hpp \
-  src/DefineLibcFunsPass.cpp src/DefineLibcFunsPass.hpp \
+  src/Static/Transforms/DeclareInternalsPass.cpp src/Static/Transforms/DeclareInternalsPass.hpp \
+  src/Static/Transforms/DefineLibcFunsPass.cpp src/Static/Transforms/DefineLibcFunsPass.hpp \
   src/DepExecutionGraph.cpp src/DepExecutionGraph.hpp \
   src/DepInfo.cpp src/DepInfo.hpp \
   src/DepTracker.hpp \
   src/DepView.cpp src/DepView.hpp \
   src/DriverFactory.hpp \
-  src/EliminateAnnotationsPass.cpp src/EliminateAnnotationsPass.hpp \
-  src/EliminateCASPHIsPass.cpp src/EliminateCASPHIsPass.hpp \
-  src/EliminateCastsPass.cpp src/EliminateCastsPass.hpp \
-  src/EliminateRedundantInstPass.cpp src/EliminateRedundantInstPass.hpp \
-  src/EliminateUnusedCodePass.cpp src/EliminateUnusedCodePass.hpp \
+  src/Static/Transforms/EliminateAnnotationsPass.cpp src/Static/Transforms/EliminateAnnotationsPass.hpp \
+  src/Static/Transforms/EliminateCASPHIsPass.cpp src/Static/Transforms/EliminateCASPHIsPass.hpp \
+  src/Static/Transforms/EliminateCastsPass.cpp src/Static/Transforms/EliminateCastsPass.hpp \
+  src/Static/Transforms/EliminateRedundantInstPass.cpp src/Static/Transforms/EliminateRedundantInstPass.hpp \
+  src/Static/Transforms/EliminateUnusedCodePass.cpp src/Static/Transforms/EliminateUnusedCodePass.hpp \
+  src/Static/Transforms/PromotePause.cpp src/Static/Transforms/PromotePause.hpp \
+  src/Static/Transforms/splitRW.cpp src/Static/Transforms/splitRW.hpp \
+  src/Static/Transforms/CollectIntrinsics.cpp src/Static/Transforms/CollectIntrinsics.hpp \
   src/Error.hpp \
-  src/EscapeCheckerPass.cpp src/EscapeCheckerPass.hpp \
+  src/Static/Transforms/EscapeCheckerPass.cpp src/Static/Transforms/EscapeCheckerPass.hpp \
   src/Event.cpp src/Event.hpp \
   src/EventAttr.hpp \
   src/EventLabel.cpp src/EventLabel.hpp \
   src/Execution.cpp \
   src/ExecutionGraph.cpp src/ExecutionGraph.hpp \
   src/ExternalFunctions.cpp \
-  src/FunctionInlinerPass.cpp src/FunctionInlinerPass.hpp \
+  src/Static/Transforms/FunctionInlinerPass.cpp src/Static/Transforms/FunctionInlinerPass.hpp \
   src/GenMCDriver.cpp src/GenMCDriver.hpp \
   src/GraphIterators.hpp \
   src/InstAnnotator.cpp src/InstAnnotator.hpp \
   src/Interpreter.cpp Interpreter.h \
   src/InterpreterEnumAPI.cpp src/InterpreterEnumAPI.hpp \
-  src/IntrinsicLoweringPass.cpp src/IntrinsicLoweringPass.hpp \
+  src/Static/Transforms/IntrinsicLoweringPass.cpp src/Static/Transforms/IntrinsicLoweringPass.hpp \
   src/LabelVisitor.hpp \
-  src/LoadAnnotationPass.cpp src/LoadAnnotationPass.hpp \
-  src/LocalSimplifyCFGPass.cpp src/LocalSimplifyCFGPass.hpp \
+  src/Static/Transforms/LoadAnnotationPass.cpp src/Static/Transforms/LoadAnnotationPass.hpp \
+  src/Static/Transforms/LocalSimplifyCFGPass.cpp src/Static/Transforms/LocalSimplifyCFGPass.hpp \
   src/Logger.hpp \
-  src/LLVMModule.cpp src/LLVMModule.hpp \
-  src/LLVMUtils.cpp src/LLVMUtils.hpp \
-  src/LoopUnrollPass.cpp src/LoopUnrollPass.hpp \
-  src/LoopJumpThreadingPass.cpp src/LoopJumpThreadingPass.hpp \
+  src/Static/Transforms/LoopUnrollPass.cpp src/Static/Transforms/LoopUnrollPass.hpp \
+  src/Static/Transforms/LoopJumpThreadingPass.cpp src/Static/Transforms/LoopJumpThreadingPass.hpp \
   src/Matrix2D.hpp Matrix2D.tcc \
   src/MaximalIterator.hpp \
-  src/MDataCollectionPass.hpp src/MDataCollectionPass.cpp \
+  src/Static/Transforms/MDataCollectionPass.hpp src/Static/Transforms/MDataCollectionPass.cpp \
   src/MemAccess.hpp src/MemAccess.cpp \
-  src/MMDetectorPass.cpp src/MMDetectorPass.hpp \
+  src/Static/Transforms/MMDetectorPass.cpp src/Static/Transforms/MMDetectorPass.hpp \
+  src/Static/Transforms/PromoteMemcpy.cpp \
+  src/Static/Transforms/InsertUndefs.cpp \
+  src/Static/Transforms/PromoteMemMove.cpp \
   src/ModuleID.hpp \
-  src/ModuleInfo.cpp src/ModuleInfo.hpp \
   src/NameInfo.cpp src/NameInfo.hpp \
   src/Parser.cpp src/Parser.hpp \
-  src/PromoteMemIntrinsicPass.cpp src/PromoteMemIntrinsicPass.hpp \
-  src/PropagateAssumesPass.cpp src/PropagateAssumesPass.hpp \
+  src/Static/LLVMModule.cpp \
+  src/Static/LLVMUtils.cpp src/LLVMUtils.hpp \
+  src/Static/ModuleInfo.cpp \
+  src/Static/Transforms/PromoteMemIntrinsicPass.cpp src/Static/Transforms/PromoteMemIntrinsicPass.hpp \
+  src/Static/Transforms/PropagateAssumesPass.cpp src/Static/Transforms/PropagateAssumesPass.hpp \
   src/RADriver.cpp src/RADriver.hpp \
   src/Revisit.cpp src/Revisit.hpp \
   src/RoundBoundDecider.cpp src/RoundBoundDecider.hpp \
@@ -727,7 +753,7 @@ libgenmc_a_SOURCES = \
   src/SExprVisitor.tcc src/SExprVisitor.hpp \
   src/Stamp.cpp src/Stamp.hpp \
   src/SVal.cpp src/SVal.hpp \
-  src/SpinAssumePass.cpp src/SpinAssumePass.hpp \
+  src/Static/Transforms/SpinAssumePass.cpp src/Static/Transforms/SpinAssumePass.hpp \
   src/WBIterator.hpp \
   src/ThreadInfo.hpp \
   src/ThreadPinner.cpp src/ThreadPinner.hpp \
@@ -853,42 +879,69 @@ src/$(DEPDIR)/$(am__dirstamp):
 src/AccessFilter.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ASize.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/BisimilarityCheckerPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/$(am__dirstamp):
+	@$(MKDIR_P) src/Static/Transforms
+	@: > src/Static/Transforms/$(am__dirstamp)
+src/Static/Transforms/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/Static/Transforms/$(DEPDIR)
+	@: > src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/BisimilarityCheckerPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/BoundDecider.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/CallInfoCollectionPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/CodeCondenserPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/CallInfoCollectionPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/CodeCondenserPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/ContextBoundDecider.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/ConfirmationAnnotationPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/ConfirmationAnnotationPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/Config.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/DeclareInternalsPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/DefineLibcFunsPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/DeclareInternalsPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/DefineLibcFunsPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/DepExecutionGraph.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/DepInfo.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/DepView.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/EliminateAnnotationsPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/EliminateCASPHIsPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/EliminateCastsPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/EliminateRedundantInstPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/EliminateUnusedCodePass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/EscapeCheckerPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EliminateAnnotationsPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EliminateCASPHIsPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EliminateCastsPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EliminateRedundantInstPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EliminateUnusedCodePass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/PromotePause.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/splitRW.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/CollectIntrinsics.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/EscapeCheckerPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/Event.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/EventLabel.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -898,8 +951,9 @@ src/ExecutionGraph.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ExternalFunctions.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/FunctionInlinerPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/FunctionInlinerPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/GenMCDriver.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/InstAnnotator.$(OBJEXT): src/$(am__dirstamp) \
@@ -908,36 +962,60 @@ src/Interpreter.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/InterpreterEnumAPI.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/IntrinsicLoweringPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LoadAnnotationPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LocalSimplifyCFGPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LLVMModule.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LLVMUtils.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LoopUnrollPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/LoopJumpThreadingPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/MDataCollectionPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/IntrinsicLoweringPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/LoadAnnotationPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/LocalSimplifyCFGPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/LoopUnrollPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/LoopJumpThreadingPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/MDataCollectionPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/MemAccess.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/MMDetectorPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/ModuleInfo.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/MMDetectorPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/PromoteMemcpy.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/InsertUndefs.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/PromoteMemMove.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/NameInfo.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/Parser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/PromoteMemIntrinsicPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/PropagateAssumesPass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/$(am__dirstamp):
+	@$(MKDIR_P) src/Static
+	@: > src/Static/$(am__dirstamp)
+src/Static/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/Static/$(DEPDIR)
+	@: > src/Static/$(DEPDIR)/$(am__dirstamp)
+src/Static/LLVMModule.$(OBJEXT): src/Static/$(am__dirstamp) \
+	src/Static/$(DEPDIR)/$(am__dirstamp)
+src/Static/LLVMUtils.$(OBJEXT): src/Static/$(am__dirstamp) \
+	src/Static/$(DEPDIR)/$(am__dirstamp)
+src/Static/ModuleInfo.$(OBJEXT): src/Static/$(am__dirstamp) \
+	src/Static/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/PromoteMemIntrinsicPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/PropagateAssumesPass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/RADriver.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/Revisit.$(OBJEXT): src/$(am__dirstamp) \
@@ -947,8 +1025,9 @@ src/RoundBoundDecider.$(OBJEXT): src/$(am__dirstamp) \
 src/SAddr.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/Stamp.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/SVal.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/SpinAssumePass.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
+src/Static/Transforms/SpinAssumePass.$(OBJEXT):  \
+	src/Static/Transforms/$(am__dirstamp) \
+	src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
 src/ThreadPinner.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/ThreadPool.$(OBJEXT): src/$(am__dirstamp) \
@@ -976,61 +1055,37 @@ genmc$(EXEEXT): $(genmc_OBJECTS) $(genmc_DEPENDENCIES) $(EXTRA_genmc_DEPENDENCIE
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/*.$(OBJEXT)
+	-rm -f src/Static/*.$(OBJEXT)
+	-rm -f src/Static/Transforms/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 include src/$(DEPDIR)/ASize.Po # am--include-marker
 include src/$(DEPDIR)/AccessFilter.Po # am--include-marker
-include src/$(DEPDIR)/BisimilarityCheckerPass.Po # am--include-marker
 include src/$(DEPDIR)/BoundDecider.Po # am--include-marker
-include src/$(DEPDIR)/CallInfoCollectionPass.Po # am--include-marker
-include src/$(DEPDIR)/CodeCondenserPass.Po # am--include-marker
 include src/$(DEPDIR)/Config.Po # am--include-marker
-include src/$(DEPDIR)/ConfirmationAnnotationPass.Po # am--include-marker
 include src/$(DEPDIR)/ContextBoundDecider.Po # am--include-marker
-include src/$(DEPDIR)/DeclareInternalsPass.Po # am--include-marker
-include src/$(DEPDIR)/DefineLibcFunsPass.Po # am--include-marker
 include src/$(DEPDIR)/DepExecutionGraph.Po # am--include-marker
 include src/$(DEPDIR)/DepInfo.Po # am--include-marker
 include src/$(DEPDIR)/DepView.Po # am--include-marker
-include src/$(DEPDIR)/EliminateAnnotationsPass.Po # am--include-marker
-include src/$(DEPDIR)/EliminateCASPHIsPass.Po # am--include-marker
-include src/$(DEPDIR)/EliminateCastsPass.Po # am--include-marker
-include src/$(DEPDIR)/EliminateRedundantInstPass.Po # am--include-marker
-include src/$(DEPDIR)/EliminateUnusedCodePass.Po # am--include-marker
-include src/$(DEPDIR)/EscapeCheckerPass.Po # am--include-marker
 include src/$(DEPDIR)/Event.Po # am--include-marker
 include src/$(DEPDIR)/EventLabel.Po # am--include-marker
 include src/$(DEPDIR)/Execution.Po # am--include-marker
 include src/$(DEPDIR)/ExecutionGraph.Po # am--include-marker
 include src/$(DEPDIR)/ExternalFunctions.Po # am--include-marker
-include src/$(DEPDIR)/FunctionInlinerPass.Po # am--include-marker
 include src/$(DEPDIR)/GenMCDriver.Po # am--include-marker
 include src/$(DEPDIR)/InstAnnotator.Po # am--include-marker
 include src/$(DEPDIR)/Interpreter.Po # am--include-marker
 include src/$(DEPDIR)/InterpreterEnumAPI.Po # am--include-marker
-include src/$(DEPDIR)/IntrinsicLoweringPass.Po # am--include-marker
-include src/$(DEPDIR)/LLVMModule.Po # am--include-marker
-include src/$(DEPDIR)/LLVMUtils.Po # am--include-marker
-include src/$(DEPDIR)/LoadAnnotationPass.Po # am--include-marker
-include src/$(DEPDIR)/LocalSimplifyCFGPass.Po # am--include-marker
-include src/$(DEPDIR)/LoopJumpThreadingPass.Po # am--include-marker
-include src/$(DEPDIR)/LoopUnrollPass.Po # am--include-marker
-include src/$(DEPDIR)/MDataCollectionPass.Po # am--include-marker
-include src/$(DEPDIR)/MMDetectorPass.Po # am--include-marker
 include src/$(DEPDIR)/MemAccess.Po # am--include-marker
-include src/$(DEPDIR)/ModuleInfo.Po # am--include-marker
 include src/$(DEPDIR)/NameInfo.Po # am--include-marker
 include src/$(DEPDIR)/Parser.Po # am--include-marker
-include src/$(DEPDIR)/PromoteMemIntrinsicPass.Po # am--include-marker
-include src/$(DEPDIR)/PropagateAssumesPass.Po # am--include-marker
 include src/$(DEPDIR)/RADriver.Po # am--include-marker
 include src/$(DEPDIR)/Revisit.Po # am--include-marker
 include src/$(DEPDIR)/RoundBoundDecider.Po # am--include-marker
 include src/$(DEPDIR)/SAddr.Po # am--include-marker
 include src/$(DEPDIR)/SVal.Po # am--include-marker
-include src/$(DEPDIR)/SpinAssumePass.Po # am--include-marker
 include src/$(DEPDIR)/Stamp.Po # am--include-marker
 include src/$(DEPDIR)/ThreadPinner.Po # am--include-marker
 include src/$(DEPDIR)/ThreadPool.Po # am--include-marker
@@ -1040,6 +1095,38 @@ include src/$(DEPDIR)/VerificationError.Po # am--include-marker
 include src/$(DEPDIR)/View.Po # am--include-marker
 include src/$(DEPDIR)/WorkSet.Po # am--include-marker
 include src/$(DEPDIR)/main.Po # am--include-marker
+include src/Static/$(DEPDIR)/LLVMModule.Po # am--include-marker
+include src/Static/$(DEPDIR)/LLVMUtils.Po # am--include-marker
+include src/Static/$(DEPDIR)/ModuleInfo.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/BisimilarityCheckerPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/CallInfoCollectionPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/CodeCondenserPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/CollectIntrinsics.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/ConfirmationAnnotationPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/DeclareInternalsPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/DefineLibcFunsPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EliminateAnnotationsPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EliminateCASPHIsPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EliminateCastsPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EliminateRedundantInstPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EliminateUnusedCodePass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/EscapeCheckerPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/FunctionInlinerPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/InsertUndefs.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/IntrinsicLoweringPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/LoadAnnotationPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/LocalSimplifyCFGPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/LoopJumpThreadingPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/LoopUnrollPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/MDataCollectionPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/MMDetectorPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/PromoteMemIntrinsicPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/PromoteMemMove.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/PromoteMemcpy.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/PromotePause.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/PropagateAssumesPass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/SpinAssumePass.Po # am--include-marker
+include src/Static/Transforms/$(DEPDIR)/splitRW.Po # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1487,7 +1574,7 @@ distcleancheck: distclean
 	  || { echo "ERROR: files left in build directory after distclean:" ; \
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
-check-local:
+#check-local:
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS check-local
 check: check-am
@@ -1528,6 +1615,10 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/$(am__dirstamp)
+	-rm -f src/Static/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/Static/$(am__dirstamp)
+	-rm -f src/Static/Transforms/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/Static/Transforms/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1542,55 +1633,29 @@ distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 		-rm -f src/$(DEPDIR)/ASize.Po
 	-rm -f src/$(DEPDIR)/AccessFilter.Po
-	-rm -f src/$(DEPDIR)/BisimilarityCheckerPass.Po
 	-rm -f src/$(DEPDIR)/BoundDecider.Po
-	-rm -f src/$(DEPDIR)/CallInfoCollectionPass.Po
-	-rm -f src/$(DEPDIR)/CodeCondenserPass.Po
 	-rm -f src/$(DEPDIR)/Config.Po
-	-rm -f src/$(DEPDIR)/ConfirmationAnnotationPass.Po
 	-rm -f src/$(DEPDIR)/ContextBoundDecider.Po
-	-rm -f src/$(DEPDIR)/DeclareInternalsPass.Po
-	-rm -f src/$(DEPDIR)/DefineLibcFunsPass.Po
 	-rm -f src/$(DEPDIR)/DepExecutionGraph.Po
 	-rm -f src/$(DEPDIR)/DepInfo.Po
 	-rm -f src/$(DEPDIR)/DepView.Po
-	-rm -f src/$(DEPDIR)/EliminateAnnotationsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateCASPHIsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateCastsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateRedundantInstPass.Po
-	-rm -f src/$(DEPDIR)/EliminateUnusedCodePass.Po
-	-rm -f src/$(DEPDIR)/EscapeCheckerPass.Po
 	-rm -f src/$(DEPDIR)/Event.Po
 	-rm -f src/$(DEPDIR)/EventLabel.Po
 	-rm -f src/$(DEPDIR)/Execution.Po
 	-rm -f src/$(DEPDIR)/ExecutionGraph.Po
 	-rm -f src/$(DEPDIR)/ExternalFunctions.Po
-	-rm -f src/$(DEPDIR)/FunctionInlinerPass.Po
 	-rm -f src/$(DEPDIR)/GenMCDriver.Po
 	-rm -f src/$(DEPDIR)/InstAnnotator.Po
 	-rm -f src/$(DEPDIR)/Interpreter.Po
 	-rm -f src/$(DEPDIR)/InterpreterEnumAPI.Po
-	-rm -f src/$(DEPDIR)/IntrinsicLoweringPass.Po
-	-rm -f src/$(DEPDIR)/LLVMModule.Po
-	-rm -f src/$(DEPDIR)/LLVMUtils.Po
-	-rm -f src/$(DEPDIR)/LoadAnnotationPass.Po
-	-rm -f src/$(DEPDIR)/LocalSimplifyCFGPass.Po
-	-rm -f src/$(DEPDIR)/LoopJumpThreadingPass.Po
-	-rm -f src/$(DEPDIR)/LoopUnrollPass.Po
-	-rm -f src/$(DEPDIR)/MDataCollectionPass.Po
-	-rm -f src/$(DEPDIR)/MMDetectorPass.Po
 	-rm -f src/$(DEPDIR)/MemAccess.Po
-	-rm -f src/$(DEPDIR)/ModuleInfo.Po
 	-rm -f src/$(DEPDIR)/NameInfo.Po
 	-rm -f src/$(DEPDIR)/Parser.Po
-	-rm -f src/$(DEPDIR)/PromoteMemIntrinsicPass.Po
-	-rm -f src/$(DEPDIR)/PropagateAssumesPass.Po
 	-rm -f src/$(DEPDIR)/RADriver.Po
 	-rm -f src/$(DEPDIR)/Revisit.Po
 	-rm -f src/$(DEPDIR)/RoundBoundDecider.Po
 	-rm -f src/$(DEPDIR)/SAddr.Po
 	-rm -f src/$(DEPDIR)/SVal.Po
-	-rm -f src/$(DEPDIR)/SpinAssumePass.Po
 	-rm -f src/$(DEPDIR)/Stamp.Po
 	-rm -f src/$(DEPDIR)/ThreadPinner.Po
 	-rm -f src/$(DEPDIR)/ThreadPool.Po
@@ -1600,6 +1665,38 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/View.Po
 	-rm -f src/$(DEPDIR)/WorkSet.Po
 	-rm -f src/$(DEPDIR)/main.Po
+	-rm -f src/Static/$(DEPDIR)/LLVMModule.Po
+	-rm -f src/Static/$(DEPDIR)/LLVMUtils.Po
+	-rm -f src/Static/$(DEPDIR)/ModuleInfo.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/BisimilarityCheckerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CallInfoCollectionPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CodeCondenserPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CollectIntrinsics.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/ConfirmationAnnotationPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/DeclareInternalsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/DefineLibcFunsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateAnnotationsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateCASPHIsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateCastsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateRedundantInstPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateUnusedCodePass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EscapeCheckerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/FunctionInlinerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/InsertUndefs.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/IntrinsicLoweringPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoadAnnotationPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LocalSimplifyCFGPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoopJumpThreadingPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoopUnrollPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/MDataCollectionPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/MMDetectorPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemIntrinsicPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemMove.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemcpy.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromotePause.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PropagateAssumesPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/SpinAssumePass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/splitRW.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -1649,55 +1746,29 @@ maintainer-clean: maintainer-clean-am
 	-rm -rf $(top_srcdir)/autom4te.cache
 		-rm -f src/$(DEPDIR)/ASize.Po
 	-rm -f src/$(DEPDIR)/AccessFilter.Po
-	-rm -f src/$(DEPDIR)/BisimilarityCheckerPass.Po
 	-rm -f src/$(DEPDIR)/BoundDecider.Po
-	-rm -f src/$(DEPDIR)/CallInfoCollectionPass.Po
-	-rm -f src/$(DEPDIR)/CodeCondenserPass.Po
 	-rm -f src/$(DEPDIR)/Config.Po
-	-rm -f src/$(DEPDIR)/ConfirmationAnnotationPass.Po
 	-rm -f src/$(DEPDIR)/ContextBoundDecider.Po
-	-rm -f src/$(DEPDIR)/DeclareInternalsPass.Po
-	-rm -f src/$(DEPDIR)/DefineLibcFunsPass.Po
 	-rm -f src/$(DEPDIR)/DepExecutionGraph.Po
 	-rm -f src/$(DEPDIR)/DepInfo.Po
 	-rm -f src/$(DEPDIR)/DepView.Po
-	-rm -f src/$(DEPDIR)/EliminateAnnotationsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateCASPHIsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateCastsPass.Po
-	-rm -f src/$(DEPDIR)/EliminateRedundantInstPass.Po
-	-rm -f src/$(DEPDIR)/EliminateUnusedCodePass.Po
-	-rm -f src/$(DEPDIR)/EscapeCheckerPass.Po
 	-rm -f src/$(DEPDIR)/Event.Po
 	-rm -f src/$(DEPDIR)/EventLabel.Po
 	-rm -f src/$(DEPDIR)/Execution.Po
 	-rm -f src/$(DEPDIR)/ExecutionGraph.Po
 	-rm -f src/$(DEPDIR)/ExternalFunctions.Po
-	-rm -f src/$(DEPDIR)/FunctionInlinerPass.Po
 	-rm -f src/$(DEPDIR)/GenMCDriver.Po
 	-rm -f src/$(DEPDIR)/InstAnnotator.Po
 	-rm -f src/$(DEPDIR)/Interpreter.Po
 	-rm -f src/$(DEPDIR)/InterpreterEnumAPI.Po
-	-rm -f src/$(DEPDIR)/IntrinsicLoweringPass.Po
-	-rm -f src/$(DEPDIR)/LLVMModule.Po
-	-rm -f src/$(DEPDIR)/LLVMUtils.Po
-	-rm -f src/$(DEPDIR)/LoadAnnotationPass.Po
-	-rm -f src/$(DEPDIR)/LocalSimplifyCFGPass.Po
-	-rm -f src/$(DEPDIR)/LoopJumpThreadingPass.Po
-	-rm -f src/$(DEPDIR)/LoopUnrollPass.Po
-	-rm -f src/$(DEPDIR)/MDataCollectionPass.Po
-	-rm -f src/$(DEPDIR)/MMDetectorPass.Po
 	-rm -f src/$(DEPDIR)/MemAccess.Po
-	-rm -f src/$(DEPDIR)/ModuleInfo.Po
 	-rm -f src/$(DEPDIR)/NameInfo.Po
 	-rm -f src/$(DEPDIR)/Parser.Po
-	-rm -f src/$(DEPDIR)/PromoteMemIntrinsicPass.Po
-	-rm -f src/$(DEPDIR)/PropagateAssumesPass.Po
 	-rm -f src/$(DEPDIR)/RADriver.Po
 	-rm -f src/$(DEPDIR)/Revisit.Po
 	-rm -f src/$(DEPDIR)/RoundBoundDecider.Po
 	-rm -f src/$(DEPDIR)/SAddr.Po
 	-rm -f src/$(DEPDIR)/SVal.Po
-	-rm -f src/$(DEPDIR)/SpinAssumePass.Po
 	-rm -f src/$(DEPDIR)/Stamp.Po
 	-rm -f src/$(DEPDIR)/ThreadPinner.Po
 	-rm -f src/$(DEPDIR)/ThreadPool.Po
@@ -1707,6 +1778,38 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/View.Po
 	-rm -f src/$(DEPDIR)/WorkSet.Po
 	-rm -f src/$(DEPDIR)/main.Po
+	-rm -f src/Static/$(DEPDIR)/LLVMModule.Po
+	-rm -f src/Static/$(DEPDIR)/LLVMUtils.Po
+	-rm -f src/Static/$(DEPDIR)/ModuleInfo.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/BisimilarityCheckerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CallInfoCollectionPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CodeCondenserPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/CollectIntrinsics.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/ConfirmationAnnotationPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/DeclareInternalsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/DefineLibcFunsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateAnnotationsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateCASPHIsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateCastsPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateRedundantInstPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EliminateUnusedCodePass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/EscapeCheckerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/FunctionInlinerPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/InsertUndefs.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/IntrinsicLoweringPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoadAnnotationPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LocalSimplifyCFGPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoopJumpThreadingPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/LoopUnrollPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/MDataCollectionPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/MMDetectorPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemIntrinsicPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemMove.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromoteMemcpy.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PromotePause.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/PropagateAssumesPass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/SpinAssumePass.Po
+	-rm -f src/Static/Transforms/$(DEPDIR)/splitRW.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1772,10 +1875,10 @@ uninstall-am: uninstall-binPROGRAMS uninstall-nobase_genmcHEADERS
 
 
 
-#lint-local: $(libgenmc_a_SOURCES) $(genmc_SOURCES)
-#	-$(CPPLINT) -header-filter='^(?!llvm/).+' -config-file='$(top_srcdir)/.clang-tidy' $^
+lint-local: $(libgenmc_a_SOURCES) $(genmc_SOURCES)
+	-$(CPPLINT) -header-filter='^(?!llvm/).+' -config-file='$(top_srcdir)/.clang-tidy' $^
 
-#check-local: lint-local
+check-local: lint-local
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
