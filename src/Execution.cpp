@@ -1806,10 +1806,10 @@ void Interpreter::visitAtomicRMWInst(AtomicRMWInst &I)
 	auto atyp = TYPE_TO_ATYPE(typ);
 
 	if(!typ->isIntegerTy()){
-		errs() << "ABOUT TO BUG GRAPEFRUIT \n";
+		//errs() << "ABOUT TO BUG GRAPEFRUIT \n";
 		Function *F = I.getParent()->getParent();  
-		errs() << "Function: " << F->getName() << "\n";
-		errs() << "Instruction: " << I;
+		//errs() << "Function: " << F->getName() << "\n";
+		//errs() << "Instruction: " << I;
 	}
 	BUG_ON(!typ->isIntegerTy());
 

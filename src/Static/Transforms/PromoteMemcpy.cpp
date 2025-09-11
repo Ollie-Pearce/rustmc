@@ -38,8 +38,8 @@ void removePromoted(std::ranges::input_range auto &&promoted)
 		if (auto *MC = dyn_cast<MemCpyInst>(MI))
 			src = dyn_cast<BitCastInst>(MC->getRawSource());
 
-		// errs() << "Erasing: ";
-		// MI->dump();
+		// //errs() << "Erasing: ";
+		// //MI->dump();
 		MI->eraseFromParent();
 		if (dst && dst->hasNUses(0))
 			dst->eraseFromParent();
@@ -74,15 +74,15 @@ auto promoteI64Memset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *> &promote
 				builder.CreateStore(memset_val_const, dst);
 			}
 		} else {
-			errs() << " \n Cannot promote memset with non-constant length: ";
-			MI->dump();
+			//errs() << " \n Cannot promote memset with non-constant length: ";
+			//MI->dump();
 			return false;
 		}
 
 		
 	} else {
-		errs() << " \n Cannot promote memset with non-constant value: ";
-		MI->dump();
+		//errs() << " \n Cannot promote memset with non-constant value: ";
+		//MI->dump();
 		return false;
 	}
 	promoted.push_back(MI); // Maybe move this to the end of the function?
@@ -99,9 +99,9 @@ void convertMemcpyWithDebugInfo(MemCpyInst *MemCpyToConvert, VarFieldInfo TypeIn
 	LLVMContext &ctx = MemCpyToConvert->getContext();
 
 	Type *int8Type = Type::getInt8Ty(ctx);
-	errs() << "\n Converting memcpy with debug info\n";
-	MemCpyToConvert->dump();
-	errs() << "\n From function: " << MemCpyToConvert->getFunction()->getName();
+	//errs() << "\n Converting memcpy with debug info\n";
+	//MemCpyToConvert->dump();
+	//errs() << "\n From function: " << MemCpyToConvert->getFunction()->getName();
 
 	int total = 0;
 	for (auto &pair : TypeInfo.FieldSizesAndOffsets) {
@@ -110,26 +110,23 @@ void convertMemcpyWithDebugInfo(MemCpyInst *MemCpyToConvert, VarFieldInfo TypeIn
 	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MemCpyToConvert->getLength());
 	if (constLength) {
 		if (total != constLength->getZExtValue()) {
-			errs() << "\n Total size mismatch: " << total << " vs "
-			       << constLength->getZExtValue();
+			//errs() << "\n Total size mismatch: " << total << " vs " << constLength->getZExtValue();
 
 			// Identify gaps
-			errs() << "\n Identifying gaps:\n";
+			//errs() << "\n Identifying gaps:\n";
 			uint64_t previousEnd = 0;
 			for (auto &pair : TypeInfo.FieldSizesAndOffsets) {
 				uint64_t offset = pair.second;
 				uint64_t size = pair.first;
 				if (offset > previousEnd) {
-					errs() << " Gap from " << previousEnd << " to " << offset
-					       << "\n";
+					//errs() << " Gap from " << previousEnd << " to " << offset << "\n";
 					uninitialisedFields.push_back(
 						std::make_pair(previousEnd, offset));
 				}
 				previousEnd = offset + size;
 			}
 			if (previousEnd < constLength->getZExtValue()) {
-				errs() << "Traiing gap from " << previousEnd << " to "
-				       << constLength->getZExtValue() << "\n";
+				//errs() << "Traiing gap from " << previousEnd << " to " << constLength->getZExtValue() << "\n";
 				uninitialisedFields.push_back(
 					std::make_pair(previousEnd, constLength->getZExtValue()));
 			}
@@ -143,10 +140,7 @@ void convertMemcpyWithDebugInfo(MemCpyInst *MemCpyToConvert, VarFieldInfo TypeIn
 			continue;
 		}
 
-		errs() << "\n"
-		       << " constructing index for field offset: "
-		       << (TypeInfo.FieldSizesAndOffsets[i].second * 8)
-		       << "with size: " << (TypeInfo.FieldSizesAndOffsets[i].first * 8);
+		//errs() << "\n" << " constructing index for field offset: " << (TypeInfo.FieldSizesAndOffsets[i].second * 8) << "with size: " << (TypeInfo.FieldSizesAndOffsets[i].first * 8);
 
 		Value *index = ConstantInt::get(builder.getInt64Ty(),
 						(TypeInfo.FieldSizesAndOffsets[i].second));
@@ -169,8 +163,7 @@ void convertMemcpyWithDebugInfo(MemCpyInst *MemCpyToConvert, VarFieldInfo TypeIn
 			     j = j + 8) {
 				Value *index = ConstantInt::get(builder.getInt64Ty(),
 								uninitialisedFields[i].first + j);
-				errs() << "Generating i64 load/store pairs for index: "
-				       << (uninitialisedFields[i].first + j) << "\n";
+				//errs() << "Generating i64 load/store pairs for index: " << (uninitialisedFields[i].first + j) << "\n";
 				Type *TypeToInsert = IntegerType::get(ctx, 64);
 
 				Value *srcGEP = builder.CreateGEP(int8Type,
@@ -186,9 +179,7 @@ void convertMemcpyWithDebugInfo(MemCpyInst *MemCpyToConvert, VarFieldInfo TypeIn
 		}
 	}
 
-	errs() << "\n "
-		  "--------------------------------------------------------------------------------"
-		  "--------------- \n";
+	//errs() << "\n " "--------------------------------------------------------------------------------" "--------------- \n";
 
 	promoted.push_back(MemCpyToConvert);
 
@@ -208,9 +199,9 @@ void collectFieldSizesAndOffsets(DIDerivedType *Derived, VarFieldInfo &TypeInfo,
 				       entry.first == Derived->getSizeInBits();
 			});
 		if (it != TypeInfo.FieldSizesAndOffsets.end()) {
-			errs() << " \n Already visited type ";
-			Derived->dump();
-			errs() << "\n Current offset: " << currentOffset;
+			//errs() << " \n Already visited type ";
+			//Derived->dump();
+			//errs() << "\n Current offset: " << currentOffset;
 			return;
 		}
 	}
@@ -224,9 +215,9 @@ void collectFieldSizesAndOffsets(DIDerivedType *Derived, VarFieldInfo &TypeInfo,
 		while (newBase) {
 			if (auto *RealBase = dyn_cast<DIBasicType>(newBase)) {
 				uint64_t size = Derived->getSizeInBits() / 8;
-				errs() << "\n Identified base type: ";
-				RealBase->dump();
-				errs() << "\n pushed back with offset: " << offset;
+				//errs() << "\n Identified base type: ";
+				//RealBase->dump();
+				//errs() << "\n pushed back with offset: " << offset;
 				TypeInfo.FieldSizesAndOffsets.push_back(
 					std::make_pair(size, offset));
 				break;
@@ -246,7 +237,7 @@ void collectFieldSizesAndOffsets(DIDerivedType *Derived, VarFieldInfo &TypeInfo,
 				}
 				break;
 			} else {
-				errs() << " \n Could not identify base type";
+				//errs() << " \n Could not identify base type";
 				break;
 			}
 		}
@@ -254,12 +245,12 @@ void collectFieldSizesAndOffsets(DIDerivedType *Derived, VarFieldInfo &TypeInfo,
 		// uint64_t offset = currentOffset + 8;
 		// TypeInfo.FieldSizesAndOffsets.push_back(std::make_pair(8, currentOffset + 8));
 
-		errs() << "\n pointer type: ";
-		Derived->dump();
-		errs() << "\n Current offset: " << currentOffset;
+		//errs() << "\n pointer type: ";
+		//Derived->dump();
+		//errs() << "\n Current offset: " << currentOffset;
 	} else {
-		errs() << " \n Could not identify tag type";
-		Derived->dump();
+		//errs() << " \n Could not identify tag type";
+		//Derived->dump();
 	}
 }
 
@@ -285,8 +276,8 @@ auto promoteMemcpy(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *> &promoted) 
 {
 	ConstantInt *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
 	if (!constLength) {
-		WARN_ONCE("memintr-length",
-			  "Cannot promote non-constant-length mem intrinsic! Skipping...\n");
+		errs() << " \n Cannot promote memcpy with non-constant length: ";
+		MI->dump();
 		return false;
 	}
 
@@ -361,8 +352,8 @@ auto PromoteUndefMemset(MemSetInst *MI, SmallVector<llvm::MemIntrinsic *> &promo
 
 		return true;
 	} else {
-		errs() << " \n Cannot promote memset with non-constant length: ";
-		MI->dump();
+		//errs() << " \n Cannot promote memset with non-constant length: ";
+		//MI->dump();
 		abort();
 		return false;
 	}
@@ -395,18 +386,43 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 				}
 			} else {
 				modified |= promoteMemcpy(MI, promoted);
-			}
+			} //FIXME: This logic is pretty janky. What if there are multiple dbg.declares?
 		} else if (auto *MS = dyn_cast<MemSetInst>(&I)) {
 			if (auto *UV = dyn_cast<UndefValue>(MS->getArgOperand(1))) {
 				modified |= PromoteUndefMemset(MS, promoted);
-			} else {
-				auto DbgDeclares = findDbgDeclares(MS->getDest());
-				if (DbgDeclares.size() == 1) {
-					errs() << "\n Found 1 dbg declare for memset\n";
-					DbgDeclares[0]->dump();
-					errs() << "\n sauerkraut \n";
-				}
+			} else if (auto *CI = dyn_cast<ConstantInt>(MS->getLength())) {
+
 				modified |= promoteI64Memset(MS, promoted);
+			} else {
+				Value *Count = MS->getLength();   
+				for (User *U : Count->users()) {
+					if (auto *SI = dyn_cast<StoreInst>(U)) {
+						 Value *Ptr = SI->getPointerOperand();
+						 auto DbgDeclares = findDbgDeclares(Ptr);
+
+						 if (auto *DebugDeclareI = dyn_cast<DbgDeclareInst>(DbgDeclares[0])){
+							DILocalVariable *Var = DebugDeclareI->getVariable();
+							errs() << "\n Variable name: " << Var->getName();
+							errs() << "\n Variable dump: ";
+							Var->dump();
+						 }
+						 
+
+
+						 /*VarFieldInfo TypeInfo = collectDbgDeclareInfo(DbgDeclares[1]);
+						 if (!TypeInfo.FieldSizesAndOffsets.empty()) {
+							errs() << "Created type info from dbg.declare\n";
+								int total = 0;
+								for (auto &pair : TypeInfo.FieldSizesAndOffsets) {
+									total += pair.first;
+								}
+								errs() << "Total size: " << total << "\n";
+						 } else {
+							errs() << "Could not create type info from dbg.declare\n";
+						 }*/
+
+					}
+				}
 			}
 		}
 	}

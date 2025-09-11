@@ -123,7 +123,7 @@ auto PromoteMemMove::run(Function &F, FunctionAnalysisManager &FAM) -> Preserved
 		if (auto *MI = dyn_cast<MemMoveInst>(&I)) {
 			if (isa<Constant>(MI->getLength())){
 					auto *constLength = llvm::dyn_cast<llvm::ConstantInt>(MI->getLength());
-					errs() << "Promoting MemMove of length: " << constLength->getZExtValue() << "\n";
+					//errs() << "Promoting MemMove of length: " << constLength->getZExtValue() << "\n";
 					promoteMemMove(MI, promoted, constLength->getZExtValue());
 					modified = true;
 				}

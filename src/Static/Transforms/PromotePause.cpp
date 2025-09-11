@@ -23,24 +23,24 @@ using namespace llvm;
 void removePromotedPauses(std::ranges::input_range auto &&promoted)
 {
 	for (auto *CI : promoted) {
-		errs() << "Erasing: ";
-		CI->dump();
+		//errs() << "Erasing: ";
+		//CI->dump();
 
 		if (!CI->use_empty()) {
 			// Replace uses with undef of matching type
-			errs() << "Use list not empty";
+			//errs() << "Use list not empty";
 		} else {
-			errs() << "No uses";
+			//errs() << "No uses";
 
 			if (auto *V = dyn_cast<Value>(CI)) {
 				if (V->hasNUses(0)) {
-					errs() << "No uses, erasing";
+					//errs() << "No uses, erasing";
 					CI->eraseFromParent();
 				} else {
-					errs() << "Has uses, not erasing";
+					//errs() << "Has uses, not erasing";
 				}
 			} else {
-				errs() << "Not a value, cannot erase";
+				//errs() << "Not a value, cannot erase";
 			}
 		}
 
@@ -65,7 +65,7 @@ auto PromotePause::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAn
 					modified = true;
 				}
 			} else {
-				errs() << "Unknown function\n";
+				//errs() << "Unknown function\n";
 			}
 		}
 		

@@ -189,6 +189,7 @@ auto tryPromoteMemCpy(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &prom
 
 auto tryPromoteMemSet(MemSetInst *MS, SmallVector<MemIntrinsic *, 8> &promoted) -> bool
 {
+	MS->dump();
 	if (!canPromoteMemIntrinsic(MS))
 		return false;
 
@@ -241,7 +242,6 @@ bool IsCFunction(Function &F)
 					StringRef Dir = Loc->getDirectory();
 					bool ImplicitCode = Loc->isImplicitCode();
 					if (File.ends_with(".c")) {
-						errs() << "Hello I am a c function";
 						return true;
 					}
 				}
@@ -254,15 +254,16 @@ bool IsCFunction(Function &F)
 auto PromoteMemIntrinsicPass::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAnalyses
 {
 	if (IsCFunction(F)) {
-
 		SmallVector<llvm::MemIntrinsic *, 8> promoted;
 		auto modified = false;
 		for (auto &I : instructions(F)) {
 
 			if (auto *MI = dyn_cast<MemCpyInst>(&I))
 				modified |= tryPromoteMemCpy(MI, promoted);
-			if (auto *MS = dyn_cast<MemSetInst>(&I))
+			if (auto *MS = dyn_cast<MemSetInst>(&I)){
 				modified |= tryPromoteMemSet(MS, promoted);
+			}
+				
 		}
 
 		/* Erase promoted intrinsics from the code */
@@ -273,15 +274,15 @@ auto PromoteMemIntrinsicPass::run(Function &F, FunctionAnalysisManager &FAM) -> 
 
 			if (auto *MI = dyn_cast<MemCpyInst>(&I)) {
 
-				// errs() << "\n in LLVM Function: ";
-				// errs() << MI->getFunction()->getName() << " \n";
+				// //errs() << "\n in LLVM Function: ";
+				// //errs() << MI->getFunction()->getName() << " \n";
 				if (DILocation *Loc = MI->getDebugLoc()) {
-					// errs() << "memcpy at " << Loc->getFilename() << ":"
+					// //errs() << "memcpy at " << Loc->getFilename() << ":"
 					//<< Loc->getLine() << "\n";
 
 					// Extract type info from debug metadata
 					if (auto *Scope = dyn_cast<DISubprogram>(Loc->getScope())) {
-						// errs() << "Function: " << Scope->getName() <<
+						// //errs() << "Function: " << Scope->getName() <<
 						// "\n";
 					}
 				}
@@ -289,7 +290,7 @@ auto PromoteMemIntrinsicPass::run(Function &F, FunctionAnalysisManager &FAM) -> 
 					if (DILocation *Loc = dest_inst->getDebugLoc()) {
 						if (auto *Scope = dyn_cast<DISubprogram>(
 							    Loc->getScope())) {
-							// errs() << "Dest: " << Scope->getName()
+							// //errs() << "Dest: " << Scope->getName()
 							//       << "\n";
 						}
 					}
