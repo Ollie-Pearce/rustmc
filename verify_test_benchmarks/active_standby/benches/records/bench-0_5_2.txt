@@ -1,0 +1,15 @@
+running 12 tests
+test plain_atomicbool                   ... bench:          14 ns/iter (+/- 1)
+test read_guard_no_contention           ... bench:          35 ns/iter (+/- 2)
+test read_guard_read_contention         ... bench:          37 ns/iter (+/- 0)
+test read_guard_readwrite_contention_1  ... bench:         151 ns/iter (+/- 5)
+test read_guard_readwrite_contention_10 ... bench:         177 ns/iter (+/- 50)
+test read_guard_readwrite_contention_20 ... bench:         157 ns/iter (+/- 135)
+test read_guard_readwrite_contention_30 ... bench:          89 ns/iter (+/- 67)
+test read_guard_readwrite_contention_40 ... bench:         124 ns/iter (+/- 179)
+test read_guard_write_contention        ... bench:          99 ns/iter (+/- 79)
+test read_guard_writehold_contention    ... bench:          56 ns/iter (+/- 46)
+test write_guard_with_contention        ... bench:       4,215 ns/iter (+/- 86,352)
+test write_guard_without_contention     ... bench:         389 ns/iter (+/- 4,076)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 12 measured; 0 filtered out; finished in 47.29s
