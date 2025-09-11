@@ -3,6 +3,16 @@ source_filename = "my_pthread.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+%"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" = type { %"std::sync::reentrant_lock::Tid", %"std::sys::sync::mutex::futex::Mutex", i32, i64 }
+%"std::sync::reentrant_lock::Tid" = type { %"core::sync::atomic::AtomicU64" }
+%"core::sync::atomic::AtomicU64" = type { i64 }
+%"std::sys::sync::mutex::futex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
+%"core::sync::atomic::AtomicU32" = type { i32 }
+
+
+
+@_ZN3std2io5stdio6stderr8INSTANCE17h22db7be8253b8d66E = dso_local global %"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" { %"std::sync::reentrant_lock::Tid" { %"core::sync::atomic::AtomicU64" { i64 0 } }, %"std::sys::sync::mutex::futex::Mutex" { %"core::sync::atomic::AtomicU32" { i32 0 } }, i32 0, i64 0 }, align 8
+
 %"core::sync::atomic::AtomicUsize" = type { i64 }
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hf10d90ee4e8d5258E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global %"core::sync::atomic::AtomicUsize" {i64 0 }
@@ -10,13 +20,48 @@ target triple = "x86_64-unknown-linux-gnu"
 @__dso_handle = dso_local global ptr @__dso_handle, align 8
 
 @"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hd69d6c74a2a1681dE" = dso_local global { i64, [2 x i64] } { i64 0, [2 x i64] [i64 0, i64 0] }, align 8
+@"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h3cea3bcc94e317ffE" = dso_local global { i64, [2 x i64] } { i64 0, [2 x i64] [i64 0, i64 0] }, align 8
 @"_ZN3std6thread5local17LocalKey$LT$T$GT$4with17hd5f9bec89a3fdbd3E" = dso_local global { i64, i64 } { i64 0, i64 0 }, align 8
+@"_ZN3std6thread5local17LocalKey$LT$T$GT$4with17h591b19b758959997E" = dso_local global { i64, i64 } { i64 0, i64 0 }, align 8
+
+@_ZN16parking_lot_core11parking_lot9HASHTABLE17hb82b50228d40236fE = global <{ [8 x i8] }> zeroinitializer, align 8
+@_ZN16parking_lot_core11parking_lot9HASHTABLE17h8a41eac2a6ffc7e7E = global <{ [8 x i8] }> zeroinitializer, align 8
 
 
-define dso_local i32 @main() {
-  entry:
-  ret i32 0
-}
+@_ZN4core7unicode12unicode_data11white_space14WHITESPACE_MAP17h78bfbf1a1051c34cE = dso_local global [256 x i8] [
+  i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2,
+  i8 2, i8 3, i8 3, i8 1, i8 1, i8 1, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 1, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 2, i8 2, i8 0, i8 0, i8 0, i8 0, i8 0, i8 2,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 2, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 1, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0
+], align 1
 
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
 entry:
@@ -152,6 +197,8 @@ entry:
 
 ; Function Attrs: nounwind
 declare i32 @__VERIFIER_atexit(ptr noundef) #1
+
+
 
 attributes #0 = { alwaysinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
