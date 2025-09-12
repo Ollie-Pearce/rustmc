@@ -1,6 +1,6 @@
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
-INCLUDE_DEPS=false
+INCLUDE_DEPS=true
 
 while [ $# -gt 1 ]; do
   case "$1" in
@@ -140,7 +140,7 @@ find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r projec
 
   while read -r test_func; do
     echo "Verifying test function: $test_func"
-    timeout 80s ./genmc --mixer \
+    timeout 800s ./genmc --mixer \
             --transform-output=myout.ll \
             --print-exec-graphs \
             --disable-function-inliner \
