@@ -133,8 +133,8 @@ find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r projec
   #Maybe remove the DEPDIR var from below
   #llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
 
-  llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-  opt -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+  /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
+  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
   mkdir -p test_traces/${PROJECT_NAME}/
 
