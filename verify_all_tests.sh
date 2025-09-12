@@ -97,9 +97,18 @@ find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r projec
 
   cargo clean
 
-  if ! RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run 2>&1 | tee cargo_output.txt; then
+  # Create temp file for output
+  cargo_output_file=$(mktemp)
+
+  # Run cargo and capture exit status directly
+  RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+
+  cargo_status=$?
+  rm "$cargo_output_file"   # Clean up
+
+  if [ $cargo_status -ne 0 ]; then
     echo "Cargo test failed for project: $PROJECT_NAME. Skipping..."
-    cd $DEPDIR
+    cd "$DEPDIR"
     continue
   fi
 
