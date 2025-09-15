@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev zlib1g-dev libedit-dev libxml2-dev \
     g++ clang util-linux \
     clang-18 llvm-18 llvm-18-dev \
-    bash \
+    bash gawk vim \
  && rm -rf /var/lib/apt/lists/*
 
 # rustup (no default toolchain)
@@ -35,6 +35,8 @@ COPY rust_toolchain.tar.xz /root/
 RUN tar -xf /root/rust_toolchain.tar.xz -C /root/custom_toolchain
 RUN rustup toolchain link RustMC /root/custom_toolchain/stage1
 
+RUN rustup default stable
+RUN rustup component add cargo
 
 WORKDIR /root/private_mixer
 RUN autoreconf --install && ./configure --with-llvm=/usr/lib/llvm-18 && make -j"$(nproc)" && make install
