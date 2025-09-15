@@ -4,4 +4,7 @@ libgenmc.a
 mixer
 genmc
 trust
-verify_test_benchmarks/scalable-concurrent-containers/target-ir
+verify_test_benchmarks/**/target-ir/
+verify_test_benchmarks/**/target/
+test_results/
+test_traces/
