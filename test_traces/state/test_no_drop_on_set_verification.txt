@@ -1,0 +1,9 @@
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/mixer/genmc-tool/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+
+ Variable name: count
+ Variable dump: <0x57b0da757218> = !DILocalVariable(name: "count", arg: 3, scope: <0x57b0da7493d0>, file: <0x57b0da2d3500>, line: 3218, type: <0x57b0db9101c8>)
+WARNING: Cannot promote non-constant-length mem intrinsic! Skipping...
+genmc: /home/ollie/llvm-project/llvm/include/llvm/ADT/ilist_iterator.h:138: llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::reference llvm::ilist_iterator<OptionsT, IsReverse, IsConst>::operator*() const [with OptionsT = llvm::ilist_detail::node_options<WriteLabel, true, false, void, false>; bool IsReverse = false; bool IsConst = true; reference = const WriteLabel&]: Assertion `!NodePtr->isKnownSentinel()' failed.
+timeout: the monitored command dumped core
+Aborted

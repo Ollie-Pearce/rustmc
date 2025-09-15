@@ -1,0 +1,1142 @@
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/mixer/genmc-tool/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+
+ Variable name: count
+ Variable dump: <0x5a294cc43718> = !DILocalVariable(name: "count", arg: 3, scope: <0x5a294ce74d20>, file: <0x5a294c9ff4a0>, line: 3218, type: <0x5a294e03c178>)
+WARNING: Cannot promote non-constant-length mem intrinsic! Skipping...
+Tip: The execution graph seems quite large. Consider bounding all loops or using -unroll
+<-1, 0> no_double_put:
+	(0, 1): MALLOC right_val.dbg.spill
+	(0, 2): Wna (right_val.dbg.spill[0], 0x0)
+	(0, 3): MALLOC left_val.dbg.spill
+	(0, 4): Wna (left_val.dbg.spill[0], 0x0)
+	(0, 5): MALLOC _32
+	(0, 6): Wna (, 0x0)
+	(0, 7): Wna (, 0x0)
+	(0, 8): Wna (, 0x0)
+	(0, 9): Wna (, 0x0)
+	(0, 10): Wna (, 0x0)
+	(0, 11): Wna (, 0x0)
+	(0, 12): MALLOC kind
+	(0, 13): MALLOC self.dbg.spill.i.i
+	(0, 14): Wna (self.dbg.spill.i.i[0], 0x0)
+	(0, 15): MALLOC 
+	(0, 16): Wna (, 0x0)
+	(0, 17): Wna (, 0x0)
+	(0, 18): MALLOC f.dbg.spill.i
+	(0, 19): MALLOC self.dbg.spill.i35
+	(0, 20): Wna (self.dbg.spill.i35[0], 0x0)
+	(0, 21): MALLOC _7.i36
+	(0, 22): MALLOC self.dbg.spill.i25
+	(0, 23): Wna (self.dbg.spill.i25[0], 0x0)
+	(0, 24): MALLOC _5.i26
+	(0, 25): MALLOC self.dbg.spill.i17
+	(0, 26): Wna (self.dbg.spill.i17[0], 0x0)
+	(0, 27): MALLOC _5.i18
+	(0, 28): MALLOC self.dbg.spill.i8
+	(0, 29): Wna (self.dbg.spill.i8[0], 0x0)
+	(0, 30): MALLOC _15.i
+	(0, 31): MALLOC _14.i
+	(0, 32): MALLOC _12.i
+	(0, 33): MALLOC _5.i
+	(0, 34): MALLOC _0.i9
+	(0, 35): MALLOC self.dbg.spill.i5
+	(0, 36): Wna (self.dbg.spill.i5[0], 0x0)
+	(0, 37): MALLOC _3.i
+	(0, 38): MALLOC self.dbg.spill.i2
+	(0, 39): Wna (self.dbg.spill.i2[0], 0x0)
+	(0, 40): MALLOC _7.i
+	(0, 41): MALLOC _4.i
+	(0, 42): MALLOC self.dbg.spill.i
+	(0, 43): Wna (self.dbg.spill.i[0], 0x0)
+	(0, 44): MALLOC _0.i
+	(0, 45): MALLOC 
+	(0, 46): Wna (, 0x0)
+	(0, 47): Wna (, 0x0)
+	(0, 48): MALLOC value.dbg.spill
+	(0, 49): MALLOC self.dbg.spill
+	(0, 50): Wna (self.dbg.spill[0], 0x0)
+	(0, 51): MALLOC _13
+	(0, 52): MALLOC _0
+	(0, 53): Wna (self.dbg.spill[0], 0x80000000000021d0)
+	(0, 54): Wna (value.dbg.spill[0], 1)
+	(0, 55): Wna (, 0)
+	(0, 56): Wna (, 1)
+	(0, 57): Wna (self.dbg.spill.i[0], 0x80000000000021d8)
+	(0, 58): Wna (self.dbg.spill.i5[0], 0x80000000000021d8)
+	(0, 59): Wna (, 2)
+	(0, 60): Rna (, 2) [(0, 59)]
+	(0, 61): MALLOC location.dbg.spill7.i
+	(0, 62): Wna (location.dbg.spill7.i[0], 0x0)
+	(0, 63): MALLOC 
+	(0, 64): Wna (, 0x0)
+	(0, 65): MALLOC location.dbg.spill.i
+	(0, 66): Wna (location.dbg.spill.i[0], 0x0)
+	(0, 67): MALLOC 
+	(0, 68): Wna (, 0x0)
+	(0, 69): MALLOC dst.dbg.spill.i
+	(0, 70): Wna (dst.dbg.spill.i[0], 0x0)
+	(0, 71): MALLOC pi5.i
+	(0, 72): Wna (pi5.i[0], 0x0)
+	(0, 73): Wna (pi5.i[8], 0x0)
+	(0, 74): Wna (pi5.i[16], 0x0)
+	(0, 75): Wna (pi5.i[24], 0x0)
+	(0, 76): Wna (pi5.i[32], 0x0)
+	(0, 77): Wna (pi5.i[40], 0x0)
+	(0, 78): Wna (pi5.i[48], 0x0)
+	(0, 79): Wna (pi5.i[56], 0x0)
+	(0, 80): MALLOC pi.i
+	(0, 81): Wna (pi.i[0], 0x0)
+	(0, 82): Wna (pi.i[8], 0x0)
+	(0, 83): Wna (pi.i[16], 0x0)
+	(0, 84): Wna (pi.i[24], 0x0)
+	(0, 85): Wna (pi.i[32], 0x0)
+	(0, 86): Wna (pi.i[40], 0x0)
+	(0, 87): Wna (pi.i[48], 0x0)
+	(0, 88): Wna (pi.i[56], 0x0)
+	(0, 89): MALLOC fmt4.i
+	(0, 90): Wna (fmt4.i[0], 0x0)
+	(0, 91): Wna (fmt4.i[8], 0x0)
+	(0, 92): Wna (fmt4.i[16], 0x0)
+	(0, 93): Wna (fmt4.i[24], 0x0)
+	(0, 94): Wna (fmt4.i[32], 0x0)
+	(0, 95): Wna (fmt4.i[40], 0x0)
+	(0, 96): MALLOC fmt.i
+	(0, 97): Wna (fmt.i[0], 0x0)
+	(0, 98): Wna (fmt.i[8], 0x0)
+	(0, 99): Wna (fmt.i[16], 0x0)
+	(0, 100): Wna (fmt.i[24], 0x0)
+	(0, 101): Wna (fmt.i[32], 0x0)
+	(0, 102): Wna (fmt.i[40], 0x0)
+	(0, 103): MALLOC _0.i
+	(0, 104): MALLOC order.i
+	(0, 105): MALLOC force_no_backtrace.dbg.spill3.i
+	(0, 106): MALLOC can_unwind.dbg.spill2.i
+	(0, 107): MALLOC force_no_backtrace.dbg.spill.i
+	(0, 108): MALLOC can_unwind.dbg.spill.i
+	(0, 109): MALLOC pieces.dbg.spill1.i
+	(0, 110): Wna (pieces.dbg.spill1.i[0], 0x0)
+	(0, 111): MALLOC pieces.dbg.spill.i
+	(0, 112): Wna (pieces.dbg.spill.i[0], 0x0)
+	(0, 113): MALLOC self.dbg.spill1
+	(0, 114): Wna (self.dbg.spill1[0], 0x0)
+	(0, 115): MALLOC order.dbg.spill
+	(0, 116): MALLOC self.dbg.spill
+	(0, 117): Wna (self.dbg.spill[0], 0x0)
+	(0, 118): Wna (self.dbg.spill[0], 0x80000000000021d9)
+	(0, 119): Wna (order.dbg.spill[0], 2)
+	(0, 120): Wna (self.dbg.spill1[0], 0x80000000000021d9)
+	(0, 121): Wna (pieces.dbg.spill.i[0], 0x8000000000000b30)
+	(0, 122): Wna (pieces.dbg.spill1.i[0], 0x8000000000000b70)
+	(0, 123): Wna (can_unwind.dbg.spill.i[0], 1)
+	(0, 124): Wna (force_no_backtrace.dbg.spill.i[0], 0)
+	(0, 125): Wna (can_unwind.dbg.spill2.i[0], 1)
+	(0, 126): Wna (force_no_backtrace.dbg.spill3.i[0], 0)
+	(0, 127): Wna (order.i[0], 2)
+	(0, 128): Wna (dst.dbg.spill.i[0], 0x80000000000021d9)
+	(0, 129): Rna (order.i[0], 2) [(0, 127)]
+	(0, 130): Racq (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 0) [INIT]
+	(0, 131): Wna (, 0)
+	(0, 132): Rna (, 0) [(0, 131)]
+	(0, 133): FREE
+	(0, 134): FREE
+	(0, 135): FREE
+	(0, 136): FREE
+	(0, 137): FREE
+	(0, 138): FREE
+	(0, 139): FREE
+	(0, 140): FREE
+	(0, 141): FREE
+	(0, 142): FREE
+	(0, 143): FREE
+	(0, 144): FREE
+	(0, 145): FREE
+	(0, 146): FREE
+	(0, 147): FREE
+	(0, 148): FREE
+	(0, 149): FREE
+	(0, 150): FREE
+	(0, 151): FREE
+	(0, 152): FREE
+	(0, 153): Wna (self.dbg.spill.i8[0], 0x80000000000021d8)
+	(0, 154): Wna (, 0)
+	(0, 155): Rna (, 0) [(0, 154)]
+	(0, 156): MALLOC location.dbg.spill7.i
+	(0, 157): Wna (location.dbg.spill7.i[0], 0x0)
+	(0, 158): MALLOC 
+	(0, 159): Wna (, 0x0)
+	(0, 160): MALLOC location.dbg.spill.i
+	(0, 161): Wna (location.dbg.spill.i[0], 0x0)
+	(0, 162): MALLOC 
+	(0, 163): Wna (, 0x0)
+	(0, 164): MALLOC dst.dbg.spill.i
+	(0, 165): Wna (dst.dbg.spill.i[0], 0x0)
+	(0, 166): MALLOC pi5.i
+	(0, 167): Wna (pi5.i[0], 0x0)
+	(0, 168): Wna (pi5.i[8], 0x0)
+	(0, 169): Wna (pi5.i[16], 0x0)
+	(0, 170): Wna (pi5.i[24], 0x0)
+	(0, 171): Wna (pi5.i[32], 0x0)
+	(0, 172): Wna (pi5.i[40], 0x0)
+	(0, 173): Wna (pi5.i[48], 0x0)
+	(0, 174): Wna (pi5.i[56], 0x0)
+	(0, 175): MALLOC pi.i
+	(0, 176): Wna (pi.i[0], 0x0)
+	(0, 177): Wna (pi.i[8], 0x0)
+	(0, 178): Wna (pi.i[16], 0x0)
+	(0, 179): Wna (pi.i[24], 0x0)
+	(0, 180): Wna (pi.i[32], 0x0)
+	(0, 181): Wna (pi.i[40], 0x0)
+	(0, 182): Wna (pi.i[48], 0x0)
+	(0, 183): Wna (pi.i[56], 0x0)
+	(0, 184): MALLOC fmt4.i
+	(0, 185): Wna (fmt4.i[0], 0x0)
+	(0, 186): Wna (fmt4.i[8], 0x0)
+	(0, 187): Wna (fmt4.i[16], 0x0)
+	(0, 188): Wna (fmt4.i[24], 0x0)
+	(0, 189): Wna (fmt4.i[32], 0x0)
+	(0, 190): Wna (fmt4.i[40], 0x0)
+	(0, 191): MALLOC fmt.i
+	(0, 192): Wna (fmt.i[0], 0x0)
+	(0, 193): Wna (fmt.i[8], 0x0)
+	(0, 194): Wna (fmt.i[16], 0x0)
+	(0, 195): Wna (fmt.i[24], 0x0)
+	(0, 196): Wna (fmt.i[32], 0x0)
+	(0, 197): Wna (fmt.i[40], 0x0)
+	(0, 198): MALLOC _0.i
+	(0, 199): MALLOC order.i
+	(0, 200): MALLOC force_no_backtrace.dbg.spill3.i
+	(0, 201): MALLOC can_unwind.dbg.spill2.i
+	(0, 202): MALLOC force_no_backtrace.dbg.spill.i
+	(0, 203): MALLOC can_unwind.dbg.spill.i
+	(0, 204): MALLOC pieces.dbg.spill1.i
+	(0, 205): Wna (pieces.dbg.spill1.i[0], 0x0)
+	(0, 206): MALLOC pieces.dbg.spill.i
+	(0, 207): Wna (pieces.dbg.spill.i[0], 0x0)
+	(0, 208): MALLOC self.dbg.spill1
+	(0, 209): Wna (self.dbg.spill1[0], 0x0)
+	(0, 210): MALLOC order.dbg.spill
+	(0, 211): MALLOC self.dbg.spill
+	(0, 212): Wna (self.dbg.spill[0], 0x0)
+	(0, 213): Wna (self.dbg.spill[0], 0x80000000000021d8)
+	(0, 214): Wna (order.dbg.spill[0], 0)
+	(0, 215): Wna (self.dbg.spill1[0], 0x80000000000021d8)
+	(0, 216): Wna (pieces.dbg.spill.i[0], 0x8000000000000b30)
+	(0, 217): Wna (pieces.dbg.spill1.i[0], 0x8000000000000b70)
+	(0, 218): Wna (can_unwind.dbg.spill.i[0], 1)
+	(0, 219): Wna (force_no_backtrace.dbg.spill.i[0], 0)
+	(0, 220): Wna (can_unwind.dbg.spill2.i[0], 1)
+	(0, 221): Wna (force_no_backtrace.dbg.spill3.i[0], 0)
+	(0, 222): Wna (order.i[0], 0)
+	(0, 223): Wna (dst.dbg.spill.i[0], 0x80000000000021d8)
+	(0, 224): Rna (order.i[0], 0) [(0, 222)]
+	(0, 225): Rrlx (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 0) [INIT]
+	(0, 226): Wna (, 0)
+	(0, 227): Rna (, 0) [(0, 226)]
+	(0, 228): FREE
+	(0, 229): FREE
+	(0, 230): FREE
+	(0, 231): FREE
+	(0, 232): FREE
+	(0, 233): FREE
+	(0, 234): FREE
+	(0, 235): FREE
+	(0, 236): FREE
+	(0, 237): FREE
+	(0, 238): FREE
+	(0, 239): FREE
+	(0, 240): FREE
+	(0, 241): FREE
+	(0, 242): FREE
+	(0, 243): FREE
+	(0, 244): FREE
+	(0, 245): FREE
+	(0, 246): FREE
+	(0, 247): FREE
+	(0, 248): Wna (, 3)
+	(0, 249): Wna (, 0)
+	(0, 250): Rna (, 3) [(0, 248)]
+	(0, 251): Rna (, 0) [(0, 249)]
+	(0, 252): MALLOC x.dbg.spill13
+	(0, 253): MALLOC x.dbg.spill
+	(0, 254): MALLOC self.dbg.spill11
+	(0, 255): Wna (self.dbg.spill11[0], 0x0)
+	(0, 256): MALLOC failure.dbg.spill
+	(0, 257): MALLOC success.dbg.spill
+	(0, 258): MALLOC new.dbg.spill
+	(0, 259): MALLOC current.dbg.spill
+	(0, 260): MALLOC self.dbg.spill
+	(0, 261): Wna (self.dbg.spill[0], 0x0)
+	(0, 262): MALLOC _13
+	(0, 263): MALLOC _0
+	(0, 264): MALLOC val.dbg.spill8
+	(0, 265): MALLOC val.dbg.spill7
+	(0, 266): MALLOC val.dbg.spill6
+	(0, 267): MALLOC val.dbg.spill5
+	(0, 268): MALLOC val.dbg.spill4
+	(0, 269): MALLOC val.dbg.spill
+	(0, 270): MALLOC force_no_backtrace.dbg.spill3
+	(0, 271): MALLOC can_unwind.dbg.spill2
+	(0, 272): MALLOC pieces.dbg.spill1
+	(0, 273): Wna (pieces.dbg.spill1[0], 0x0)
+	(0, 274): MALLOC force_no_backtrace.dbg.spill
+	(0, 275): MALLOC can_unwind.dbg.spill
+	(0, 276): MALLOC pieces.dbg.spill
+	(0, 277): Wna (pieces.dbg.spill[0], 0x0)
+	(0, 278): Wna (pieces.dbg.spill[0], 0x8000000000000aa0)
+	(0, 279): Wna (can_unwind.dbg.spill[0], 1)
+	(0, 280): Wna (force_no_backtrace.dbg.spill[0], 0)
+	(0, 281): Wna (pieces.dbg.spill1[0], 0x8000000000000ae8)
+	(0, 282): Wna (can_unwind.dbg.spill2[0], 1)
+	(0, 283): Wna (force_no_backtrace.dbg.spill3[0], 0)
+	(0, 284): Wna (val.dbg.spill[0], 0)
+	(0, 285): Wna (val.dbg.spill4[0], 0)
+	(0, 286): Wna (val.dbg.spill5[0], 1)
+	(0, 287): Wna (val.dbg.spill6[0], 1)
+	(0, 288): Wna (val.dbg.spill7[0], 0)
+	(0, 289): Wna (val.dbg.spill8[0], 0)
+	(0, 290): Wna (self.dbg.spill[0], 0x80000000000021d8)
+	(0, 291): Wna (current.dbg.spill[0], 0)
+	(0, 292): Wna (new.dbg.spill[0], 1)
+	(0, 293): Wna (success.dbg.spill[0], 3)
+	(0, 294): Wna (failure.dbg.spill[0], 0)
+	(0, 295): Wna (self.dbg.spill11[0], 0x80000000000021d8)
+	(0, 296): MALLOC location.dbg.spill7
+	(0, 297): Wna (location.dbg.spill7[0], 0x0)
+	(0, 298): MALLOC 
+	(0, 299): Wna (, 0x0)
+	(0, 300): MALLOC location.dbg.spill
+	(0, 301): Wna (location.dbg.spill[0], 0x0)
+	(0, 302): MALLOC 
+	(0, 303): Wna (, 0x0)
+	(0, 304): MALLOC ok.dbg.spill
+	(0, 305): MALLOC val.dbg.spill
+	(0, 306): MALLOC new.dbg.spill
+	(0, 307): MALLOC old.dbg.spill
+	(0, 308): MALLOC dst.dbg.spill
+	(0, 309): Wna (dst.dbg.spill[0], 0x0)
+	(0, 310): MALLOC pi5
+	(0, 311): Wna (pi5[0], 0x0)
+	(0, 312): Wna (pi5[8], 0x0)
+	(0, 313): Wna (pi5[16], 0x0)
+	(0, 314): Wna (pi5[24], 0x0)
+	(0, 315): Wna (pi5[32], 0x0)
+	(0, 316): Wna (pi5[40], 0x0)
+	(0, 317): Wna (pi5[48], 0x0)
+	(0, 318): Wna (pi5[56], 0x0)
+	(0, 319): MALLOC pi
+	(0, 320): Wna (pi[0], 0x0)
+	(0, 321): Wna (pi[8], 0x0)
+	(0, 322): Wna (pi[16], 0x0)
+	(0, 323): Wna (pi[24], 0x0)
+	(0, 324): Wna (pi[32], 0x0)
+	(0, 325): Wna (pi[40], 0x0)
+	(0, 326): Wna (pi[48], 0x0)
+	(0, 327): Wna (pi[56], 0x0)
+	(0, 328): MALLOC fmt4
+	(0, 329): Wna (fmt4[0], 0x0)
+	(0, 330): Wna (fmt4[8], 0x0)
+	(0, 331): Wna (fmt4[16], 0x0)
+	(0, 332): Wna (fmt4[24], 0x0)
+	(0, 333): Wna (fmt4[32], 0x0)
+	(0, 334): Wna (fmt4[40], 0x0)
+	(0, 335): MALLOC fmt
+	(0, 336): Wna (fmt[0], 0x0)
+	(0, 337): Wna (fmt[8], 0x0)
+	(0, 338): Wna (fmt[16], 0x0)
+	(0, 339): Wna (fmt[24], 0x0)
+	(0, 340): Wna (fmt[32], 0x0)
+	(0, 341): Wna (fmt[40], 0x0)
+	(0, 342): MALLOC _8
+	(0, 343): MALLOC _0
+	(0, 344): MALLOC failure
+	(0, 345): MALLOC success
+	(0, 346): MALLOC force_no_backtrace.dbg.spill3
+	(0, 347): MALLOC can_unwind.dbg.spill2
+	(0, 348): MALLOC force_no_backtrace.dbg.spill
+	(0, 349): MALLOC can_unwind.dbg.spill
+	(0, 350): MALLOC pieces.dbg.spill1
+	(0, 351): Wna (pieces.dbg.spill1[0], 0x0)
+	(0, 352): MALLOC pieces.dbg.spill
+	(0, 353): Wna (pieces.dbg.spill[0], 0x0)
+	(0, 354): Wna (pieces.dbg.spill[0], 0x8000000000000ae8)
+	(0, 355): Wna (pieces.dbg.spill1[0], 0x8000000000000aa0)
+	(0, 356): Wna (can_unwind.dbg.spill[0], 1)
+	(0, 357): Wna (force_no_backtrace.dbg.spill[0], 0)
+	(0, 358): Wna (can_unwind.dbg.spill2[0], 1)
+	(0, 359): Wna (force_no_backtrace.dbg.spill3[0], 0)
+	(0, 360): Wna (success[0], 3)
+	(0, 361): Wna (failure[0], 0)
+	(0, 362): Wna (dst.dbg.spill[0], 0x80000000000021d8)
+	(0, 363): Wna (old.dbg.spill[0], 0)
+	(0, 364): Wna (new.dbg.spill[0], 1)
+	(0, 365): Rna (success[0], 3) [(0, 360)]
+	(0, 366): Rna (failure[0], 0) [(0, 361)]
+	(0, 367): CRar (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 0) [INIT]
+	(0, 368): CWar (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 1)
+	(0, 369): Wna (, 0)
+	(0, 370): Wna (, 1)
+	(0, 371): Rna (, 0) [(0, 369)]
+	(0, 372): Wna (val.dbg.spill[0], 0)
+	(0, 373): Rna (, 1) [(0, 370)]
+	(0, 374): Wna (ok.dbg.spill[0], 1)
+	(0, 375): Wna (, 0)
+	(0, 376): Wna (, 0)
+	(0, 377): Rna (, 0) [(0, 376)]
+	(0, 378): Rna (, 0) [(0, 375)]
+	(0, 379): FREE
+	(0, 380): FREE
+	(0, 381): FREE
+	(0, 382): FREE
+	(0, 383): FREE
+	(0, 384): FREE
+	(0, 385): FREE
+	(0, 386): FREE
+	(0, 387): FREE
+	(0, 388): FREE
+	(0, 389): FREE
+	(0, 390): FREE
+	(0, 391): FREE
+	(0, 392): FREE
+	(0, 393): FREE
+	(0, 394): FREE
+	(0, 395): FREE
+	(0, 396): FREE
+	(0, 397): FREE
+	(0, 398): FREE
+	(0, 399): FREE
+	(0, 400): FREE
+	(0, 401): FREE
+	(0, 402): Wna (, 0)
+	(0, 403): Wna (, 0)
+	(0, 404): Rna (, 0) [(0, 402)]
+	(0, 405): Rna (, 0) [(0, 403)]
+	(0, 406): Wna (x.dbg.spill[0], 0)
+	(0, 407): Wna (, 0)
+	(0, 408): Wna (, 0)
+	(0, 409): Rna (, 0) [(0, 408)]
+	(0, 410): Rna (, 0) [(0, 407)]
+	(0, 411): FREE
+	(0, 412): FREE
+	(0, 413): FREE
+	(0, 414): FREE
+	(0, 415): FREE
+	(0, 416): FREE
+	(0, 417): FREE
+	(0, 418): FREE
+	(0, 419): FREE
+	(0, 420): FREE
+	(0, 421): FREE
+	(0, 422): FREE
+	(0, 423): FREE
+	(0, 424): FREE
+	(0, 425): FREE
+	(0, 426): FREE
+	(0, 427): FREE
+	(0, 428): FREE
+	(0, 429): FREE
+	(0, 430): FREE
+	(0, 431): FREE
+	(0, 432): FREE
+	(0, 433): Wna (, 0)
+	(0, 434): Wna (, 0)
+	(0, 435): MALLOC self.dbg.spill
+	(0, 436): Wna (self.dbg.spill[0], 0x0)
+	(0, 437): MALLOC _2
+	(0, 438): Wna (self.dbg.spill[0], 0x40000000000000c4)
+	(0, 439): Rna (, 0) [(0, 433)]
+	(0, 440): Wna (, 1)
+	(0, 441): Rna (, 1) [(0, 440)]
+	(0, 442): FREE
+	(0, 443): FREE
+	(0, 444): Wna (, 1)
+	(0, 445): Rna (, 1) [(0, 444)]
+	(0, 446): Wna (, 1)
+	(0, 447): Rna (, 1) [(0, 446)]
+	(0, 448): Wna (, 0)
+	(0, 449): Wna (self.dbg.spill.i35[0], 0x80000000000021d0)
+	(0, 450): Wna (f.dbg.spill.i[0], 1)
+	(0, 451): Wna (, 0)
+	(0, 452): Wna (, 1)
+	(0, 453): Wna (self.dbg.spill.i.i[0], 0x80000000000021d0)
+	(0, 454): Wna (, 0)
+	(0, 455): MALLOC ptr.dbg.spill
+	(0, 456): Wna (ptr.dbg.spill[0], 0x0)
+	(0, 457): MALLOC _1.dbg.spill
+	(0, 458): MALLOC _3
+	(0, 459): Wna (, 0x0)
+	(0, 460): Wna (_1.dbg.spill[0], 1)
+	(0, 461): Wna (ptr.dbg.spill[0], 0x80000000000021d0)
+	(0, 462): Wna (, 1)
+	(0, 463): Wna (, 1)
+	(0, 464): Rna (, 1) [(0, 463)]
+	(0, 465): Rna (, 1) [(0, 462)]
+	(0, 466): Wna (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.item[0], 1)
+	(0, 467): Wna (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[0], 1)
+	(0, 468): FREE
+	(0, 469): FREE
+	(0, 470): FREE
+	(0, 471): Wna (, 0)
+	(0, 472): Wna (self.dbg.spill.i2[0], 0x80000000000021d8)
+	(0, 473): Wna (, 1)
+	(0, 474): Rna (, 1) [(0, 473)]
+	(0, 475): MALLOC self.dbg.spill1
+	(0, 476): Wna (self.dbg.spill1[0], 0x0)
+	(0, 477): MALLOC order.dbg.spill
+	(0, 478): MALLOC val.dbg.spill
+	(0, 479): MALLOC self.dbg.spill
+	(0, 480): Wna (self.dbg.spill[0], 0x0)
+	(0, 481): Wna (self.dbg.spill[0], 0x80000000000021d8)
+	(0, 482): Wna (val.dbg.spill[0], 1)
+	(0, 483): Wna (order.dbg.spill[0], 1)
+	(0, 484): Wna (self.dbg.spill1[0], 0x80000000000021d8)
+	(0, 485): MALLOC location.dbg.spill7
+	(0, 486): Wna (location.dbg.spill7[0], 0x0)
+	(0, 487): MALLOC 
+	(0, 488): Wna (, 0x0)
+	(0, 489): MALLOC location.dbg.spill
+	(0, 490): Wna (location.dbg.spill[0], 0x0)
+	(0, 491): MALLOC 
+	(0, 492): Wna (, 0x0)
+	(0, 493): MALLOC val.dbg.spill
+	(0, 494): MALLOC dst.dbg.spill
+	(0, 495): Wna (dst.dbg.spill[0], 0x0)
+	(0, 496): MALLOC pi5
+	(0, 497): Wna (pi5[0], 0x0)
+	(0, 498): Wna (pi5[8], 0x0)
+	(0, 499): Wna (pi5[16], 0x0)
+	(0, 500): Wna (pi5[24], 0x0)
+	(0, 501): Wna (pi5[32], 0x0)
+	(0, 502): Wna (pi5[40], 0x0)
+	(0, 503): Wna (pi5[48], 0x0)
+	(0, 504): Wna (pi5[56], 0x0)
+	(0, 505): MALLOC pi
+	(0, 506): Wna (pi[0], 0x0)
+	(0, 507): Wna (pi[8], 0x0)
+	(0, 508): Wna (pi[16], 0x0)
+	(0, 509): Wna (pi[24], 0x0)
+	(0, 510): Wna (pi[32], 0x0)
+	(0, 511): Wna (pi[40], 0x0)
+	(0, 512): Wna (pi[48], 0x0)
+	(0, 513): Wna (pi[56], 0x0)
+	(0, 514): MALLOC fmt4
+	(0, 515): Wna (fmt4[0], 0x0)
+	(0, 516): Wna (fmt4[8], 0x0)
+	(0, 517): Wna (fmt4[16], 0x0)
+	(0, 518): Wna (fmt4[24], 0x0)
+	(0, 519): Wna (fmt4[32], 0x0)
+	(0, 520): Wna (fmt4[40], 0x0)
+	(0, 521): MALLOC fmt
+	(0, 522): Wna (fmt[0], 0x0)
+	(0, 523): Wna (fmt[8], 0x0)
+	(0, 524): Wna (fmt[16], 0x0)
+	(0, 525): Wna (fmt[24], 0x0)
+	(0, 526): Wna (fmt[32], 0x0)
+	(0, 527): Wna (fmt[40], 0x0)
+	(0, 528): MALLOC order
+	(0, 529): MALLOC force_no_backtrace.dbg.spill3
+	(0, 530): MALLOC can_unwind.dbg.spill2
+	(0, 531): MALLOC force_no_backtrace.dbg.spill
+	(0, 532): MALLOC can_unwind.dbg.spill
+	(0, 533): MALLOC pieces.dbg.spill1
+	(0, 534): Wna (pieces.dbg.spill1[0], 0x0)
+	(0, 535): MALLOC pieces.dbg.spill
+	(0, 536): Wna (pieces.dbg.spill[0], 0x0)
+	(0, 537): Wna (pieces.dbg.spill[0], 0x8000000000000c38)
+	(0, 538): Wna (pieces.dbg.spill1[0], 0x8000000000000c78)
+	(0, 539): Wna (can_unwind.dbg.spill[0], 1)
+	(0, 540): Wna (force_no_backtrace.dbg.spill[0], 0)
+	(0, 541): Wna (can_unwind.dbg.spill2[0], 1)
+	(0, 542): Wna (force_no_backtrace.dbg.spill3[0], 0)
+	(0, 543): Wna (order[0], 1)
+	(0, 544): Wna (dst.dbg.spill[0], 0x80000000000021d8)
+	(0, 545): Wna (val.dbg.spill[0], 1)
+	(0, 546): Rna (order[0], 1) [(0, 543)]
+	(0, 547): Wrel (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 1)
+	(0, 548): FREE
+	(0, 549): FREE
+	(0, 550): FREE
+	(0, 551): FREE
+	(0, 552): FREE
+	(0, 553): FREE
+	(0, 554): FREE
+	(0, 555): FREE
+	(0, 556): FREE
+	(0, 557): FREE
+	(0, 558): FREE
+	(0, 559): FREE
+	(0, 560): FREE
+	(0, 561): FREE
+	(0, 562): FREE
+	(0, 563): FREE
+	(0, 564): FREE
+	(0, 565): FREE
+	(0, 566): FREE
+	(0, 567): FREE
+	(0, 568): FREE
+	(0, 569): Wna (, 1)
+	(0, 570): Rna (, 1) [(0, 569)]
+	(0, 571): MALLOC self.dbg.spill1
+	(0, 572): Wna (self.dbg.spill1[0], 0x0)
+	(0, 573): MALLOC order.dbg.spill
+	(0, 574): MALLOC val.dbg.spill
+	(0, 575): MALLOC self.dbg.spill
+	(0, 576): Wna (self.dbg.spill[0], 0x0)
+	(0, 577): Wna (self.dbg.spill[0], 0x80000000000021d9)
+	(0, 578): Wna (val.dbg.spill[0], 1)
+	(0, 579): Wna (order.dbg.spill[0], 1)
+	(0, 580): Wna (self.dbg.spill1[0], 0x80000000000021d9)
+	(0, 581): MALLOC location.dbg.spill7
+	(0, 582): Wna (location.dbg.spill7[0], 0x0)
+	(0, 583): MALLOC 
+	(0, 584): Wna (, 0x0)
+	(0, 585): MALLOC location.dbg.spill
+	(0, 586): Wna (location.dbg.spill[0], 0x0)
+	(0, 587): MALLOC 
+	(0, 588): Wna (, 0x0)
+	(0, 589): MALLOC val.dbg.spill
+	(0, 590): MALLOC dst.dbg.spill
+	(0, 591): Wna (dst.dbg.spill[0], 0x0)
+	(0, 592): MALLOC pi5
+	(0, 593): Wna (pi5[0], 0x0)
+	(0, 594): Wna (pi5[8], 0x0)
+	(0, 595): Wna (pi5[16], 0x0)
+	(0, 596): Wna (pi5[24], 0x0)
+	(0, 597): Wna (pi5[32], 0x0)
+	(0, 598): Wna (pi5[40], 0x0)
+	(0, 599): Wna (pi5[48], 0x0)
+	(0, 600): Wna (pi5[56], 0x0)
+	(0, 601): MALLOC pi
+	(0, 602): Wna (pi[0], 0x0)
+	(0, 603): Wna (pi[8], 0x0)
+	(0, 604): Wna (pi[16], 0x0)
+	(0, 605): Wna (pi[24], 0x0)
+	(0, 606): Wna (pi[32], 0x0)
+	(0, 607): Wna (pi[40], 0x0)
+	(0, 608): Wna (pi[48], 0x0)
+	(0, 609): Wna (pi[56], 0x0)
+	(0, 610): MALLOC fmt4
+	(0, 611): Wna (fmt4[0], 0x0)
+	(0, 612): Wna (fmt4[8], 0x0)
+	(0, 613): Wna (fmt4[16], 0x0)
+	(0, 614): Wna (fmt4[24], 0x0)
+	(0, 615): Wna (fmt4[32], 0x0)
+	(0, 616): Wna (fmt4[40], 0x0)
+	(0, 617): MALLOC fmt
+	(0, 618): Wna (fmt[0], 0x0)
+	(0, 619): Wna (fmt[8], 0x0)
+	(0, 620): Wna (fmt[16], 0x0)
+	(0, 621): Wna (fmt[24], 0x0)
+	(0, 622): Wna (fmt[32], 0x0)
+	(0, 623): Wna (fmt[40], 0x0)
+	(0, 624): MALLOC order
+	(0, 625): MALLOC force_no_backtrace.dbg.spill3
+	(0, 626): MALLOC can_unwind.dbg.spill2
+	(0, 627): MALLOC force_no_backtrace.dbg.spill
+	(0, 628): MALLOC can_unwind.dbg.spill
+	(0, 629): MALLOC pieces.dbg.spill1
+	(0, 630): Wna (pieces.dbg.spill1[0], 0x0)
+	(0, 631): MALLOC pieces.dbg.spill
+	(0, 632): Wna (pieces.dbg.spill[0], 0x0)
+	(0, 633): Wna (pieces.dbg.spill[0], 0x8000000000000c38)
+	(0, 634): Wna (pieces.dbg.spill1[0], 0x8000000000000c78)
+	(0, 635): Wna (can_unwind.dbg.spill[0], 1)
+	(0, 636): Wna (force_no_backtrace.dbg.spill[0], 0)
+	(0, 637): Wna (can_unwind.dbg.spill2[0], 1)
+	(0, 638): Wna (force_no_backtrace.dbg.spill3[0], 0)
+	(0, 639): Wna (order[0], 1)
+	(0, 640): Wna (dst.dbg.spill[0], 0x80000000000021d9)
+	(0, 641): Wna (val.dbg.spill[0], 1)
+	(0, 642): Rna (order[0], 1) [(0, 639)]
+	(0, 643): Wrel (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 1)
+	(0, 644): FREE
+	(0, 645): FREE
+	(0, 646): FREE
+	(0, 647): FREE
+	(0, 648): FREE
+	(0, 649): FREE
+	(0, 650): FREE
+	(0, 651): FREE
+	(0, 652): FREE
+	(0, 653): FREE
+	(0, 654): FREE
+	(0, 655): FREE
+	(0, 656): FREE
+	(0, 657): FREE
+	(0, 658): FREE
+	(0, 659): FREE
+	(0, 660): FREE
+	(0, 661): FREE
+	(0, 662): FREE
+	(0, 663): FREE
+	(0, 664): FREE
+	(0, 665): Wna (, 1)
+	(0, 666): Rna (, 1) [(0, 665)]
+	(0, 667): FREE
+	(0, 668): FREE
+	(0, 669): FREE
+	(0, 670): FREE
+	(0, 671): FREE
+	(0, 672): FREE
+	(0, 673): FREE
+	(0, 674): FREE
+	(0, 675): FREE
+	(0, 676): FREE
+	(0, 677): FREE
+	(0, 678): FREE
+	(0, 679): FREE
+	(0, 680): FREE
+	(0, 681): FREE
+	(0, 682): FREE
+	(0, 683): FREE
+	(0, 684): FREE
+	(0, 685): FREE
+	(0, 686): FREE
+	(0, 687): FREE
+	(0, 688): FREE
+	(0, 689): FREE
+	(0, 690): FREE
+	(0, 691): FREE
+	(0, 692): FREE
+	(0, 693): FREE
+	(0, 694): MALLOC self.dbg.spill.i.i
+	(0, 695): Wna (self.dbg.spill.i.i[0], 0x0)
+	(0, 696): MALLOC 
+	(0, 697): Wna (, 0x0)
+	(0, 698): Wna (, 0x0)
+	(0, 699): MALLOC f.dbg.spill.i
+	(0, 700): MALLOC self.dbg.spill.i35
+	(0, 701): Wna (self.dbg.spill.i35[0], 0x0)
+	(0, 702): MALLOC _7.i36
+	(0, 703): MALLOC self.dbg.spill.i25
+	(0, 704): Wna (self.dbg.spill.i25[0], 0x0)
+	(0, 705): MALLOC _5.i26
+	(0, 706): MALLOC self.dbg.spill.i17
+	(0, 707): Wna (self.dbg.spill.i17[0], 0x0)
+	(0, 708): MALLOC _5.i18
+	(0, 709): MALLOC self.dbg.spill.i8
+	(0, 710): Wna (self.dbg.spill.i8[0], 0x0)
+	(0, 711): MALLOC _15.i
+	(0, 712): MALLOC _14.i
+	(0, 713): MALLOC _12.i
+	(0, 714): MALLOC _5.i
+	(0, 715): MALLOC _0.i9
+	(0, 716): MALLOC self.dbg.spill.i5
+	(0, 717): Wna (self.dbg.spill.i5[0], 0x0)
+	(0, 718): MALLOC _3.i
+	(0, 719): MALLOC self.dbg.spill.i2
+	(0, 720): Wna (self.dbg.spill.i2[0], 0x0)
+	(0, 721): MALLOC _7.i
+	(0, 722): MALLOC _4.i
+	(0, 723): MALLOC self.dbg.spill.i
+	(0, 724): Wna (self.dbg.spill.i[0], 0x0)
+	(0, 725): MALLOC _0.i
+	(0, 726): MALLOC 
+	(0, 727): Wna (, 0x0)
+	(0, 728): Wna (, 0x0)
+	(0, 729): MALLOC value.dbg.spill
+	(0, 730): MALLOC self.dbg.spill
+	(0, 731): Wna (self.dbg.spill[0], 0x0)
+	(0, 732): MALLOC _13
+	(0, 733): MALLOC _0
+	(0, 734): Wna (self.dbg.spill[0], 0x80000000000021d0)
+	(0, 735): Wna (value.dbg.spill[0], 5)
+	(0, 736): Wna (, 0)
+	(0, 737): Wna (, 1)
+	(0, 738): Wna (self.dbg.spill.i[0], 0x80000000000021d8)
+	(0, 739): Wna (self.dbg.spill.i5[0], 0x80000000000021d8)
+	(0, 740): Wna (, 2)
+	(0, 741): Rna (, 2) [(0, 740)]
+	(0, 742): MALLOC location.dbg.spill7.i
+	(0, 743): Wna (location.dbg.spill7.i[0], 0x0)
+	(0, 744): MALLOC 
+	(0, 745): Wna (, 0x0)
+	(0, 746): MALLOC location.dbg.spill.i
+	(0, 747): Wna (location.dbg.spill.i[0], 0x0)
+	(0, 748): MALLOC 
+	(0, 749): Wna (, 0x0)
+	(0, 750): MALLOC dst.dbg.spill.i
+	(0, 751): Wna (dst.dbg.spill.i[0], 0x0)
+	(0, 752): MALLOC pi5.i
+	(0, 753): Wna (pi5.i[0], 0x0)
+	(0, 754): Wna (pi5.i[8], 0x0)
+	(0, 755): Wna (pi5.i[16], 0x0)
+	(0, 756): Wna (pi5.i[24], 0x0)
+	(0, 757): Wna (pi5.i[32], 0x0)
+	(0, 758): Wna (pi5.i[40], 0x0)
+	(0, 759): Wna (pi5.i[48], 0x0)
+	(0, 760): Wna (pi5.i[56], 0x0)
+	(0, 761): MALLOC pi.i
+	(0, 762): Wna (pi.i[0], 0x0)
+	(0, 763): Wna (pi.i[8], 0x0)
+	(0, 764): Wna (pi.i[16], 0x0)
+	(0, 765): Wna (pi.i[24], 0x0)
+	(0, 766): Wna (pi.i[32], 0x0)
+	(0, 767): Wna (pi.i[40], 0x0)
+	(0, 768): Wna (pi.i[48], 0x0)
+	(0, 769): Wna (pi.i[56], 0x0)
+	(0, 770): MALLOC fmt4.i
+	(0, 771): Wna (fmt4.i[0], 0x0)
+	(0, 772): Wna (fmt4.i[8], 0x0)
+	(0, 773): Wna (fmt4.i[16], 0x0)
+	(0, 774): Wna (fmt4.i[24], 0x0)
+	(0, 775): Wna (fmt4.i[32], 0x0)
+	(0, 776): Wna (fmt4.i[40], 0x0)
+	(0, 777): MALLOC fmt.i
+	(0, 778): Wna (fmt.i[0], 0x0)
+	(0, 779): Wna (fmt.i[8], 0x0)
+	(0, 780): Wna (fmt.i[16], 0x0)
+	(0, 781): Wna (fmt.i[24], 0x0)
+	(0, 782): Wna (fmt.i[32], 0x0)
+	(0, 783): Wna (fmt.i[40], 0x0)
+	(0, 784): MALLOC _0.i
+	(0, 785): MALLOC order.i
+	(0, 786): MALLOC force_no_backtrace.dbg.spill3.i
+	(0, 787): MALLOC can_unwind.dbg.spill2.i
+	(0, 788): MALLOC force_no_backtrace.dbg.spill.i
+	(0, 789): MALLOC can_unwind.dbg.spill.i
+	(0, 790): MALLOC pieces.dbg.spill1.i
+	(0, 791): Wna (pieces.dbg.spill1.i[0], 0x0)
+	(0, 792): MALLOC pieces.dbg.spill.i
+	(0, 793): Wna (pieces.dbg.spill.i[0], 0x0)
+	(0, 794): MALLOC self.dbg.spill1
+	(0, 795): Wna (self.dbg.spill1[0], 0x0)
+	(0, 796): MALLOC order.dbg.spill
+	(0, 797): MALLOC self.dbg.spill
+	(0, 798): Wna (self.dbg.spill[0], 0x0)
+	(0, 799): Wna (self.dbg.spill[0], 0x80000000000021d9)
+	(0, 800): Wna (order.dbg.spill[0], 2)
+	(0, 801): Wna (self.dbg.spill1[0], 0x80000000000021d9)
+	(0, 802): Wna (pieces.dbg.spill.i[0], 0x8000000000000b30)
+	(0, 803): Wna (pieces.dbg.spill1.i[0], 0x8000000000000b70)
+	(0, 804): Wna (can_unwind.dbg.spill.i[0], 1)
+	(0, 805): Wna (force_no_backtrace.dbg.spill.i[0], 0)
+	(0, 806): Wna (can_unwind.dbg.spill2.i[0], 1)
+	(0, 807): Wna (force_no_backtrace.dbg.spill3.i[0], 0)
+	(0, 808): Wna (order.i[0], 2)
+	(0, 809): Wna (dst.dbg.spill.i[0], 0x80000000000021d9)
+	(0, 810): Rna (order.i[0], 2) [(0, 808)]
+	(0, 811): Racq (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 1) [(0, 643)]
+	(0, 812): Wna (, 1)
+	(0, 813): Rna (, 1) [(0, 812)]
+	(0, 814): FREE
+	(0, 815): FREE
+	(0, 816): FREE
+	(0, 817): FREE
+	(0, 818): FREE
+	(0, 819): FREE
+	(0, 820): FREE
+	(0, 821): FREE
+	(0, 822): FREE
+	(0, 823): FREE
+	(0, 824): FREE
+	(0, 825): FREE
+	(0, 826): FREE
+	(0, 827): FREE
+	(0, 828): FREE
+	(0, 829): FREE
+	(0, 830): FREE
+	(0, 831): FREE
+	(0, 832): FREE
+	(0, 833): FREE
+	(0, 834): Wna (, 0)
+	(0, 835): Rna (, 0) [(0, 834)]
+	(0, 836): Wna (, 0)
+	(0, 837): Rna (, 0) [(0, 836)]
+	(0, 838): FREE
+	(0, 839): FREE
+	(0, 840): FREE
+	(0, 841): FREE
+	(0, 842): FREE
+	(0, 843): FREE
+	(0, 844): FREE
+	(0, 845): FREE
+	(0, 846): FREE
+	(0, 847): FREE
+	(0, 848): FREE
+	(0, 849): FREE
+	(0, 850): FREE
+	(0, 851): FREE
+	(0, 852): FREE
+	(0, 853): FREE
+	(0, 854): FREE
+	(0, 855): FREE
+	(0, 856): FREE
+	(0, 857): FREE
+	(0, 858): FREE
+	(0, 859): FREE
+	(0, 860): FREE
+	(0, 861): FREE
+	(0, 862): FREE
+	(0, 863): FREE
+	(0, 864): FREE
+	(0, 865): MALLOC self.dbg.spill
+	(0, 866): Wna (self.dbg.spill[0], 0x0)
+	(0, 867): Wna (self.dbg.spill[0], 0x80000000000021d0)
+	(0, 868): MALLOC self.dbg.spill.i3
+	(0, 869): Wna (self.dbg.spill.i3[0], 0x0)
+	(0, 870): MALLOC 
+	(0, 871): Wna (, 0x0)
+	(0, 872): Wna (, 0x0)
+	(0, 873): MALLOC self.dbg.spill.i1
+	(0, 874): Wna (self.dbg.spill.i1[0], 0x0)
+	(0, 875): MALLOC _8.i
+	(0, 876): MALLOC self.dbg.spill.i
+	(0, 877): Wna (self.dbg.spill.i[0], 0x0)
+	(0, 878): MALLOC _3.i
+	(0, 879): MALLOC self.dbg.spill
+	(0, 880): Wna (self.dbg.spill[0], 0x0)
+	(0, 881): MALLOC _0
+	(0, 882): Wna (, 0x0)
+	(0, 883): Wna (self.dbg.spill[0], 0x80000000000021d0)
+	(0, 884): Wna (self.dbg.spill.i[0], 0x80000000000021d8)
+	(0, 885): Wna (, 2)
+	(0, 886): Rna (, 2) [(0, 885)]
+	(0, 887): MALLOC location.dbg.spill7.i
+	(0, 888): Wna (location.dbg.spill7.i[0], 0x0)
+	(0, 889): MALLOC 
+	(0, 890): Wna (, 0x0)
+	(0, 891): MALLOC location.dbg.spill.i
+	(0, 892): Wna (location.dbg.spill.i[0], 0x0)
+	(0, 893): MALLOC 
+	(0, 894): Wna (, 0x0)
+	(0, 895): MALLOC dst.dbg.spill.i
+	(0, 896): Wna (dst.dbg.spill.i[0], 0x0)
+	(0, 897): MALLOC pi5.i
+	(0, 898): Wna (pi5.i[0], 0x0)
+	(0, 899): Wna (pi5.i[8], 0x0)
+	(0, 900): Wna (pi5.i[16], 0x0)
+	(0, 901): Wna (pi5.i[24], 0x0)
+	(0, 902): Wna (pi5.i[32], 0x0)
+	(0, 903): Wna (pi5.i[40], 0x0)
+	(0, 904): Wna (pi5.i[48], 0x0)
+	(0, 905): Wna (pi5.i[56], 0x0)
+	(0, 906): MALLOC pi.i
+	(0, 907): Wna (pi.i[0], 0x0)
+	(0, 908): Wna (pi.i[8], 0x0)
+	(0, 909): Wna (pi.i[16], 0x0)
+	(0, 910): Wna (pi.i[24], 0x0)
+	(0, 911): Wna (pi.i[32], 0x0)
+	(0, 912): Wna (pi.i[40], 0x0)
+	(0, 913): Wna (pi.i[48], 0x0)
+	(0, 914): Wna (pi.i[56], 0x0)
+	(0, 915): MALLOC fmt4.i
+	(0, 916): Wna (fmt4.i[0], 0x0)
+	(0, 917): Wna (fmt4.i[8], 0x0)
+	(0, 918): Wna (fmt4.i[16], 0x0)
+	(0, 919): Wna (fmt4.i[24], 0x0)
+	(0, 920): Wna (fmt4.i[32], 0x0)
+	(0, 921): Wna (fmt4.i[40], 0x0)
+	(0, 922): MALLOC fmt.i
+	(0, 923): Wna (fmt.i[0], 0x0)
+	(0, 924): Wna (fmt.i[8], 0x0)
+	(0, 925): Wna (fmt.i[16], 0x0)
+	(0, 926): Wna (fmt.i[24], 0x0)
+	(0, 927): Wna (fmt.i[32], 0x0)
+	(0, 928): Wna (fmt.i[40], 0x0)
+	(0, 929): MALLOC _0.i
+	(0, 930): MALLOC order.i
+	(0, 931): MALLOC force_no_backtrace.dbg.spill3.i
+	(0, 932): MALLOC can_unwind.dbg.spill2.i
+	(0, 933): MALLOC force_no_backtrace.dbg.spill.i
+	(0, 934): MALLOC can_unwind.dbg.spill.i
+	(0, 935): MALLOC pieces.dbg.spill1.i
+	(0, 936): Wna (pieces.dbg.spill1.i[0], 0x0)
+	(0, 937): MALLOC pieces.dbg.spill.i
+	(0, 938): Wna (pieces.dbg.spill.i[0], 0x0)
+	(0, 939): MALLOC self.dbg.spill1
+	(0, 940): Wna (self.dbg.spill1[0], 0x0)
+	(0, 941): MALLOC order.dbg.spill
+	(0, 942): MALLOC self.dbg.spill
+	(0, 943): Wna (self.dbg.spill[0], 0x0)
+	(0, 944): Wna (self.dbg.spill[0], 0x80000000000021d9)
+	(0, 945): Wna (order.dbg.spill[0], 2)
+	(0, 946): Wna (self.dbg.spill1[0], 0x80000000000021d9)
+	(0, 947): Wna (pieces.dbg.spill.i[0], 0x8000000000000b30)
+	(0, 948): Wna (pieces.dbg.spill1.i[0], 0x8000000000000b70)
+	(0, 949): Wna (can_unwind.dbg.spill.i[0], 1)
+	(0, 950): Wna (force_no_backtrace.dbg.spill.i[0], 0)
+	(0, 951): Wna (can_unwind.dbg.spill2.i[0], 1)
+	(0, 952): Wna (force_no_backtrace.dbg.spill3.i[0], 0)
+	(0, 953): Wna (order.i[0], 2)
+	(0, 954): Wna (dst.dbg.spill.i[0], 0x80000000000021d9)
+	(0, 955): Rna (order.i[0], 2) [(0, 953)]
+	(0, 956): Racq (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3], 1) [(0, 643)]
+	(0, 957): Wna (, 1)
+	(0, 958): Rna (, 1) [(0, 957)]
+	(0, 959): FREE
+	(0, 960): FREE
+	(0, 961): FREE
+	(0, 962): FREE
+	(0, 963): FREE
+	(0, 964): FREE
+	(0, 965): FREE
+	(0, 966): FREE
+	(0, 967): FREE
+	(0, 968): FREE
+	(0, 969): FREE
+	(0, 970): FREE
+	(0, 971): FREE
+	(0, 972): FREE
+	(0, 973): FREE
+	(0, 974): FREE
+	(0, 975): FREE
+	(0, 976): FREE
+	(0, 977): FREE
+	(0, 978): FREE
+	(0, 979): Wna (self.dbg.spill.i1[0], 0x80000000000021d0)
+	(0, 980): Wna (, 0)
+	(0, 981): Wna (, 1)
+	(0, 982): Wna (self.dbg.spill.i3[0], 0x80000000000021d0)
+	(0, 983): Wna (, 0)
+	(0, 984): MALLOC ptr.dbg.spill
+	(0, 985): Wna (ptr.dbg.spill[0], 0x0)
+	(0, 986): Wna (ptr.dbg.spill[0], 0x80000000000021d0)
+	(0, 987): MALLOC x.dbg.spill
+	(0, 988): Wna (x.dbg.spill[0], 0x0)
+	(0, 989): MALLOC self.dbg.spill
+	(0, 990): Wna (self.dbg.spill[0], 0x0)
+	(0, 991): MALLOC _0
+	(0, 992): Wna (, 0x0)
+	(0, 993): Wna (self.dbg.spill[0], 0x80000000000021d0)
+	(0, 994): Rna (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.item[0], 1) [(0, 466)]
+	(0, 995): Wna (x.dbg.spill[0], 0x80000000000021d4)
+	(0, 996): Wna (, 0x80000000000021d4)
+	(0, 997): Rna (, 0x80000000000021d4) [(0, 996)]
+	(0, 998): FREE
+	(0, 999): FREE
+	(0, 1000): FREE
+	(0, 1001): FREE
+	(0, 1002): Wna (, 0)
+	(0, 1003): Wna (, 0x80000000000021d4)
+	(0, 1004): Rna (, 0x80000000000021d4) [(0, 1003)]
+	(0, 1005): FREE
+	(0, 1006): FREE
+	(0, 1007): FREE
+	(0, 1008): FREE
+	(0, 1009): FREE
+	(0, 1010): FREE
+	(0, 1011): FREE
+	(0, 1012): FREE
+	(0, 1013): MALLOC val.dbg.spill
+	(0, 1014): Wna (val.dbg.spill[0], 0x0)
+	(0, 1015): MALLOC msg.dbg.spill
+	(0, 1016): Wna (msg.dbg.spill[0], 0x0)
+	(0, 1017): Wna (msg.dbg.spill[8], 0x0)
+	(0, 1018): MALLOC self
+	(0, 1019): Wna (self[0], 0x0)
+	(0, 1020): Wna (self[0], 0x80000000000021d4)
+	(0, 1021): Wna (msg.dbg.spill[0], 0x8000000000001370)
+	(0, 1022): Wna (msg.dbg.spill[8], 38)
+	(0, 1023): Rna (self[0], 0x80000000000021d4) [(0, 1020)]
+	(0, 1024): Rna (self[0], 0x80000000000021d4) [(0, 1020)]
+	(0, 1025): Wna (val.dbg.spill[0], 0x80000000000021d4)
+	(0, 1026): FREE
+	(0, 1027): FREE
+	(0, 1028): FREE
+	(0, 1029): FREE
+	(0, 1030): Wna (left_val.dbg.spill[0], 0x80000000000021d4)
+	(0, 1031): Wna (right_val.dbg.spill[0], 0x8000000000001c40)
+	(0, 1032): Rna (_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[0], 1) [(0, 467)]
+	(0, 1033): FREE
+	(0, 1034): FREE
+	(0, 1035): FREE
+	(0, 1036): FREE
+	(0, 1037): THREAD_END
+Coherence:
+self[0]: [ (0, 1019): Wna (SU#3592, 0x0) (0, 1020): Wna (SU#3592, 0x80000000000021d4) ]
+msg.dbg.spill[8]: [ (0, 1017): Wna (SU#3576, 0x0) (0, 1022): Wna (SU#3576, 38) ]
+msg.dbg.spill[0]: [ (0, 1016): Wna (SU#3568, 0x0) (0, 1021): Wna (SU#3568, 0x8000000000001370) ]
+val.dbg.spill[0]: [ (0, 1014): Wna (SU#3552, 0x0) (0, 1025): Wna (SU#3552, 0x80000000000021d4) ]
+: [ (0, 992): Wna (SU#3536, 0x0) (0, 996): Wna (SU#3536, 0x80000000000021d4) ]
+self.dbg.spill[0]: [ (0, 990): Wna (SU#3520, 0x0) (0, 993): Wna (SU#3520, 0x80000000000021d0) ]
+x.dbg.spill[0]: [ (0, 988): Wna (SU#3504, 0x0) (0, 995): Wna (SU#3504, 0x80000000000021d4) ]
+ptr.dbg.spill[0]: [ (0, 985): Wna (SU#3488, 0x0) (0, 986): Wna (SU#3488, 0x80000000000021d0) ]
+: [ (0, 980): Wna (SU#3046, 0) (0, 981): Wna (SU#3046, 1) (0, 983): Wna (SU#3046, 0) (0, 1002): Wna (SU#3046, 0) ]
+can_unwind.dbg.spill2.i[0]: [ (0, 951): Wna (SU#3423, 1) (0, 952): Wna (SU#3422, 0) (0, 953): Wna (SU#3421, 2) (0, 957): Wna (SU#3420, 1) ]
+can_unwind.dbg.spill.i[0]: [ (0, 949): Wna (SU#3425, 1) (0, 950): Wna (SU#3424, 0) ]
+self.dbg.spill[0]: [ (0, 943): Wna (SU#3472, 0x0) (0, 944): Wna (SU#3472, 0x80000000000021d9) ]
+self.dbg.spill1[0]: [ (0, 940): Wna (SU#3456, 0x0) (0, 946): Wna (SU#3456, 0x80000000000021d9) ]
+pieces.dbg.spill.i[0]: [ (0, 938): Wna (SU#3448, 0x0) (0, 947): Wna (SU#3448, 0x8000000000000b30) ]
+pieces.dbg.spill1.i[0]: [ (0, 936): Wna (SU#3432, 0x0) (0, 948): Wna (SU#3432, 0x8000000000000b70) ]
+dst.dbg.spill.i[0]: [ (0, 896): Wna (SU#3160, 0x0) (0, 954): Wna (SU#3160, 0x80000000000021d9) ]
+: [ (0, 882): Wna (SU#3080, 0x0) (0, 1003): Wna (SU#3080, 0x80000000000021d4) ]
+self.dbg.spill[0]: [ (0, 880): Wna (SU#3064, 0x0) (0, 883): Wna (SU#3064, 0x80000000000021d0) ]
+self.dbg.spill.i[0]: [ (0, 877): Wna (SU#3048, 0x0) (0, 884): Wna (SU#3048, 0x80000000000021d8) ]
+self.dbg.spill.i1[0]: [ (0, 874): Wna (SU#3032, 0x0) (0, 979): Wna (SU#3032, 0x80000000000021d0) ]
+self.dbg.spill.i3[0]: [ (0, 869): Wna (SU#3000, 0x0) (0, 982): Wna (SU#3000, 0x80000000000021d0) ]
+self.dbg.spill[0]: [ (0, 866): Wna (SU#2984, 0x0) (0, 867): Wna (SU#2984, 0x80000000000021d0) ]
+can_unwind.dbg.spill.i[0]: [ (0, 804): Wna (SU#2916, 1) (0, 805): Wna (SU#2915, 0) (0, 806): Wna (SU#2914, 1) (0, 807): Wna (SU#2913, 0) (0, 808): Wna (SU#2912, 2) ]
+self.dbg.spill[0]: [ (0, 798): Wna (SU#2968, 0x0) (0, 799): Wna (SU#2968, 0x80000000000021d9) ]
+self.dbg.spill1[0]: [ (0, 795): Wna (SU#2952, 0x0) (0, 801): Wna (SU#2952, 0x80000000000021d9) ]
+pieces.dbg.spill.i[0]: [ (0, 793): Wna (SU#2936, 0x0) (0, 802): Wna (SU#2936, 0x8000000000000b30) ]
+pieces.dbg.spill1.i[0]: [ (0, 791): Wna (SU#2920, 0x0) (0, 803): Wna (SU#2920, 0x8000000000000b70) ]
+dst.dbg.spill.i[0]: [ (0, 751): Wna (SU#2648, 0x0) (0, 809): Wna (SU#2648, 0x80000000000021d9) ]
+: [ (0, 736): Wna (SU#2582, 0) (0, 737): Wna (SU#2582, 1) (0, 836): Wna (SU#2583, 0) ]
+self.dbg.spill[0]: [ (0, 731): Wna (SU#2568, 0x0) (0, 734): Wna (SU#2568, 0x80000000000021d0) ]
+new.dbg.spill[0]: [ (0, 292): Wna (SU#1103, 1) (0, 293): Wna (SU#1102, 3) (0, 294): Wna (SU#1101, 0) ]
+can_unwind.dbg.spill[0]: [ (0, 279): Wna (SU#1148, 1) (0, 280): Wna (SU#1147, 0) ]
+pieces.dbg.spill1[0]: [ (0, 273): Wna (SU#1136, 0x0) (0, 281): Wna (SU#1136, 0x8000000000000ae8) ]
+self.dbg.spill[0]: [ (0, 261): Wna (SU#1112, 0x0) (0, 290): Wna (SU#1112, 0x80000000000021d8) ]
+pieces.dbg.spill.i[0]: [ (0, 207): Wna (SU#1040, 0x0) (0, 216): Wna (SU#1040, 0x8000000000000b30) ]
+pieces.dbg.spill1.i[0]: [ (0, 205): Wna (SU#1024, 0x0) (0, 217): Wna (SU#1024, 0x8000000000000b70) ]
+dst.dbg.spill.i[0]: [ (0, 165): Wna (SU#752, 0x0) (0, 223): Wna (SU#752, 0x80000000000021d8) ]
+: [ (0, 154): Wna (SU#198, 0) (0, 248): Wna (SU#195, 3) (0, 249): Wna (SU#194, 0) (0, 433): Wna (SU#196, 0) (0, 434): Wna (SU#197, 0) (0, 444): Wna (SU#199, 1) ]
+can_unwind.dbg.spill.i[0]: [ (0, 123): Wna (SU#628, 1) (0, 124): Wna (SU#627, 0) (0, 125): Wna (SU#626, 1) (0, 126): Wna (SU#625, 0) (0, 127): Wna (SU#624, 2) ]
+self.dbg.spill[0]: [ (0, 117): Wna (SU#680, 0x0) (0, 118): Wna (SU#680, 0x80000000000021d9) ]
+self.dbg.spill1[0]: [ (0, 114): Wna (SU#664, 0x0) (0, 120): Wna (SU#664, 0x80000000000021d9) ]
+dst.dbg.spill.i[0]: [ (0, 70): Wna (SU#360, 0x0) (0, 128): Wna (SU#360, 0x80000000000021d9) ]
+self.dbg.spill.i[0]: [ (0, 43): Wna (SU#240, 0x0) (0, 57): Wna (SU#240, 0x80000000000021d8) ]
+dst.dbg.spill[0]: [ (0, 309): Wna (SU#1232, 0x0) (0, 362): Wna (SU#1232, 0x80000000000021d8) ]
+self.dbg.spill.i2[0]: [ (0, 39): Wna (SU#216, 0x0) (0, 472): Wna (SU#216, 0x80000000000021d8) ]
+self.dbg.spill.i5[0]: [ (0, 36): Wna (SU#200, 0x0) (0, 58): Wna (SU#200, 0x80000000000021d8) ]
+self.dbg.spill.i8[0]: [ (0, 29): Wna (SU#184, 0x0) (0, 153): Wna (SU#184, 0x80000000000021d8) ]
+can_unwind.dbg.spill.i[0]: [ (0, 218): Wna (SU#1022, 1) (0, 219): Wna (SU#1021, 0) (0, 220): Wna (SU#1020, 1) (0, 221): Wna (SU#1019, 0) (0, 222): Wna (SU#1018, 0) (0, 226): Wna (SU#1017, 0) ]
+right_val.dbg.spill[0]: [ (0, 2): Wna (SU#0, 0x0) (0, 1031): Wna (SU#0, 0x8000000000001c40) ]
+self.dbg.spill.i[0]: [ (0, 724): Wna (SU#2528, 0x0) (0, 738): Wna (SU#2528, 0x80000000000021d8) ]
+val.dbg.spill5[0]: [ (0, 286): Wna (SU#1127, 1) (0, 287): Wna (SU#1126, 1) (0, 288): Wna (SU#1125, 0) (0, 289): Wna (SU#1124, 0) (0, 402): Wna (SU#1120, 0) (0, 403): Wna (SU#1121, 0) (0, 407): Wna (SU#1123, 0) (0, 408): Wna (SU#1122, 0) ]
+left_val.dbg.spill[0]: [ (0, 4): Wna (SU#16, 0x0) (0, 1030): Wna (SU#16, 0x80000000000021d4) ]
+dst.dbg.spill[0]: [ (0, 591): Wna (SU#2072, 0x0) (0, 640): Wna (SU#2072, 0x80000000000021d9) ]
+pieces.dbg.spill[0]: [ (0, 277): Wna (SU#1152, 0x0) (0, 278): Wna (SU#1152, 0x8000000000000aa0) ]
+self.dbg.spill.i35[0]: [ (0, 20): Wna (SU#136, 0x0) (0, 449): Wna (SU#136, 0x80000000000021d0) ]
+self.dbg.spill1[0]: [ (0, 209): Wna (SU#1056, 0x0) (0, 215): Wna (SU#1056, 0x80000000000021d8) ]
+self.dbg.spill[0]: [ (0, 50): Wna (SU#280, 0x0) (0, 53): Wna (SU#280, 0x80000000000021d0) ]
+can_unwind.dbg.spill[0]: [ (0, 635): Wna (SU#2343, 1) (0, 636): Wna (SU#2342, 0) (0, 637): Wna (SU#2341, 1) (0, 638): Wna (SU#2340, 0) (0, 639): Wna (SU#2339, 1) ]
+: [ (0, 55): Wna (SU#294, 0) (0, 56): Wna (SU#294, 1) (0, 448): Wna (SU#294, 0) (0, 665): Wna (SU#295, 1) ]
+pieces.dbg.spill1[0]: [ (0, 630): Wna (SU#2344, 0x0) (0, 634): Wna (SU#2344, 0x8000000000000c78) ]
+self.dbg.spill[0]: [ (0, 212): Wna (SU#1072, 0x0) (0, 213): Wna (SU#1072, 0x80000000000021d8) ]
+self.dbg.spill11[0]: [ (0, 255): Wna (SU#1088, 0x0) (0, 295): Wna (SU#1088, 0x80000000000021d8) ]
+self.dbg.spill.i.i[0]: [ (0, 14): Wna (SU#88, 0x0) (0, 453): Wna (SU#88, 0x80000000000021d0) ]
+can_unwind.dbg.spill2[0]: [ (0, 282): Wna (SU#1131, 1) (0, 283): Wna (SU#1130, 0) (0, 284): Wna (SU#1129, 0) (0, 285): Wna (SU#1128, 0) ]
+self.dbg.spill.i5[0]: [ (0, 717): Wna (SU#2488, 0x0) (0, 739): Wna (SU#2488, 0x80000000000021d8) ]
+pieces.dbg.spill1.i[0]: [ (0, 110): Wna (SU#632, 0x0) (0, 122): Wna (SU#632, 0x8000000000000b70) ]
+pieces.dbg.spill.i[0]: [ (0, 112): Wna (SU#648, 0x0) (0, 121): Wna (SU#648, 0x8000000000000b30) ]
+pieces.dbg.spill1[0]: [ (0, 351): Wna (SU#1512, 0x0) (0, 355): Wna (SU#1512, 0x8000000000000aa0) ]
+pieces.dbg.spill[0]: [ (0, 353): Wna (SU#1520, 0x0) (0, 354): Wna (SU#1520, 0x8000000000000ae8) ]
+force_no_backtrace.dbg.spill[0]: [ (0, 357): Wna (SU#1503, 0) (0, 358): Wna (SU#1502, 1) (0, 359): Wna (SU#1501, 0) (0, 360): Wna (SU#1500, 3) (0, 361): Wna (SU#1499, 0) (0, 370): Wna (SU#1496, 1) (0, 375): Wna (SU#1498, 0) (0, 376): Wna (SU#1497, 0) ]
+old.dbg.spill[0]: [ (0, 363): Wna (SU#1227, 0) (0, 364): Wna (SU#1226, 1) (0, 372): Wna (SU#1225, 0) (0, 374): Wna (SU#1224, 1) ]
+self.dbg.spill[0]: [ (0, 436): Wna (SU#1536, 0x0) (0, 438): Wna (SU#1536, 0x40000000000000c4) ]
+: [ (0, 451): Wna (SU#146, 0) (0, 452): Wna (SU#146, 1) (0, 454): Wna (SU#146, 0) (0, 471): Wna (SU#146, 0) ]
+ptr.dbg.spill[0]: [ (0, 456): Wna (SU#1552, 0x0) (0, 461): Wna (SU#1552, 0x80000000000021d0) ]
+: [ (0, 459): Wna (SU#1576, 0x0) (0, 462): Wna (SU#1580, 1) (0, 463): Wna (SU#1576, 1) ]
+_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.item[0]: [ (0, 466): Wna (GU#8656, 1) (0, 467): Wna (GU#8660, 1) ]
+self.dbg.spill1[0]: [ (0, 476): Wna (SU#1584, 0x0) (0, 484): Wna (SU#1584, 0x80000000000021d8) ]
+self.dbg.spill[0]: [ (0, 480): Wna (SU#1608, 0x0) (0, 481): Wna (SU#1608, 0x80000000000021d8) ]
+dst.dbg.spill[0]: [ (0, 495): Wna (SU#1680, 0x0) (0, 544): Wna (SU#1680, 0x80000000000021d8) ]
+pieces.dbg.spill1[0]: [ (0, 534): Wna (SU#1952, 0x0) (0, 538): Wna (SU#1952, 0x8000000000000c78) ]
+pieces.dbg.spill[0]: [ (0, 536): Wna (SU#1968, 0x0) (0, 537): Wna (SU#1968, 0x8000000000000c38) ]
+can_unwind.dbg.spill[0]: [ (0, 539): Wna (SU#1948, 1) (0, 540): Wna (SU#1947, 0) (0, 541): Wna (SU#1946, 1) (0, 542): Wna (SU#1945, 0) (0, 543): Wna (SU#1944, 1) ]
+self.dbg.spill1[0]: [ (0, 572): Wna (SU#1984, 0x0) (0, 580): Wna (SU#1984, 0x80000000000021d9) ]
+self.dbg.spill[0]: [ (0, 576): Wna (SU#2000, 0x0) (0, 577): Wna (SU#2000, 0x80000000000021d9) ]
+val.dbg.spill[0]: [ (0, 578): Wna (SU#1995, 1) (0, 579): Wna (SU#1994, 1) ]
+_ZN4main10cell_tests13no_double_put4CELL17ha45c47ddec71d1d9E.init[3]: [ (0, 368): CWar (GU#8664, 1) (0, 547): Wrel (GU#8664, 1) (0, 643): Wrel (GU#8665, 1) ]
+pieces.dbg.spill[0]: [ (0, 632): Wna (SU#2360, 0x0) (0, 633): Wna (SU#2360, 0x8000000000000c38) ]
+
+GenMC v0.10.1 (LLVM 18.1.7)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 1
+Total wall-clock time: 0.80s
