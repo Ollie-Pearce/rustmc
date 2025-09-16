@@ -1,6 +1,6 @@
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
-INCLUDE_DEPS=true
+INCLUDE_DEPS=false
 
 while [ $# -gt 1 ]; do
   case "$1" in
@@ -130,17 +130,37 @@ find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r projec
 
   cd $DEPDIR
 
-  #Maybe remove the DEPDIR var from below
-  #llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
+  mkdir -p linked_bitcode_files/${PROJECT_NAME}/
+  while IFS= read -r bc_file; do
+    echo "Processing bitcode file: $bc_file"
+    /usr/bin/llvm-link-18 --internalize -S -o "linked_bitcode_files/${PROJECT_NAME}/combined_${bc_file##*/}.ll" "$bc_file"
+  done < "bitcode.txt"
+
+  cd linked_bitcode_files/${PROJECT_NAME}/
+
+  grep -rl "@main" > bitcode_with_main.txt
+
+  while IFS= read -r file; do
+    echo "Removing @main from $file"
+    # Create a temporary file without the @main function and its body
+    sed '/^define.*@main/,/^}/d' "$file" > "${file}.tmp"
+    mv "${file}.tmp" "$file"
+  done < bitcode_with_main.txt
+
+  rm bitcode_with_main.txt
+
+  find "$(pwd)" -name "*.ll" > "bitcode.txt"
 
   /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o ../../combined.ll
+
+  cd ../../
 
   mkdir -p test_traces/${PROJECT_NAME}/
 
   while read -r test_func; do
     echo "Verifying test function: $test_func"
-    timeout 800s ./genmc --mixer \
+    timeout 600s ./genmc --mixer \
             --transform-output=myout.ll \
             --print-exec-graphs \
             --disable-function-inliner \
