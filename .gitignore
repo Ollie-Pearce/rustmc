@@ -10,3 +10,6 @@ verify_large_crates/**/target-ir/
 verify_large_crate/**/target/
 test_results/
 test_traces/
+bitcode.txt
+test_functions.txt
+*.ll
