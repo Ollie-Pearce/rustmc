@@ -6,5 +6,7 @@ genmc
 trust
 verify_test_benchmarks/**/target-ir/
 verify_test_benchmarks/**/target/
+verify_large_crates/**/target-ir/
+verify_large_crate/**/target/
 test_results/
 test_traces/
