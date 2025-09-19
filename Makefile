@@ -543,7 +543,7 @@ CSCOPE = cscope
 CTAGS = ctags
 CXX = g++ -std=c++20
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -I/home/ollie/llvm-project/llvm/include -I/home/ollie/llvm-project/build/include    -fno-exceptions -funwind-tables -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+CXXFLAGS = -g -O2 -I/home/ollie/llvm-project/llvm/include -I/home/ollie/llvm-project/build/include    -fexceptions -funwind-tables -D_GNU_SOURCE -D_DEBUG -D_GLIBCXX_ASSERTIONS -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps

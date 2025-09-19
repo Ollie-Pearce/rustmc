@@ -113,7 +113,7 @@ libgenmc_a_SOURCES = \
 
 TESTS=scripts/fast-driver.sh scripts/randomize-driver.sh
 
-AM_CXXFLAGS = -DINCLUDE_DIR=\"$(pkgincludedir)/$(pkg)/include\" -DSRC_INCLUDE_DIR=\"$(abs_top_srcdir)/include\" $(COVERAGE_CXXFLAGS)
+AM_CXXFLAGS = -DINCLUDE_DIR=\"$(pkgincludedir)/$(pkg)/include\" -DSRC_INCLUDE_DIR=\"$(abs_top_srcdir)/include\" $(COVERAGE_CXXFLAGS) -fexceptions
 bin_PROGRAMS = genmc
 genmc_SOURCES = src/main.cpp
 genmc_LDADD = libgenmc.a -lpthread $(COVERAGE_LDFLAGS)
