@@ -273,10 +273,13 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		  }
 		  
 		default:
-			IL->LowerIntrinsicCall(I);
-			modified = true;
-			break;
-		}
+			try {
+                IL->LowerIntrinsicCall(I);
+                modified = true;
+				break;
+            } catch (...) {
+                break;
+            }
 	}
 	return modified;
 }
