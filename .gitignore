@@ -13,3 +13,4 @@ test_traces/
 bitcode.txt
 test_functions.txt
 *.ll
+Makefile
