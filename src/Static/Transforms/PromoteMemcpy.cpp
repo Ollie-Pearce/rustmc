@@ -400,12 +400,12 @@ auto PromoteMemcpy::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedA
 						 Value *Ptr = SI->getPointerOperand();
 						 auto DbgDeclares = findDbgDeclares(Ptr);
 
-						 if (auto *DebugDeclareI = dyn_cast<DbgDeclareInst>(DbgDeclares[0])){
+						 /*if (auto *DebugDeclareI = dyn_cast<DbgDeclareInst>(DbgDeclares[0])){
 							DILocalVariable *Var = DebugDeclareI->getVariable();
 							errs() << "\n Variable name: " << Var->getName();
 							errs() << "\n Variable dump: ";
 							Var->dump();
-						 }
+						 }*/
 						 
 
 
