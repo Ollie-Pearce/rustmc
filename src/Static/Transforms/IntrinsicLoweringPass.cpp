@@ -299,6 +299,27 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			modified = true;
 			break;
 		  }
+
+		case Intrinsic::bswap: {
+			if (auto * CI = dyn_cast<CallInst>(I)){
+				if(Value *V = CI->getArgOperand(0)){
+					unsigned BitSize = V->getType()->getScalarSizeInBits();
+
+					if (BitSize == 16 || BitSize == 32 || BitSize == 64){
+						IL->LowerIntrinsicCall(I);
+						modified = true;
+						break;
+					} else {
+						errs() << "Unhandled type size of value to byteswap";
+						break;
+					}
+				} else {
+					break;
+				}
+			} else {
+				break;
+			}
+		}
 		  
 		default:
             IL->LowerIntrinsicCall(I);
