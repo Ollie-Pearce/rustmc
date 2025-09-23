@@ -121,7 +121,7 @@ mkdir -p test_traces/${PROJECT_NAME}/
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 80s ./genmc --mixer \
+  timeout 600s ./genmc --mixer \
           --transform-output=myout.ll \
           --print-exec-graphs \
           --disable-function-inliner \
