@@ -61,6 +61,12 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		case llvm::Intrinsic::vacopy:
 		case llvm::Intrinsic::is_constant:
 		case llvm::Intrinsic::umax:
+		case llvm::Intrinsic::powi:
+		case llvm::Intrinsic::fptoui_sat:
+		case llvm::Intrinsic::fabs:
+		case llvm::Intrinsic::fptosi_sat:
+		case llvm::Intrinsic::minnum:
+		case llvm::Intrinsic::maxnum:
 			break;
 		
 		//Attempt to deal with overflow intrinsics taken from KLEE: https://github.com/klee/klee/blob/master/lib/Module/IntrinsicCleaner.cpp
@@ -251,6 +257,28 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			modified = true;
 			break;
 		}
+
+		case Intrinsic::fshr: {
+			IRBuilder<> builder(I->getParent(), I->getIterator());
+			
+			Value *op1 = I->getArgOperand(0); // a
+			Value *op2 = I->getArgOperand(1); // b
+			Value *op3 = I->getArgOperand(2); // shift amount
+			
+			unsigned int bw = op1->getType()->getPrimitiveSizeInBits();
+			Value *bitWidthVal = ConstantInt::get(op1->getType(), bw);
+			
+			Value *lshr = builder.CreateLShr(op1, op3);
+			Value *invShift = builder.CreateSub(bitWidthVal, op3);
+			Value *shl = builder.CreateShl(op2, invShift);
+			Value *result = builder.CreateOr(lshr, shl);
+			
+			I->replaceAllUsesWith(result);
+			I->eraseFromParent();
+			modified = true;
+			break;
+		}
+		
 		case Intrinsic::fshl: {
 			IRBuilder<> builder(I->getParent(), I->getIterator());
 		  
