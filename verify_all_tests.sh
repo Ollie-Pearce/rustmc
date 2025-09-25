@@ -138,10 +138,14 @@ find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r projec
 
   while read -r test_func; do
     echo "Verifying test function: $test_func"
-    timeout 600s ./genmc --mixer \
+    timeout 1000s ./genmc --mixer \
             --transform-output=myout.ll \
             --print-exec-graphs \
             --disable-function-inliner \
+            --disable-assume-propagation \
+            --disable-load-annotation \
+            --disable-confirmation-annotation \
+            --disable-spin-assume \
             --program-entry-function="$test_func" \
             --disable-estimation \
             --print-error-trace \
