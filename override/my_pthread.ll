@@ -3,17 +3,56 @@ source_filename = "my_pthread.c"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+%"unicode_width::tables::Align128<[u8; 256]>" = type { [256 x i8] }
+%"unicode_width::tables::Align64<[[u8; 64]; 20]>" = type { [20 x [64 x i8]] }
+%"unicode_width::tables::Align32<[[u8; 32]; 184]>" = type { [184 x [32 x i8]] }
+%"unicode_width::tables::Align128<[[u8; 128]; 7]>" = type { [7 x [128 x i8]] }
 %"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" = type { %"std::sync::reentrant_lock::Tid", %"std::sys::sync::mutex::futex::Mutex", i32, i64 }
 %"std::sync::reentrant_lock::Tid" = type { %"core::sync::atomic::AtomicU64" }
 %"core::sync::atomic::AtomicU64" = type { i64 }
 %"std::sys::sync::mutex::futex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
 %"core::sync::atomic::AtomicU32" = type { i32 }
+%"compiler::Block" = type { i64, [1 x i64] }
+%"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" = type { %"compiler::Block" }
+%"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" = type { %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" }
+%"proc_macro::bridge::client::HandleCounters" = type { %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32" }
+%"core::sync::atomic::AtomicUsize" = type { i64 }
 
-
-
+@"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
+@_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = global %"proc_macro::bridge::client::HandleCounters" zeroinitializer
 @_ZN3std2io5stdio6stderr8INSTANCE17h22db7be8253b8d66E = dso_local global %"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" { %"std::sync::reentrant_lock::Tid" { %"core::sync::atomic::AtomicU64" { i64 0 } }, %"std::sys::sync::mutex::futex::Mutex" { %"core::sync::atomic::AtomicU32" { i32 0 } }, i32 0, i64 0 }, align 8
 
-%"core::sync::atomic::AtomicUsize" = type { i64 }
+@"_ZN10proc_macro6bridge6client5state12BRIDGE_STATE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h703a0e7681e6c7efE" = thread_local global ptr null
+
+@_ZN3log20MAX_LOG_LEVEL_FILTER17h520adb782b570d30E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
+@_ZN13unicode_width6tables10WIDTH_ROOT17ha1f77ae8a759015fE = local_unnamed_addr global %"unicode_width::tables::Align128<[u8; 256]>" zeroinitializer
+@_ZN13unicode_width6tables12WIDTH_MIDDLE17h173e4aab6e3ec159E = local_unnamed_addr global %"unicode_width::tables::Align64<[[u8; 64]; 20]>" zeroinitializer
+@_ZN13unicode_width6tables12WIDTH_LEAVES17hbcfbaa8f3ab0c019E = local_unnamed_addr global %"unicode_width::tables::Align32<[[u8; 32]; 184]>" zeroinitializer
+
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_017h0241c1d8aedeed83E = global [2 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_117ha34ae02bb357cdfcE = global [1 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_217h039e29cda2509620E = global [4 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_317hef43c3a56f4526c6E = global [9 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_417h5c548665459732f7E = global [4 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_517h4579929dd213780dE = global [6 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_617h9a97258a5d514986E = global [12 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables21EMOJI_MODIFIER_LEAF_717hea8d889f65da9820E = global [2 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables25EMOJI_PRESENTATION_LEAVES17h6532f3356a7c241fE = local_unnamed_addr global %"unicode_width::tables::Align128<[[u8; 128]; 7]>" zeroinitializer
+
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_017h1040b1765b73b5f5E = global [4 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_117hd012b3ced69b0f9fE = global [1 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_217hf179e866cae1f17cE = global [15 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_317hd3623533b3713634E = global [10 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_417hc7f5fb0800ce3e59E = global [3 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_517hdb61757426f3a970E = global [1 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_617hdc5acda1354d3542E = global [13 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_717h933734633221c643E = global [22 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_817h1237c827c71b6044E = global [4 x { i8, i8 }] zeroinitializer
+@_ZN13unicode_width6tables24TEXT_PRESENTATION_LEAF_917hd0590f017456ed3bE = global [10 x { i8, i8 }] zeroinitializer
+
+@_ZN10std_detect6detect5cache5CACHE17ha70d35da6fb9c084E = global [2 x %"std::sync::reentrant_lock::Tid"] zeroinitializer
+
+
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hf10d90ee4e8d5258E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
