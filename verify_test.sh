@@ -97,7 +97,7 @@ cargo clean
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
-RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C target-feature=-avx2 -C no-vectorize-slp -C no-vectorize-loops -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C codegen-units=1 -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --target=x86_64-unknown-linux-gnu --emit=llvm-bc" rustup run RustMC cargo test --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+RUSTFLAGS="-Zpanic_abort_tests -C overflow-checks=off -C target-feature=-avx2 -C no-vectorize-slp -C no-vectorize-loops -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --target=x86_64-unknown-linux-gnu --emit=llvm-bc" rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 #if [ "$MIXED_LANGUAGE" = "true" ]; then
 #	clang -O3 -emit-llvm -c *.c
@@ -190,4 +190,4 @@ ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
 echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 cd ../..
-rm combined.ll combined_old.ll
+#rm combined.ll combined_old.ll
