@@ -10,13 +10,19 @@ target triple = "x86_64-unknown-linux-gnu"
 %"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" = type { %"std::sync::reentrant_lock::Tid", %"std::sys::sync::mutex::futex::Mutex", i32, i64 }
 %"std::sync::reentrant_lock::Tid" = type { %"core::sync::atomic::AtomicU64" }
 %"core::sync::atomic::AtomicU64" = type { i64 }
-%"std::sys::sync::mutex::futex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
 %"core::sync::atomic::AtomicU32" = type { i32 }
+%"core::sync::atomic::AtomicBool" = type { i8 }
+%"std::sys::sync::mutex::futex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
 %"compiler::Block" = type { i64, [1 x i64] }
 %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" = type { %"compiler::Block" }
 %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" = type { %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" }
 %"proc_macro::bridge::client::HandleCounters" = type { %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32" }
 %"core::sync::atomic::AtomicUsize" = type { i64 }
+%"std::sys::thread_local::native::eager::Storage<core::cell::once::OnceCell<std::thread::Thread>>" = type { ptr, i8, [7 x i8] }
+%"core::sync::atomic::AtomicPtr<core::ffi::c_void>" = type { ptr }
+%"core::cell::Cell<(usize, usize)>" = type { %"core::cell::UnsafeCell<(usize, usize)>" }
+%"core::cell::UnsafeCell<(usize, usize)>" = type { { i64, i64 } }
+
 
 @"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
 @_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = global %"proc_macro::bridge::client::HandleCounters" zeroinitializer
@@ -56,6 +62,10 @@ target triple = "x86_64-unknown-linux-gnu"
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hf10d90ee4e8d5258E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global %"core::sync::atomic::AtomicUsize" {i64 0 }
 @_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
+@"_ZN3std6thread10CURRENT_ID29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h72832091327b60bfE" = thread_local global i64 0
+@"_ZN3std6thread7CURRENT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17ha4638e9f4485ca67E" = thread_local global %"std::sys::thread_local::native::eager::Storage<core::cell::once::OnceCell<std::thread::Thread>>" zeroinitializer
+
+
 @__dso_handle = dso_local global ptr @__dso_handle, align 8
 
 @"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hd69d6c74a2a1681dE" = dso_local global { i64, [2 x i64] } { i64 0, [2 x i64] [i64 0, i64 0] }, align 8
@@ -101,6 +111,13 @@ target triple = "x86_64-unknown-linux-gnu"
   i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
   i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0
 ], align 1
+
+@_ZN3std3sys3pal4unix14stack_overflow3imp13NEED_ALTSTACK17h752424148a591eb2E = global %"core::sync::atomic::AtomicBool" {i8 0 }
+@_ZN3std3sys3pal4unix14stack_overflow3imp9PAGE_SIZE17h64a3e9253a979bf7E = global %"core::sync::atomic::AtomicUsize" {i64 0 }
+@_ZN3std3sys3pal4unix14stack_overflow3imp13MAIN_ALTSTACK17h0bc63d12ce7e6ff2E = global %"core::sync::atomic::AtomicPtr<core::ffi::c_void>" { ptr null }
+@_ZN3std3sys3pal4unix24ON_BROKEN_PIPE_FLAG_USED17h4c843d6a8af6a147E = global %"core::sync::atomic::AtomicBool" {i8 0}
+@"_ZN3std3sys3pal4unix14stack_overflow3imp5GUARD29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17ha3f8f4a5ee183220E" = thread_local global %"core::cell::Cell<(usize, usize)>" zeroinitializer
+
 
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
 entry:
