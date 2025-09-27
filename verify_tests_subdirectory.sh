@@ -12,11 +12,6 @@ while [ $# -gt 1 ]; do
       INCLUDE_DEPS=true
       shift
       ;;
-    --test-dir=*)
-      TEST_DIR="${1#*=}"
-      echo "test dir: $TEST_DIR"
-      shift
-      ;;
     *)
       echo "Unknown argument: $1"
       exit 1
@@ -77,25 +72,37 @@ find . -name "*.rs" | while read -r file; do
   ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 done
 
-# collect test names
-echo "Collecting #[test] function names..."
-TEST_FUNCS_FILE="$DEPDIR/test_functions.txt"
-> "$TEST_FUNCS_FILE"
+# Collect Rust test file paths
+echo "Collecting Rust test files..."
+TEST_FILES="$DEPDIR/test_files.txt"
+: > "$TEST_FILES"
 
-find . -name "*.rs" | while read -r file; do
+find . -path "*/tests/*.rs" -type f | sort > "$TEST_FILES"
+
+# For each test file, extract names of functions annotated with #[test]
+TEST_FN_DIR="$DEPDIR/test_functions/${PROJECT_NAME}"
+mkdir -p "$TEST_FN_DIR"
+
+while read -r file; do
+  base="$(basename "${file%.*}")"
   awk '
-    BEGIN { in_test = 0 }
-    /^[[:space:]]*#\[test\]/ { in_test = 1; next }
-    in_test && /^[[:space:]]*fn[[:space:]]+[a-zA-Z0-9_]+/ {
-      if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
-        print m[1]
-      }
-      in_test = 0
+    BEGIN { seen_test = 0 }
+    /^[[:space:]]*#\[test\]/          { seen_test = 1; next }
+    /^[[:space:]]*#\[/ && $0 !~ /#\[test\]/ { next }
+    seen_test && /^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]/ {
+      line = $0
+      sub(/^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+/, "", line)
+      sub(/\(.*/, "", line)      # strip args
+      gsub(/[[:space:]]/, "", line)
+      print line
+      seen_test = 0
+      next
     }
-  ' "$file"
-done >> "$TEST_FUNCS_FILE"
+    /^[[:space:]]*$/ { seen_test = 0 }
+  ' "$file" > "$TEST_FN_DIR/${base}.txt"
+done < "$TEST_FILES"
 
-
+echo "Per-file test function lists written to: $TEST_FN_DIR/"
 
 cargo clean
 
@@ -104,47 +111,52 @@ cargo_output_file=$(mktemp)
 
 RUSTFLAGS="--emit=dep-info,link,llvm-bc,llvm-ir -Zpanic_abort_tests -C overflow-checks=off -C target-feature=-avx2 -C no-vectorize-slp -C no-vectorize-loops -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --target=x86_64-unknown-linux-gnu" rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
-#if [ "$MIXED_LANGUAGE" = "true" ]; then
-#	clang -O3 -emit-llvm -c *.c
-#	mv *.bc $(pwd)/target/x86_64-unknown-linux-gnu/debug/deps
-#fi
-
-
-
-if [ "$INCLUDE_DEPS" = "true" ]; then
-  find "$(pwd)/target-ir/debug/deps" -name "*.bc" > "$DEPDIR/bitcode.txt"
-else
-  find "$(pwd)/target-ir/debug/deps" -type f \( -name "${TEST_DIR}-*.bc" -o -name "lib-*.bc" \) > "$DEPDIR/bitcode.txt"
-fi
 
 cd $DEPDIR
 
-/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+mkdir -p "test_traces/${PROJECT_NAME}"
 
-mkdir -p test_traces/${PROJECT_NAME}/
+while read -r test_file; do
+  stem="$(basename "${test_file%.*}")"
 
-while read -r test_func; do
-  echo "Verifying test function: $test_func"
-  timeout 1000s ./genmc --mixer \
-          --transform-output=myout.ll \
-          --print-exec-graphs \
-          --disable-function-inliner \
-          --disable-assume-propagation \
-          --disable-load-annotation \
-          --disable-confirmation-annotation \
-          --disable-spin-assume \
-          --program-entry-function="$test_func" \
-          --disable-estimation \
-          --print-error-trace \
-          --disable-stop-on-system-error \
-          --unroll=2 \
-          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
+    > "$DEPDIR/bitcode.txt"
 
-  if [ $? -eq 124 ]; then
-      echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
-  fi
-done < "$TEST_FUNCS_FILE"
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    -name "${PROJECT_NAME}*.ll" \
+  | xargs grep -L '@main' >> "$DEPDIR/bitcode.txt"
+
+  /usr/bin/llvm-link-18 --internalize -S \
+    --override="$DEPDIR/override/my_pthread.ll" \
+    -o combined_old.ll @bitcode.txt
+
+  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.ll -o combined.ll
+
+  while read -r test_func; do
+    echo "Verifying: $stem :: $test_func"
+
+    out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
+
+    timeout 1000s ./genmc --mixer \
+      --transform-output=myout.ll \
+      --print-exec-graphs \
+      --disable-function-inliner \
+      --disable-assume-propagation \
+      --disable-load-annotation \
+      --disable-confirmation-annotation \
+      --disable-spin-assume \
+      --program-entry-function="$test_func" \
+      --disable-estimation \
+      --print-error-trace \
+      --disable-stop-on-system-error \
+      --unroll=2 \
+      combined.ll > "$out" 2>&1
+
+    [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
+  done < "$TEST_FN_DIR/${stem}.txt"
+done < "$TEST_FILES"
 
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
