@@ -202,9 +202,14 @@ echo "External address errors: $external_address_count / $file_count" >> ../../t
 memset_promotion_string="ERROR: Invalid call to memset()!"
 memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
 echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
 ilist_iterator_string="llvm::ilist_iterator_w_bits"
 ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
 echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+segfault_string="Segmentation fault"
+segfault_count=$(grep -rl "$segfault_string" . | wc -l)
+echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 cd ../..
 #rm combined.ll combined_old.ll
