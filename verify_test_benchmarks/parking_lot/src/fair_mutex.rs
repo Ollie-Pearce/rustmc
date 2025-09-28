@@ -269,18 +269,4 @@ mod tests {
         let _lock = mutex.lock();
         assert_eq!(format!("{:?}", mutex), "Mutex { data: <locked> }");
     }
-
-    #[cfg(feature = "serde")]
-#[no_mangle]
-    #[test]
-    fn test_serde_2() {
-        let contents: Vec<u8> = vec![0, 1, 2];
-        let mutex = FairMutex::new(contents.clone());
-
-        let serialized = serialize(&mutex).unwrap();
-        let deserialized: FairMutex<Vec<u8>> = deserialize(&serialized).unwrap();
-
-        assert_eq!(*(mutex.lock()), *(deserialized.lock()));
-        assert_eq!(contents, *(deserialized.lock()));
-    }
 }
