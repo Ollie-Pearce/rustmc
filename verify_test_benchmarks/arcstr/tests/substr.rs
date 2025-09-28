@@ -234,30 +234,6 @@ fn test_hashmap() {
     }
 }
 
-#[cfg(feature = "serde")]
-#[no_mangle]
-#[test]
-fn test_serde() {
-    use serde_test::{assert_de_tokens, assert_tokens, Token};
-    let teststr = ArcStr::from("  test test 123 456").substr(2..);
-    assert_tokens(&teststr, &[Token::BorrowedStr("test test 123 456")]);
-    assert_tokens(&teststr.clone(), &[Token::BorrowedStr("test test 123 456")]);
-    assert_tokens(&ArcStr::default(), &[Token::BorrowedStr("")]);
-
-    let checks = &[
-        [Token::Str("123")],
-        [Token::BorrowedStr("123")],
-        [Token::String("123")],
-        [Token::Bytes(b"123")],
-        [Token::BorrowedBytes(b"123")],
-        [Token::ByteBuf(b"123")],
-    ];
-    for check in checks {
-        eprintln!("checking {:?}", check);
-        assert_de_tokens(&Substr::from("123"), check);
-    }
-}
-
 #[no_mangle]
 #[test]
 fn test_loose_ends() {

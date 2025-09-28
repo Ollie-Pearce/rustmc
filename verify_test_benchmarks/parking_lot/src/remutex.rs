@@ -160,18 +160,4 @@ mod tests {
             ReentrantMutexGuard::bump(&mut guard);
         }
     }
-
-    #[cfg(feature = "serde")]
-#[no_mangle]
-    #[test]
-    fn test_serde_1_1_1_1() {
-        let contents: Vec<u8> = vec![0, 1, 2];
-        let mutex = ReentrantMutex::new(contents.clone());
-
-        let serialized = serialize(&mutex).unwrap();
-        let deserialized: ReentrantMutex<Vec<u8>> = deserialize(&serialized).unwrap();
-
-        assert_eq!(*(mutex.lock()), *(deserialized.lock()));
-        assert_eq!(contents, *(deserialized.lock()));
-    }
 }

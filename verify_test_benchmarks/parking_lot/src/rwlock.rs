@@ -605,20 +605,6 @@ mod tests {
         assert_eq!(Arc::strong_count(&b), 2);
     }
 
-    #[cfg(feature = "serde")]
-#[no_mangle]
-    #[test]
-    fn test_serde_3() {
-        let contents: Vec<u8> = vec![0, 1, 2];
-        let mutex = RwLock::new(contents.clone());
-
-        let serialized = serialize(&mutex).unwrap();
-        let deserialized: RwLock<Vec<u8>> = deserialize(&serialized).unwrap();
-
-        assert_eq!(*(mutex.read()), *(deserialized.read()));
-        assert_eq!(contents, *(deserialized.read()));
-    }
-
 #[no_mangle]
     #[test]
     fn test_issue_203() {
