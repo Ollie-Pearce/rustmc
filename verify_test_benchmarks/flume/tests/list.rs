@@ -462,61 +462,6 @@ fn linearizable_1() {
     .unwrap();
 }
 
-// #[test]
-// fn fairness_3() {
-//     const COUNT: usize = 10_000;
-
-//     let (s1, r1) = unbounded::<()>();
-//     let (s2, r2) = unbounded::<()>();
-
-//     for _ in 0..COUNT {
-//         s1.send(()).unwrap();
-//         s2.send(()).unwrap();
-//     }
-
-//     let mut hits = [0usize; 2];
-//     for _ in 0..COUNT {
-//         select! {
-//             recv(r1) -> _ => hits[0] += 1,
-//             recv(r2) -> _ => hits[1] += 1,
-//         }
-//     }
-//     assert!(hits.iter().all(|x| *x >= COUNT / hits.len() / 2));
-// }
-
-// #[test]
-// fn fairness_duplicates_3() {
-//     const COUNT: usize = 10_000;
-
-//     let (s, r) = unbounded();
-
-//     for _ in 0..COUNT {
-//         s.send(()).unwrap();
-//     }
-
-//     let mut hits = [0usize; 5];
-//     for _ in 0..COUNT {
-//         select! {
-//             recv(r) -> _ => hits[0] += 1,
-//             recv(r) -> _ => hits[1] += 1,
-//             recv(r) -> _ => hits[2] += 1,
-//             recv(r) -> _ => hits[3] += 1,
-//             recv(r) -> _ => hits[4] += 1,
-//         }
-//     }
-//     assert!(hits.iter().all(|x| *x >= COUNT / hits.len() / 2));
-// }
-
-// #[test]
-// fn recv_in_send_2() {
-//     let (s, r) = unbounded();
-//     s.send(()).unwrap();
-
-//     select! {
-//         send(s, assert_eq!(r.recv(), Ok(()))) -> _ => {}
-//     }
-// }
-
 #[no_mangle]
 #[test]
 fn channel_through_channel_4() {
