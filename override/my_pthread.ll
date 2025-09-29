@@ -25,6 +25,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::cell::UnsafeCell<(usize, usize)>" = type { { i64, i64 } }
 %"sdd::collector::CollectorRoot" = type { %"core::sync::atomic::AtomicPtr<sdd::collector::Collector>", %"core::sync::atomic::AtomicU8", [7 x i8] }
 %"core::sync::atomic::AtomicPtr<sdd::collector::Collector>" = type { ptr }
+%"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" = type { ptr }
 
 @"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
 @_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = global %"proc_macro::bridge::client::HandleCounters" zeroinitializer
@@ -77,7 +78,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17hb82b50228d40236fE = global <{ [8 x i8] }> zeroinitializer, align 8
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17h8a41eac2a6ffc7e7E = global <{ [8 x i8] }> zeroinitializer, align 8
-
+@_ZN16parking_lot_core11parking_lot9HASHTABLE17h2106f294beb32a70E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 
 @_ZN4core7unicode12unicode_data11white_space14WHITESPACE_MAP17h78bfbf1a1051c34cE = dso_local global [256 x i8] [
   i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2,
