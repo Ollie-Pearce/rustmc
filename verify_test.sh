@@ -1,15 +1,10 @@
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
-INCLUDE_DEPS=false
 
 while [ $# -gt 1 ]; do
   case "$1" in
     --ffi)
       MIXED_LANGUAGE=true
-      shift
-      ;;
-    --include-deps)
-      INCLUDE_DEPS=true
       shift
       ;;
     *)
@@ -77,7 +72,7 @@ echo "Collecting #[test] function names..."
 TEST_FUNCS_FILE="$DEPDIR/test_functions.txt"
 > "$TEST_FUNCS_FILE"
 
-find . -name "*.rs" | while read -r file; do
+find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
   awk '
     BEGIN { in_test = 0 }
     /^[[:space:]]*#\[test\]/ { in_test = 1; next }
@@ -105,12 +100,7 @@ RUSTFLAGS="--emit=dep-info,link,llvm-bc,llvm-ir -Zpanic_abort_tests -C overflow-
 #fi
 
 
-
-if [ "$INCLUDE_DEPS" = "true" ]; then
-  find "$(pwd)/target-ir/debug/deps" -name "*.bc" > "$DEPDIR/bitcode.txt"
-else
-  find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
-fi
+find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
 
 cd $DEPDIR
 
