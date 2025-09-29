@@ -4,8 +4,8 @@
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod benchmark {
-    use crate::ebr::Guard;
-    use crate::{HashIndex, HashMap, TreeIndex};
+    use scc::ebr::Guard;
+    use scc::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
     use std::hash::{BuildHasher, Hash};
     use std::ptr::addr_of;
@@ -691,8 +691,8 @@ mod benchmark {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod benchmark_async {
-    use crate::ebr::Guard;
-    use crate::{HashIndex, HashMap, TreeIndex};
+    use scc::ebr::Guard;
+    use scc::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering::Relaxed;

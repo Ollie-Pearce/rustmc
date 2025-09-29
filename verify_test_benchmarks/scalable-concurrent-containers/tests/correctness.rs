@@ -1,8 +1,8 @@
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashmap_test {
-    use crate::hash_map::{self, Entry, Reserve};
-    use crate::{Equivalent, HashMap};
+    use scc::hash_map::{self, Entry, Reserve};
+    use scc::{Equivalent, HashMap};
     use proptest::prelude::*;
     use proptest::strategy::ValueTree;
     use proptest::test_runner::TestRunner;
@@ -885,9 +885,9 @@ mod hashmap_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashindex_test {
-    use crate::ebr::Guard;
-    use crate::hash_index::{self, Iter};
-    use crate::{Equivalent, HashIndex};
+    use scc::ebr::Guard;
+    use scc::hash_index::{self, Iter};
+    use scc::{Equivalent, HashIndex};
     use proptest::strategy::{Strategy, ValueTree};
     use proptest::test_runner::TestRunner;
     use std::collections::BTreeSet;
@@ -1556,7 +1556,7 @@ mod hashindex_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashset_test {
-    use crate::{Equivalent, HashSet};
+    use scc::{Equivalent, HashSet};
     use std::hash::{Hash, Hasher};
     use std::panic::UnwindSafe;
     use std::rc::Rc;
@@ -1627,8 +1627,8 @@ mod hashset_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashcache_test {
-    use crate::hash_cache;
-    use crate::{Equivalent, HashCache};
+    use scc::hash_cache;
+    use scc::{Equivalent, HashCache};
     use proptest::prelude::*;
     use std::hash::{Hash, Hasher};
     use std::panic::UnwindSafe;
@@ -2003,9 +2003,9 @@ mod hashcache_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod treeindex_test {
-    use crate::ebr::Guard;
-    use crate::tree_index::{Iter, Range};
-    use crate::{Comparable, Equivalent, TreeIndex};
+    use scc::ebr::Guard;
+    use scc::tree_index::{Iter, Range};
+    use scc::{Comparable, Equivalent, TreeIndex};
     use proptest::prelude::*;
     use proptest::strategy::ValueTree;
     use proptest::test_runner::TestRunner;
@@ -2864,8 +2864,8 @@ mod treeindex_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod bag_test {
-    use crate::bag::IterMut;
-    use crate::Bag;
+    use scc::bag::IterMut;
+    use scc::Bag;
     use std::panic::UnwindSafe;
     use std::rc::Rc;
     use std::sync::atomic::AtomicUsize;
@@ -2988,11 +2988,11 @@ mod bag_test {
                             }
                             for _ in 0..workload_size {
                                 while bag32_clone.pop().is_none() {
-                                    crate::ebr::Guard::new().accelerate();
+                                    scc::ebr::Guard::new().accelerate();
                                     task::yield_now().await;
                                 }
                                 while bag_half_clone.pop().is_none() {
-                                    crate::ebr::Guard::new().accelerate();
+                                    scc::ebr::Guard::new().accelerate();
                                     task::yield_now().await;
                                 }
                             }
@@ -3067,8 +3067,8 @@ mod bag_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod queue_test {
-    use crate::ebr::Guard;
-    use crate::Queue;
+    use scc::ebr::Guard;
+    use scc::Queue;
     use std::panic::UnwindSafe;
     use std::rc::Rc;
     use std::sync::atomic::AtomicUsize;
@@ -3288,8 +3288,8 @@ mod queue_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod stack_test {
-    use crate::ebr::Guard;
-    use crate::Stack;
+    use scc::ebr::Guard;
+    use scc::Stack;
     use std::{panic::UnwindSafe, rc::Rc, sync::Arc};
     use tokio::sync::Barrier as AsyncBarrier;
 
@@ -3471,9 +3471,9 @@ mod stack_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod random_failure_test {
-    use crate::ebr::{Guard, Shared};
-    use crate::hash_map::Entry;
-    use crate::{HashCache, HashIndex, HashMap, TreeIndex};
+    use scc::ebr::{Guard, Shared};
+    use scc::hash_map::Entry;
+    use scc::{HashCache, HashIndex, HashMap, TreeIndex};
     use std::any::Any;
     use std::panic::catch_unwind;
     use std::sync::atomic::Ordering::{AcqRel, Relaxed};
