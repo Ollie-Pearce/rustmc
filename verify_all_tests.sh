@@ -133,6 +133,8 @@ echo " "
 while read -r test_file; do
   stem="$(basename "${test_file%.*}")"
 
+  echo "stem is: $stem"
+
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
