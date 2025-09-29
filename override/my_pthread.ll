@@ -11,6 +11,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"std::sync::reentrant_lock::Tid" = type { %"core::sync::atomic::AtomicU64" }
 %"core::sync::atomic::AtomicU64" = type { i64 }
 %"core::sync::atomic::AtomicU32" = type { i32 }
+%"core::sync::atomic::AtomicU8" = type { i8 }
 %"core::sync::atomic::AtomicBool" = type { i8 }
 %"std::sys::sync::mutex::futex::Mutex" = type { %"core::sync::atomic::AtomicU32" }
 %"compiler::Block" = type { i64, [1 x i64] }
@@ -22,7 +23,9 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::sync::atomic::AtomicPtr<core::ffi::c_void>" = type { ptr }
 %"core::cell::Cell<(usize, usize)>" = type { %"core::cell::UnsafeCell<(usize, usize)>" }
 %"core::cell::UnsafeCell<(usize, usize)>" = type { { i64, i64 } }
-
+%"sdd::collector::CollectorRoot" = type { %"core::sync::atomic::AtomicPtr<sdd::collector::Collector>", %"core::sync::atomic::AtomicU8", [7 x i8] }
+%"core::sync::atomic::AtomicPtr<sdd::collector::Collector>" = type { ptr }
+%"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" = type { ptr }
 
 @"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
 @_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = global %"proc_macro::bridge::client::HandleCounters" zeroinitializer
@@ -75,7 +78,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17hb82b50228d40236fE = global <{ [8 x i8] }> zeroinitializer, align 8
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17h8a41eac2a6ffc7e7E = global <{ [8 x i8] }> zeroinitializer, align 8
-
+@_ZN16parking_lot_core11parking_lot9HASHTABLE17h2106f294beb32a70E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 
 @_ZN4core7unicode12unicode_data11white_space14WHITESPACE_MAP17h78bfbf1a1051c34cE = dso_local global [256 x i8] [
   i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2,
@@ -117,6 +120,8 @@ target triple = "x86_64-unknown-linux-gnu"
 @_ZN3std3sys3pal4unix14stack_overflow3imp13MAIN_ALTSTACK17h0bc63d12ce7e6ff2E = global %"core::sync::atomic::AtomicPtr<core::ffi::c_void>" { ptr null }
 @_ZN3std3sys3pal4unix24ON_BROKEN_PIPE_FLAG_USED17h4c843d6a8af6a147E = global %"core::sync::atomic::AtomicBool" {i8 0}
 @"_ZN3std3sys3pal4unix14stack_overflow3imp5GUARD29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17ha3f8f4a5ee183220E" = thread_local global %"core::cell::Cell<(usize, usize)>" zeroinitializer
+
+@_ZN3sdd9collector11GLOBAL_ROOT17hb069fd236dc18dfcE = global %"sdd::collector::CollectorRoot" zeroinitializer
 
 
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
