@@ -114,6 +114,7 @@ find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
   ' "$file"
 done >> "$UNIT_TEST_FILE"
 
+echo "Unit test function names written to: $UNIT_TEST_FILE"
 cargo clean
 
 # Create temp file for output
