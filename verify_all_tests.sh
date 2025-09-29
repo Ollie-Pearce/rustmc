@@ -207,7 +207,7 @@ while read -r test_func; do
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
   fi
-done < "$TEST_FUNCS_FILE"
+done < "$UNIT_TEST_FILE"
 
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
