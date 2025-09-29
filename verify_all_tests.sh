@@ -269,7 +269,7 @@ echo "constant unimplemented errors: $constant_unimplemented_count / $file_count
 
 external_var_arg_string="Calling external var arg function"
 external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
-echo "segmentation fault errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "external var args errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
