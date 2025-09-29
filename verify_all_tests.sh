@@ -267,6 +267,10 @@ constant_unimplemented_string="Constant unimplemented for type"
 constant_unimplemented_count=$(grep -rl "$constant_unimplemented_string" . | wc -l)
 echo "constant unimplemented errors: $constant_unimplemented_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
+external_var_arg_string="Calling external var arg function"
+external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
+echo "segmentation fault errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
 echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
