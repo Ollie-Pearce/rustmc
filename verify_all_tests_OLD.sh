@@ -126,6 +126,9 @@ cd $DEPDIR
 
 mkdir -p "test_traces/${PROJECT_NAME}"
 
+echo " "
+echo " ================= Verifying Integration Tests ================= "
+echo " "
 while read -r test_file; do
   stem="$(basename "${test_file%.*}")"
 
@@ -168,6 +171,10 @@ while read -r test_file; do
   done < "$TEST_FN_DIR/${stem}.txt"
 done < "$INTEGRATION_TEST_FILES"
 
+echo " "
+echo " ================= Finished Verifying Integration Tests ================= "
+echo " "
+
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
@@ -175,6 +182,10 @@ cd $DEPDIR
 
 /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+
+echo " "
+echo " ================= Verifying Unit Tests ================= "
+echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
@@ -196,7 +207,11 @@ while read -r test_func; do
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
   fi
-done < "$TEST_FUNCS_FILE"
+done < "$UNIT_TEST_FILE"
+
+echo " "
+echo " ================= Finished Verifying Unit Tests ================= "
+echo " "
 
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
