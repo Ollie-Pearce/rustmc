@@ -1,15 +1,10 @@
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
-INCLUDE_DEPS=false
 
 while [ $# -gt 1 ]; do
   case "$1" in
     --ffi)
       MIXED_LANGUAGE=true
-      shift
-      ;;
-    --include-deps)
-      INCLUDE_DEPS=true
       shift
       ;;
     *)
@@ -20,11 +15,11 @@ while [ $# -gt 1 ]; do
 done
 
 if [ "$#" -lt 1 ]; then
-    echo "Target directory not supplied. Exiting"
-    exit 1
+	echo "Target Cargo Project not supplied. Exiting"
+	exit 1
 fi
 
-TARGET_DIR=$1
+TARGET_RUST_PROJECT=$1
 
 rm -rf test_traces/
 rm -rf test_results/
@@ -42,7 +37,7 @@ while true; do
 
     if [ "$output" = "No duplicates found or no changes required." ]; then
         echo "Output unchanged"
-          
+        
         break
     fi
 
@@ -50,155 +45,211 @@ while true; do
     sleep 1  # Sleep for a second to avoid running continuously without pause
 done
 
-find "$TARGET_DIR" -name "Cargo.toml" -exec dirname {} \; | while read -r project_dir; do
-  echo "Processing project in: $project_dir"
-  cd "$project_dir" || continue
+cd $TARGET_RUST_PROJECT
 
-  rm -rf target-ir
-  mkdir -p target-ir
+rm -rf target-ir
+mkdir -p target-ir
 
-  PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
-  PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr '-' '_')
-  echo "$PROJECT_NAME"
+PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr '-' '_')
+echo "$PROJECT_NAME"
 
-  #git reset --hard HEAD
-
-  # Add #[no_mangle] to #[test] functions that do not have it
-  find . -name "*.rs" | while read -r file; do
-    awk '
-      {
-        if ($0 ~ /^[[:space:]]*#\[test\]/ && prev !~ /^[[:space:]]*#\[no_mangle\]/) {
-          print "#[no_mangle]"
-        }
-        print
-        prev = $0
+# Add #[no_mangle] to #[test] functions that do not have it
+find . -name "*.rs" | while read -r file; do
+  awk '
+    {
+      if ($0 ~ /^[[:space:]]*#\[test\]/ && prev !~ /^[[:space:]]*#\[no_mangle\]/) {
+        print "#[no_mangle]"
       }
-    ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-  done
+      print
+      prev = $0
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
 
-  # collect test names
-  echo "Collecting #[test] function names..."
-  TEST_FUNCS_FILE="$DEPDIR/test_functions.txt"
-  > "$TEST_FUNCS_FILE"
+# Collect Rust test file paths
+echo "Collecting integration tests..."
+INTEGRATION_TEST_FILES="$DEPDIR/integration_test_files.txt"
+: > "$INTEGRATION_TEST_FILES"
 
-  find . -name "*.rs" | while read -r file; do
-    awk '
-      BEGIN { in_test = 0 }
-      /^[[:space:]]*#\[test\]/ { in_test = 1; next }
-      in_test && /^[[:space:]]*fn[[:space:]]+[a-zA-Z0-9_]+/ {
-        if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
-          print m[1]
-        }
-        in_test = 0
+find . -path "*/tests/*.rs" -type f | sort > "$INTEGRATION_TEST_FILES"
+
+# For each test file, extract names of functions annotated with #[test]
+TEST_FN_DIR="$DEPDIR/test_functions/${PROJECT_NAME}"
+mkdir -p "$TEST_FN_DIR"
+
+while read -r file; do
+  base="$(basename "${file%.*}")"
+  awk '
+    BEGIN { seen_test = 0 }
+    /^[[:space:]]*#\[test\]/          { seen_test = 1; next }
+    /^[[:space:]]*#\[/ && $0 !~ /#\[test\]/ { next }
+    seen_test && /^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]/ {
+      line = $0
+      sub(/^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+/, "", line)
+      sub(/\(.*/, "", line)      # strip args
+      gsub(/[[:space:]]/, "", line)
+      print line
+      seen_test = 0
+      next
+    }
+    /^[[:space:]]*$/ { seen_test = 0 }
+  ' "$file" > "$TEST_FN_DIR/${base}.txt"
+done < "$INTEGRATION_TEST_FILES"
+
+echo "Collecting unit tests..."
+UNIT_TEST_FILE="$DEPDIR/unit_test_functions.txt"
+> "$UNIT_TEST_FILE"
+
+find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
+  awk '
+    BEGIN { in_test = 0 }
+    /^[[:space:]]*#\[test\]/ { in_test = 1; next }
+    in_test && /^[[:space:]]*fn[[:space:]]+[a-zA-Z0-9_]+/ {
+      if (match($0, /fn[[:space:]]+([a-zA-Z0-9_]+)/, m)) {
+        print m[1]
       }
-    ' "$file"
-  done >> "$TEST_FUNCS_FILE"
+      in_test = 0
+    }
+  ' "$file"
+done >> "$UNIT_TEST_FILE"
+
+cargo clean
+
+# Create temp file for output
+cargo_output_file=$(mktemp)
+
+RUSTFLAGS="--emit=dep-info,link,llvm-bc,llvm-ir -Zpanic_abort_tests -C overflow-checks=off -C target-feature=-avx2 -C no-vectorize-slp -C no-vectorize-loops -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --target=x86_64-unknown-linux-gnu" rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 
+cd $DEPDIR
 
-  cargo clean
+mkdir -p "test_traces/${PROJECT_NAME}"
 
-  # Create temp file for output
-  cargo_output_file=$(mktemp)
+while read -r test_file; do
+  stem="$(basename "${test_file%.*}")"
 
-  # Run cargo and capture exit status directly
-  RUSTFLAGS="--emit=llvm-bc -Zpanic_abort_tests -C overflow-checks=off -C target-feature=-avx2 -C no-vectorize-slp -C no-vectorize-loops -C prefer-dynamic=no -C codegen-units=1 -C lto=no -C opt-level=0 -C debuginfo=2 -C llvm-args=--inline-threshold=9000 -C llvm-args=--bpf-expand-memcpy-in-order -C no-prepopulate-passes -C passes=ipsccp -C passes=globalopt -C passes=reassociate -C passes=argpromotion -C passes=typepromotion -C passes=lower-constant-intrinsics  -C passes=memcpyopt -Z mir-opt-level=0 --target=x86_64-unknown-linux-gnu" rustup run RustMC cargo test --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
+    > "$DEPDIR/bitcode.txt"
 
-  cargo_status=$?
-  rm "$cargo_output_file"   # Clean up
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    -name "${PROJECT_NAME}*.ll" \
+  | xargs grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
-  if [ $cargo_status -ne 0 ]; then
-    echo "Cargo test failed for project: $PROJECT_NAME. Skipping..."
-    cd "$DEPDIR"
-    continue
-  fi
+  /usr/bin/llvm-link-18 --internalize -S \
+    --override="$DEPDIR/override/my_pthread.ll" \
+    -o combined_old.ll @bitcode.txt
 
-  #if [ "$MIXED_LANGUAGE" = "true" ]; then
-  #	clang -O3 -emit-llvm -c *.c
-  #	mv *.bc $(pwd)/target/x86_64-unknown-linux-gnu/debug/deps
-  #fi
-
-
-
-  if [ "$INCLUDE_DEPS" = "true" ]; then
-    find "$(pwd)/target-ir/debug/deps" -name "*.bc" > "$DEPDIR/bitcode.txt"
-  else
-    find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
-  fi
-
-  cd $DEPDIR
-
-  #Maybe remove the DEPDIR var from below
-  #llvm-link --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined.ll @bitcode.txt
-
-  /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
-
-  mkdir -p test_traces/${PROJECT_NAME}/
+  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.ll -o combined.ll
 
   while read -r test_func; do
-    echo "Verifying test function: $test_func"
+    echo "Verifying: $stem :: $test_func"
+
+    out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
+
     timeout 1000s ./genmc --mixer \
-            --transform-output=myout.ll \
-            --print-exec-graphs \
-            --disable-function-inliner \
-            --disable-assume-propagation \
-            --disable-load-annotation \
-            --disable-confirmation-annotation \
-            --disable-spin-assume \
-            --program-entry-function="$test_func" \
-            --disable-estimation \
-            --print-error-trace \
-            --disable-stop-on-system-error \
-            --unroll=2 \
-            combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+      --transform-output=myout.ll \
+      --print-exec-graphs \
+      --disable-function-inliner \
+      --disable-assume-propagation \
+      --disable-load-annotation \
+      --disable-confirmation-annotation \
+      --disable-spin-assume \
+      --program-entry-function="$test_func" \
+      --disable-estimation \
+      --print-error-trace \
+      --disable-stop-on-system-error \
+      --unroll=2 \
+      combined.ll > "$out" 2>&1
 
-    if [ $? -eq 124 ]; then
+    [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
+  done < "$TEST_FN_DIR/${stem}.txt"
+done < "$INTEGRATION_TEST_FILES"
+
+cd $TARGET_RUST_PROJECT
+find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+cd $DEPDIR
+
+
+/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
+/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+
+while read -r test_func; do
+  echo "Verifying test function: $test_func"
+  timeout 1000s ./genmc --mixer \
+          --transform-output=myout.ll \
+          --print-exec-graphs \
+          --disable-function-inliner \
+          --disable-assume-propagation \
+          --disable-load-annotation \
+          --disable-confirmation-annotation \
+          --disable-spin-assume \
+          --program-entry-function="$test_func" \
+          --disable-estimation \
+          --print-error-trace \
+          --disable-stop-on-system-error \
+          --unroll=2 \
+          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+
+  if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
-    fi
-  done < "$TEST_FUNCS_FILE"
+  fi
+done < "$TEST_FUNCS_FILE"
 
-  #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="double_substr_1" --disable-estimation --print-error-trace --disable-stop-on-system-error combined.ll 
+#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
-  cd test_traces/${PROJECT_NAME}/
 
-  file_count=$(ls | wc -l)
+#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
-  success_search_string="Verification complete. No errors were detected."
-  success_count=$(grep -rl "$success_search_string" . | wc -l)
-  echo "Verification success: $success_count / $file_count" > ../../test_results/${PROJECT_NAME}_summary.txt
-  
-  unsupported_intrinsic_string="LLVM ERROR: Code generator does not support intrinsic function"
-  unsupported_intrinsic_count=$(grep -rl "$unsupported_intrinsic_string" . | wc -l)
-  echo "Unsupported intrinsic errors: $unsupported_intrinsic_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-  uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
-  uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
-  echo "Uninitialised read errors: $uninitialised_read_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+# Above gives us:
+# LLVM ERROR: Could not resolve external global address: _ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E
 
-  no_entry_string="ERROR: Could not find program's entry point function!"
-  no_entry_count=$(grep -rl "$no_entry_string" . | wc -l)
-  echo "No entry point errors: $no_entry_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+cd test_traces/${PROJECT_NAME}/
 
-  external_function_string="ERROR: Tried to execute an unknown external function:"
-  external_function_count=$(grep -rl "$external_function_string" . | wc -l)
-  echo "External function errors: $external_function_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+file_count=$(ls | wc -l)
 
-  visit_atomic_rmw_string="visitAtomicRMWInst"
-  visit_atomic_rmw_count=$(grep -rl "$visit_atomic_rmw_string" . | wc -l)
-  echo "AtomicRMW errors: $visit_atomic_rmw_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+success_search_string="Verification complete. No errors were detected."
+success_count=$(grep -rl "$success_search_string" . | wc -l)
+echo "Verification success: $success_count / $file_count" > ../../test_results/${PROJECT_NAME}_summary.txt
 
-  external_address_string="LLVM ERROR: Could not resolve external global address:"
-  external_address_count=$(grep -rl "$external_address_string" . | wc -l)
-  echo "External address errors: $external_address_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+unsupported_intrinsic_string="LLVM ERROR: Code generator does not support intrinsic function"
+unsupported_intrinsic_count=$(grep -rl "$unsupported_intrinsic_string" . | wc -l)
+echo "Unsupported intrinsic errors: $unsupported_intrinsic_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-  memset_promotion_string="ERROR: Invalid call to memset()!"
-  memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
-  echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
-  ilist_iterator_string="llvm::ilist_iterator_w_bits"
-  ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
-  echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
+uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
+echo "Uninitialised read errors: $uninitialised_read_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-  cd ../..
-  rm combined.ll combined_old.ll
-done
+no_entry_string="ERROR: Could not find program's entry point function!"
+no_entry_count=$(grep -rl "$no_entry_string" . | wc -l)
+echo "No entry point errors: $no_entry_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+external_function_string="ERROR: Tried to execute an unknown external function:"
+external_function_count=$(grep -rl "$external_function_string" . | wc -l)
+echo "External function errors: $external_function_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+visit_atomic_rmw_string="visitAtomicRMWInst"
+visit_atomic_rmw_count=$(grep -rl "$visit_atomic_rmw_string" . | wc -l)
+echo "AtomicRMW errors: $visit_atomic_rmw_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+external_address_string="LLVM ERROR: Could not resolve external global address:"
+external_address_count=$(grep -rl "$external_address_string" . | wc -l)
+echo "External address errors: $external_address_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+memset_promotion_string="ERROR: Invalid call to memset()!"
+memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
+echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+ilist_iterator_string="llvm::ilist_iterator_w_bits"
+ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
+echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+segfault_string="Segmentation fault"
+segfault_count=$(grep -rl "$segfault_string" . | wc -l)
+echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+cd ../..
+#rm combined.ll combined_old.ll
