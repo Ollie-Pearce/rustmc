@@ -125,7 +125,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 @_ZN3sdd9collector11GLOBAL_ROOT17hb069fd236dc18dfcE = global %"sdd::collector::CollectorRoot" zeroinitializer
 
-@_ZN15crossbeam_utils6atomic11atomic_cell4lock5LOCKS17hf29d1453f9b65e7eE = global [67 x %"crossbeam_utils::cache_padded::CachePadded<crossbeam_utils::atomic::seq_lock::SeqLock>"] zeroinitializer
+@_ZN15crossbeam_utils6atomic11atomic_cell4lock5LOCKS17hf29d1453f9b65e7eE = local_unnamed_addr global <{ [8576 x i8] }> zeroinitializer, align 128
 
 define dso_local { i64, i64 } @_ZN3std3sys3pal4unix4rand19hashmap_random_keys17hacd20405c8f84a06E() unnamed_addr {
 entry:
