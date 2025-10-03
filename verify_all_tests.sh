@@ -125,7 +125,7 @@ RUSTFLAGS="--emit=llvm-bc \
 -C prefer-dynamic=no \
 -C codegen-units=1 \
 -C lto=no \
--C opt-level=0 \
+-C opt-level=3 \
 -C debuginfo=2 \
 -C llvm-args=--inline-threshold=9000 \
 -C llvm-args=--bpf-expand-memcpy-in-order \
@@ -139,6 +139,12 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=reassociate \
 -C passes=sroa \
 -C passes=mem2reg \
+-C passes=early-cse \
+-C passes=instsimplify \
+-C passes=simplifycfg \
+-C passes=gvn \
+-C passes=adce \
+-C passes=dce \
 -C passes=argpromotion \
 -C passes=typepromotion \
 -C passes=lower-constant-intrinsics \
