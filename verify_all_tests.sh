@@ -117,6 +117,7 @@ cargo_output_file=$(mktemp)
 
 RUSTFLAGS="--emit=llvm-bc \
 -Zpanic_abort_tests \
+-Z mir-opt-level=4 \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
 -C no-vectorize-slp \
@@ -131,12 +132,14 @@ RUSTFLAGS="--emit=llvm-bc \
 -C no-prepopulate-passes \
 -C passes=ipsccp \
 -C passes=globalopt \
+-C passes=deadargelim \
+-C passes=argpromotion \
+-C passes=typepromotion \
 -C passes=reassociate \
 -C passes=argpromotion \
 -C passes=typepromotion \
 -C passes=lower-constant-intrinsics \
 -C passes=memcpyopt \
--Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
 rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
