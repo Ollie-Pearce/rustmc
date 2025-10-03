@@ -8,8 +8,10 @@ verify_test_benchmarks/**/target-ir/
 verify_test_benchmarks/**/target/
 verify_large_crates/**/target-ir/
 verify_large_crate/**/target/
-test_results/
-test_traces/
+test_results/*
+!test_results/.gitignore
+test_traces/*
+!test_traces/.gitignore
 bitcode.txt
 test_functions.txt
 *.ll

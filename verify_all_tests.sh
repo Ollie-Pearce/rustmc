@@ -21,11 +21,6 @@ fi
 
 TARGET_RUST_PROJECT=$1
 
-rm -rf test_traces/
-rm -rf test_results/
-mkdir -p test_results
-mkdir -p test_traces
-
 make
 
 # Rename #[test] functions so they are all unique
