@@ -142,6 +142,7 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=argpromotion \
 -C passes=typepromotion \
 -C passes=lower-constant-intrinsics \
+-C passes=sccp \
 -C passes=memcpyopt \
 --target=x86_64-unknown-linux-gnu" \
 rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
