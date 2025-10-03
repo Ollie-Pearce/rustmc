@@ -61,12 +61,14 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		case llvm::Intrinsic::vacopy:
 		case llvm::Intrinsic::is_constant:
 		case llvm::Intrinsic::umax:
+		case llvm::Intrinsic::umin:
 		case llvm::Intrinsic::powi:
 		case llvm::Intrinsic::fptoui_sat:
 		case llvm::Intrinsic::fabs:
 		case llvm::Intrinsic::fptosi_sat:
 		case llvm::Intrinsic::minnum:
 		case llvm::Intrinsic::maxnum:
+		case llvm::Intrinsic::abs:
 			break;
 		
 		//Attempt to deal with overflow intrinsics taken from KLEE: https://github.com/klee/klee/blob/master/lib/Module/IntrinsicCleaner.cpp
