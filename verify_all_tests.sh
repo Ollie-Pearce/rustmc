@@ -137,6 +137,8 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=typepromotion \
 -C passes=inline \
 -C passes=reassociate \
+-C passes=sroa \
+-C passes=mem2reg \
 -C passes=argpromotion \
 -C passes=typepromotion \
 -C passes=lower-constant-intrinsics \
