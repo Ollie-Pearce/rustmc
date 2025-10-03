@@ -135,6 +135,7 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=deadargelim \
 -C passes=argpromotion \
 -C passes=typepromotion \
+-C passes=inline \
 -C passes=reassociate \
 -C passes=argpromotion \
 -C passes=typepromotion \
