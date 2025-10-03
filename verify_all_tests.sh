@@ -145,8 +145,6 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=gvn \
 -C passes=adce \
 -C passes=dce \
--C passes=argpromotion \
--C passes=typepromotion \
 -C passes=lower-constant-intrinsics \
 -C passes=sccp \
 -C passes=memcpyopt \
