@@ -211,7 +211,9 @@ echo " ================= Finished Verifying Integration Tests ================= 
 echo " "
 
 cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f \
+  \( -name "${PROJECT_NAME}-*.bc" -o -name "crossbeam_epoch-*.bc" \) \
+  > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"

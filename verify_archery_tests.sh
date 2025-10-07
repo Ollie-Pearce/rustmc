@@ -115,7 +115,7 @@ cargo clean
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
-RUSTFLAGS="--emit=llvm-bc \
+RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
@@ -157,7 +157,7 @@ while read -r test_file; do
     > "$DEPDIR/bitcode.txt"
 
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    -name "${PROJECT_NAME}*.ll" \
+    -name "${PROJECT_NAME}*.bc" \
   | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
   /usr/bin/llvm-link-18 --internalize -S \
@@ -196,7 +196,9 @@ echo " ================= Finished Verifying Integration Tests ================= 
 echo " "
 
 cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f \
+  \( -name "${PROJECT_NAME}-*.bc" -o -name "pretty_assertions-*.bc" -o -name "yansi-*.bc" -o -name "diff-*.bc" \) \
+  > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"

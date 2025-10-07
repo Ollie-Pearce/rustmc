@@ -171,9 +171,9 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    -name "${PROJECT_NAME}*.bc" \
-  | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+  \( -name "${PROJECT_NAME}*.bc" -o -name "signal_hook_registry-*.bc" \) -print0 \
+| xargs -0 -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
   /usr/bin/llvm-link-18 --internalize -S \
     --override="$DEPDIR/override/my_pthread.ll" \
@@ -211,7 +211,9 @@ echo " ================= Finished Verifying Integration Tests ================= 
 echo " "
 
 cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f \
+  \( -name "${PROJECT_NAME}-*.bc" -o -name "signal_hook_registry-*.bc" \) \
+  > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
