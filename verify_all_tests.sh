@@ -7,6 +7,13 @@ while [ $# -gt 1 ]; do
       MIXED_LANGUAGE=true
       shift
       ;;
+    --features)
+      if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
+        echo "--features requires a value"; exit 1
+      fi
+      FEATURES_ARG="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown argument: $1"
       exit 1
@@ -20,6 +27,12 @@ if [ "$#" -lt 1 ]; then
 fi
 
 TARGET_RUST_PROJECT=$1
+
+if [ -n "$FEATURES_ARG" ]; then
+  CARGO_FEATURES="--features $FEATURES_ARG"
+else
+  CARGO_FEATURES=""
+fi
 
 make
 
@@ -138,7 +151,7 @@ RUSTFLAGS="--emit=llvm-bc \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test $CARGO_FEATURES --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
