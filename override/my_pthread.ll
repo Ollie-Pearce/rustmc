@@ -29,6 +29,8 @@ target triple = "x86_64-unknown-linux-gnu"
 %"crossbeam_utils::cache_padded::CachePadded<crossbeam_utils::atomic::seq_lock::SeqLock>" = type { %"crossbeam_utils::atomic::seq_lock::SeqLock", [15 x i64] }
 %"crossbeam_utils::atomic::seq_lock::SeqLock" = type { %"core::sync::atomic::AtomicUsize" }
 
+@_ZN15crossbeam_epoch5guard11unprotected11UNPROTECTED17hd20e8ac4d4ce9f6fE = global ptr null
+
 @"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
 @_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = global %"proc_macro::bridge::client::HandleCounters" zeroinitializer
 @_ZN3std2io5stdio6stderr8INSTANCE17h22db7be8253b8d66E = dso_local global %"std::sync::reentrant_lock::ReentrantLock<core::cell::RefCell<std::io::stdio::StderrRaw>>" { %"std::sync::reentrant_lock::Tid" { %"core::sync::atomic::AtomicU64" { i64 0 } }, %"std::sys::sync::mutex::futex::Mutex" { %"core::sync::atomic::AtomicU32" { i32 0 } }, i32 0, i64 0 }, align 8
