@@ -6,29 +6,29 @@ pub use core::{
 };
 
 #[cfg(feature = "std")]
-pub use std::thread::{Thread, current, park, yield_now};
+pub use std::thread::{current, park, yield_now, Thread};
 
-#[inline]
+#[inline(always)]
 pub fn with_atomic<T>(a: &mut AtomicU64, f: impl FnOnce(&mut u64) -> T) -> T {
     f(a.get_mut())
 }
 
-#[inline]
+#[inline(always)]
 pub fn read_atomic(a: &mut AtomicU64) -> u64 {
     *a.get_mut()
 }
 
-#[inline]
+#[inline(always)]
 pub fn write_atomic(a: &mut AtomicU64, v: u64) {
     *a.get_mut() = v;
 }
 
-#[inline]
+#[inline(always)]
 pub unsafe fn write_cell<T>(a: &UnsafeCell<T>, value: T) {
     *a.get() = value;
 }
 
-#[inline]
+#[inline(always)]
 pub unsafe fn read_init_cell<T>(a: &mut UnsafeCell<MaybeUninit<T>>) -> T {
     a.get_mut().assume_init_read()
 }

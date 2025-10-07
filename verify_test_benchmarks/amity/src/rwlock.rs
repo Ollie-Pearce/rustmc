@@ -25,14 +25,14 @@ pub struct RawRwLock<T> {
 }
 
 impl<T> Default for RawRwLock<T> {
-    #[inline]
+    #[inline(always)]
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<T> RawRwLock<T> {
-    #[inline]
+    #[inline(always)]
     pub const fn new() -> Self {
         RawRwLock {
             condvar: CondVar::zero(),
@@ -40,14 +40,14 @@ impl<T> RawRwLock<T> {
     }
 
     /// Returns true if the lock is acquired in any way, false otherwise.
-    #[inline]
+    #[inline(always)]
     pub fn is_locked(&self) -> bool {
         self.condvar.load(Ordering::Relaxed) != UNLOCKED
     }
 
     /// Attempts to acquire the exclusive lock without blocking.
     /// Returns true if the lock was acquired, false otherwise.
-    #[inline]
+    #[inline(always)]
     pub fn try_lock_exclusive(&self) -> bool {
         // If this fails then either the lock is already acquired or
         // at least one thread is waiting for the lock.
@@ -57,7 +57,7 @@ impl<T> RawRwLock<T> {
 
     /// Attempts to acquire the shared lock without blocking.
     /// Returns true if the lock was acquired, false otherwise.
-    #[inline]
+    #[inline(always)]
     pub fn try_lock_shared(&self) -> bool {
         self.condvar
             .update_break_no_wake(Ordering::Relaxed, Ordering::Acquire, |state| match state {
@@ -73,7 +73,7 @@ where
     T: Unpark,
 {
     /// Blocking shared lock that returns when the lock is acquired.
-    #[inline]
+    #[inline(always)]
     pub fn lock_shared_park(&self, park: impl Park<T>) {
         if self
             .condvar
@@ -95,7 +95,7 @@ where
     }
 
     /// Blocking exclusive lock that returns when the lock is acquired.
-    #[inline]
+    #[inline(always)]
     pub fn lock_exclusive_park(&self, park: impl Park<T>) {
         if self
             .condvar
@@ -116,7 +116,7 @@ where
         );
     }
 
-    #[inline]
+    #[inline(always)]
     pub unsafe fn unlock_shared(&self) {
         self.condvar.update(
             CondVarWake::None,
@@ -129,7 +129,7 @@ where
         );
     }
 
-    #[inline]
+    #[inline(always)]
     pub unsafe fn unlock_exclusive(&self) {
         self.condvar.set(CondVarWake::One, Ordering::Release, 0);
     }
@@ -140,7 +140,7 @@ where
     T: DefaultPark,
 {
     /// Blocking lock that returns when the lock is acquired.
-    #[inline]
+    #[inline(always)]
     pub fn lock_shared(&self) {
         if self
             .condvar
@@ -161,7 +161,7 @@ where
     }
 
     /// Blocking lock that returns when the lock is acquired.
-    #[inline]
+    #[inline(always)]
     pub fn lock_exclusive(&self) {
         if self
             .condvar
@@ -190,37 +190,37 @@ where
 
     const INIT: Self = Self::new();
 
-    #[inline]
+    #[inline(always)]
     fn is_locked(&self) -> bool {
         self.is_locked()
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_lock_shared(&self) -> bool {
         self.try_lock_shared()
     }
 
-    #[inline]
+    #[inline(always)]
     fn lock_shared(&self) {
         self.lock_shared()
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn unlock_shared(&self) {
         self.unlock_shared()
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_lock_exclusive(&self) -> bool {
         self.try_lock_exclusive()
     }
 
-    #[inline]
+    #[inline(always)]
     fn lock_exclusive(&self) {
         self.lock_exclusive()
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn unlock_exclusive(&self) {
         self.unlock_exclusive()
     }

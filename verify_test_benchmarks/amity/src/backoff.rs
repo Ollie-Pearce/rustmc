@@ -1,8 +1,9 @@
+use core::hint::spin_loop;
+
 /// Waiting hint.
 /// Provides common exponential spin logic.
 /// When spin count exceeds spin limit it switches to yield when "std" feature is enabled.
 /// When spin count exceeds yield limit it advises caller to block thread.
-#[derive(Default)]
 pub struct BackOff {
     spin_count: usize,
 }
@@ -11,27 +12,42 @@ impl BackOff {
     const SPIN_THRESHOLD: usize = 7;
     const YIELD_THRESHOLD: usize = 15;
 
-    #[inline]
-    #[must_use]
+    #[inline(always)]
     pub fn new() -> Self {
         BackOff { spin_count: 0 }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.spin_count = 0;
     }
 
-    #[inline]
-    pub fn wait(&mut self) {
+    #[inline(always)]
+    fn spin_loop(&self) {
+        for _ in 0..1 << self.spin_count {
+            spin_loop();
+        }
+    }
+
+    #[inline(always)]
+    pub fn lock_free_wait(&mut self) {
+        self.spin_loop();
+
         if self.spin_count < Self::SPIN_THRESHOLD {
-            core::hint::spin_loop();
+            self.spin_count += 1;
+        }
+    }
+
+    #[inline(always)]
+    pub fn blocking_wait(&mut self) {
+        if self.spin_count < Self::SPIN_THRESHOLD {
+            self.spin_loop();
         } else {
             #[cfg(feature = "std")]
             std::thread::yield_now();
 
             #[cfg(not(feature = "std"))]
-            core::hint::spin_loop();
+            self.spin_loop();
         }
 
         if self.spin_count < Self::YIELD_THRESHOLD {
@@ -39,7 +55,6 @@ impl BackOff {
         }
     }
 
-    #[must_use]
     pub fn should_block(&self) -> bool {
         self.spin_count >= Self::YIELD_THRESHOLD
     }
