@@ -1,3 +1,5 @@
+#!/bin/bash
+
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
 
@@ -64,6 +66,7 @@ done
 
 # Collect Rust test file paths
 echo "Collecting integration tests..."
+rm -rf "$DEPDIR/integration_test_files.txt"
 INTEGRATION_TEST_FILES="$DEPDIR/integration_test_files.txt"
 : > "$INTEGRATION_TEST_FILES"
 
@@ -93,6 +96,7 @@ while read -r file; do
 done < "$INTEGRATION_TEST_FILES"
 
 echo "Collecting unit tests..."
+rm -rf "$DEPDIR/unit_test_functions.txt"
 UNIT_TEST_FILE="$DEPDIR/unit_test_functions.txt"
 > "$UNIT_TEST_FILE"
 
@@ -138,10 +142,12 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --features triomphe --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --all-features --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
+rm -rf test_results/${PROJECT_NAME}_summary.txt
+rm -rf test_traces/${PROJECT_NAME}
 mkdir -p "test_traces/${PROJECT_NAME}"
 
 echo " "
@@ -196,9 +202,7 @@ echo " ================= Finished Verifying Integration Tests ================= 
 echo " "
 
 cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f \
-  \( -name "${PROJECT_NAME}-*.bc" -o -name "pretty_assertions-*.bc" -o -name "yansi-*.bc" -o -name "diff-*.bc" \) \
-  > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
@@ -206,6 +210,104 @@ cat bitcode.txt
 
 /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+
+# --- Report which externals are defined elsewhere in IR ---
+IR_DEPS_DIR="$TARGET_RUST_PROJECT/target-ir/debug/deps"
+[ -d "$IR_DEPS_DIR" ] || { echo "IR dir not found: $IR_DEPS_DIR" >&2; exit 1; }
+
+report_file="test_results/${PROJECT_NAME}_extern_def_sites.txt"
+mkdir -p test_results
+: > "$report_file"
+
+# Collect externals from this crate's IR: lines starting with 'declare ... @sym('
+# Handle quoted names (@"...") and unquoted (@sym).
+mapfile -t EXTERNAL_SYMS < <(
+  grep -hE '^[[:space:]]*declare[[:space:]].*\@' "$IR_DEPS_DIR"/${PROJECT_NAME}-*.ll 2>/dev/null \
+  | perl -ne 'if (/^\s*declare\b.*\@("?([^"(]+)"?)\(/) { print "$2\n"; }' \
+  | sort -u
+)
+
+if ((${#EXTERNAL_SYMS[@]}==0)); then
+  echo "No externals (declare) found in ${PROJECT_NAME}-*.ll under $IR_DEPS_DIR" | tee -a "$report_file"
+else
+  for sym in "${EXTERNAL_SYMS[@]}"; do
+    re="$(perl -e 'print quotemeta(shift)' "$sym")"
+
+    # Same-line 'define' with exact symbol, quoted or unquoted
+    mapfile -t matches < <(
+      grep -RHEn --include='*.ll' "^[[:space:]]*define[[:space:]].*\@(\"?$re\"?)\(" "$IR_DEPS_DIR" \
+      | cut -d: -f1 | sort -u
+    )
+
+    # Only print positives
+    if ((${#matches[@]})); then
+      printf '%s | In target-ir (%s)\n' "$sym" "$(printf '%s' "${matches[*]}")" | tee -a "$report_file"
+    fi
+  done
+fi
+
+echo "--------------------------------------------------------" | tee -a "$report_file"
+
+# --- Link all IR files that DEFINE externals from this crate ---
+IR_DEPS_DIR="$TARGET_RUST_PROJECT/target-ir/debug/deps"
+
+# 1) Recompute externals (declare lines) -> symbols
+mapfile -t EXTERNAL_SYMS < <(
+  grep -hE '^[[:space:]]*declare[[:space:]].*\@' "$IR_DEPS_DIR"/${PROJECT_NAME}-*.ll 2>/dev/null \
+  | perl -ne 'if (/^\s*declare\b.*\@("?([^"(]+)"?)\(/) { print "$2\n"; }' \
+  | sort -u
+)
+
+# 2) For each symbol, find *.ll files with SAME-LINE definition:  ^\s*define ... @sym(  or  @"sym"(
+declare -a DEF_LL_FILES=()
+
+if ((${#EXTERNAL_SYMS[@]})); then
+  for sym in "${EXTERNAL_SYMS[@]}"; do
+    re="$(perl -e 'print quotemeta(shift)' "$sym")"
+    # Collect matching files; append to DEF_LL_FILES
+    while IFS= read -r f; do
+      DEF_LL_FILES+=("$f")
+    done < <(
+      grep -RHEn --include='*.ll' "^[[:space:]]*define[[:space:]].*\@(\"?$re\"?)\(" "$IR_DEPS_DIR" \
+      | cut -d: -f1
+    )
+  done
+fi
+
+# 3) De-duplicate file list
+if ((${#DEF_LL_FILES[@]})); then
+  mapfile -t DEF_LL_FILES < <(printf '%s\n' "${DEF_LL_FILES[@]}" | sort -u)
+else
+  echo "No definition sites found for externals in ${PROJECT_NAME}-*.ll"
+fi
+
+# 4) Persist lists and link
+mkdir -p test_results
+printf '%s\n' "${DEF_LL_FILES[@]}" > "test_results/${PROJECT_NAME}_extern_def_ll_files.txt"
+
+# Add this crate’s own IR files to the link set
+mapfile -t OWN_LL_FILES < <(find "$IR_DEPS_DIR" -maxdepth 1 -type f -name "${PROJECT_NAME}-*.ll" | sort -u)
+
+# Prefer linking bitcode where available; fall back to .ll
+declare -a LINK_INPUTS=()
+for f in "${DEF_LL_FILES[@]}" "${OWN_LL_FILES[@]}"; do
+  b="${f%.ll}.bc"
+  if [ -f "$b" ]; then
+    LINK_INPUTS+=("$b")
+  else
+    LINK_INPUTS+=("$f")
+  fi
+done
+
+printf '%s\n' "${LINK_INPUTS[@]}" > "test_results/${PROJECT_NAME}_extern_def_link_inputs.txt"
+
+if ((${#LINK_INPUTS[@]})); then
+  /usr/bin/llvm-link-18 -o extern_defs_only.bc "${LINK_INPUTS[@]}"
+  /usr/bin/llvm-link-18 -S -o extern_defs_only.ll "${LINK_INPUTS[@]}"
+  echo "Linked externals' definition units + ${PROJECT_NAME}-*.ll -> extern_defs_only.bc/.ll"
+fi
+
+/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions extern_defs_only.ll -o extern_defs_only.ll
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -226,7 +328,7 @@ while read -r test_func; do
           --print-error-trace \
           --disable-stop-on-system-error \
           --unroll=2 \
-          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+          extern_defs_only.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
