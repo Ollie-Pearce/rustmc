@@ -119,7 +119,8 @@ while IFS= read -r ENTRY_FUNCTION; do
     echo "================= [$CURRENT/$TOTAL_FUNCTIONS] Verifying: $ENTRY_FUNCTION ================="
     echo " "
 
-    timeout 1000s ./genmc --mixer \
+    /usr/bin/time -v -o "test_traces/${FILENAME}/${ENTRY_FUNCTION}_timing.txt" \
+        timeout 1000s ./genmc --mixer \
             --transform-output=myout.ll \
             --print-exec-graphs \
             --disable-function-inliner \

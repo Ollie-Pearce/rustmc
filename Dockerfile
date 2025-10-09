@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev zlib1g-dev libedit-dev libxml2-dev \
     g++ clang util-linux \
     clang-18 llvm-18 llvm-18-dev \
-    bash gawk vim openssh-client \
+    bash gawk vim openssh-client time \
  && rm -rf /var/lib/apt/lists/*
 
 # rustup (no default toolchain)
