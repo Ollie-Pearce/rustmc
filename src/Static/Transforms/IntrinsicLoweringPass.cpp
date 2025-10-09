@@ -69,6 +69,7 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		case llvm::Intrinsic::minnum:
 		case llvm::Intrinsic::maxnum:
 		case llvm::Intrinsic::abs:
+		case Intrinsic::fma:
 			break;
 		
 		//Attempt to deal with overflow intrinsics taken from KLEE: https://github.com/klee/klee/blob/master/lib/Module/IntrinsicCleaner.cpp
