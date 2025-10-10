@@ -167,7 +167,7 @@ namespace LLVMModule {
 		fam.registerPass([&] { return BasicAA(); });
 		fam.registerPass([&] { return TypeBasedAA(); });
 	
-		//mpm.addPass(EvalAAPass());
+		//mpm.addPass(CollectIntrinsics());
 	
 		llvm::PassBuilder pb;
 		pb.registerModuleAnalyses(mam);
@@ -193,8 +193,12 @@ namespace LLVMModule {
 			basicOptsMGR.addPass(FunctionInlinerPass());
 		{
 			llvm::FunctionPassManager fpm;
+
+			fpm.addPass(splitRW());
 			/* Run after the inliner because it might generate new memcpys */
 			//
+
+			//fpm.addPass(CollectIntrinsics());
 			
 			fpm.addPass(PromoteMemcpy());
 			
@@ -207,7 +211,7 @@ namespace LLVMModule {
 			fpm.addPass(PromotePause());
 			//fpm.addPass(CollectIntrinsics());
 			
-			fpm.addPass(IntrinsicLoweringPass());
+			//fpm.addPass(IntrinsicLoweringPass());
 			
 	
 			if (conf->castElimination)
