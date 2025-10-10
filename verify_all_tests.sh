@@ -77,7 +77,6 @@ done
 
 # Collect Rust test file paths
 echo "Collecting integration tests..."
-rm -rf "$DEPDIR/integration_test_files.txt"
 INTEGRATION_TEST_FILES="$DEPDIR/integration_test_files.txt"
 : > "$INTEGRATION_TEST_FILES"
 
@@ -107,7 +106,6 @@ while read -r file; do
 done < "$INTEGRATION_TEST_FILES"
 
 echo "Collecting unit tests..."
-rm -rf "$DEPDIR/unit_test_functions.txt"
 UNIT_TEST_FILE="$DEPDIR/unit_test_functions.txt"
 > "$UNIT_TEST_FILE"
 
@@ -132,16 +130,14 @@ echo "Cargo features: $CARGO_FEATURES"
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
-RUSTFLAGS="-C codegen-units=1 \
---emit=llvm-bc,llvm-ir \
--C link-self-contained=yes \
+RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
--C link-dead-code \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
 -C no-vectorize-slp \
 -C no-vectorize-loops \
 -C prefer-dynamic=no \
+-C codegen-units=1 \
 -C lto=no \
 -C opt-level=0 \
 -C debuginfo=2 \
@@ -157,12 +153,10 @@ RUSTFLAGS="-C codegen-units=1 \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --all-features --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test $CARGO_FEATURES --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
-rm -rf test_results/${PROJECT_NAME}_summary.txt
-rm -rf test_traces/${PROJECT_NAME}
 mkdir -p "test_traces/${PROJECT_NAME}"
 
 echo " "
