@@ -313,7 +313,7 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 						modified = true;
 						break;
 					} else {
-						errs() << "Unhandled type size of value to byteswap";
+						//errs() << "Unhandled type size of value to byteswap";
 						break;
 					}
 				} else {

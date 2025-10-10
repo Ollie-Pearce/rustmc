@@ -257,7 +257,7 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 						getDataLayout().getTypeAllocSize(FieldTy);
 					char *fieldPtr = basePtr + fieldOffset;
 					//errs() << "Processing field:\n";
-					Field->dump();
+					//Field->dump();
 					if (isa<ConstantAggregateZero>(Field) ||
 					    isa<UndefValue>(Field)) {
 						// Zero-fill this field

@@ -189,7 +189,7 @@ auto tryPromoteMemCpy(MemCpyInst *MI, SmallVector<llvm::MemIntrinsic *, 8> &prom
 
 auto tryPromoteMemSet(MemSetInst *MS, SmallVector<MemIntrinsic *, 8> &promoted) -> bool
 {
-	MS->dump();
+	//MS->dump();
 	if (!canPromoteMemIntrinsic(MS))
 		return false;
 
