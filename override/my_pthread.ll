@@ -28,6 +28,11 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" = type { ptr }
 %"crossbeam_utils::cache_padded::CachePadded<crossbeam_utils::atomic::seq_lock::SeqLock>" = type { %"crossbeam_utils::atomic::seq_lock::SeqLock", [15 x i64] }
 %"crossbeam_utils::atomic::seq_lock::SeqLock" = type { %"core::sync::atomic::AtomicUsize" }
+%"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" = type { %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>>" }
+%"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>>" = type { %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" }
+%"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" = type { i64, [5 x i64] }
+
+@"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h833f4eb8744604c8E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
 
 @_ZN15crossbeam_epoch5guard11unprotected11UNPROTECTED17hd20e8ac4d4ce9f6fE = global ptr null
 
@@ -83,6 +88,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17hb82b50228d40236fE = global <{ [8 x i8] }> zeroinitializer, align 8
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17h8a41eac2a6ffc7e7E = global <{ [8 x i8] }> zeroinitializer, align 8
 @_ZN16parking_lot_core11parking_lot9HASHTABLE17h2106f294beb32a70E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
+@_ZN16parking_lot_core11parking_lot9HASHTABLE17h6c7ef01e7bc83a4cE = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 
 @_ZN4core7unicode12unicode_data11white_space14WHITESPACE_MAP17h78bfbf1a1051c34cE = dso_local global [256 x i8] [
   i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2,

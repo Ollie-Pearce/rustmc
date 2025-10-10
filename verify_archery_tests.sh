@@ -128,7 +128,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C prefer-dynamic=no \
 -C codegen-units=1 \
 -C lto=no \
--C opt-level=0 \
+-C opt-level=2 \
 -C debuginfo=2 \
 -C llvm-args=--inline-threshold=9000 \
 -C llvm-args=--bpf-expand-memcpy-in-order \
@@ -303,7 +303,7 @@ printf '%s\n' "${LINK_INPUTS[@]}" > "test_results/${PROJECT_NAME}_extern_def_lin
 
 if ((${#LINK_INPUTS[@]})); then
   /usr/bin/llvm-link-18 -o extern_defs_only.bc "${LINK_INPUTS[@]}"
-  /usr/bin/llvm-link-18 -S -o extern_defs_only.ll "${LINK_INPUTS[@]}"
+  /usr/bin/llvm-link-18 -S  --override="$DEPDIR/override/my_pthread.ll" -o extern_defs_only.ll "${LINK_INPUTS[@]}"
   echo "Linked externals' definition units + ${PROJECT_NAME}-*.ll -> extern_defs_only.bc/.ll"
 fi
 
