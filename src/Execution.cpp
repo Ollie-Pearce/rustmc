@@ -2968,9 +2968,10 @@ GenericValue Interpreter::getOperandValue(Value *V, ExecutionContext &SF)
 	if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
 		return getConstantExprValue(CE, SF);
 	} else if (Constant *CPV = dyn_cast<Constant>(V)) {
-		errs() << "Attempting get constant value for: ";
-		CPV->dump();
-		errs() << "In function: " << SF.CurFunction->getName() << "\n";
+		//errs() << "EXECUTION.CPP_CASE";
+		//errs() << "Attempting get constant value for: ";
+		//CPV->dump();
+		//errs() << "In function: " << SF.CurFunction->getName() << "\n";
 		return getConstantValue(CPV);
 	} else if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
 		return PTOGV(getPointerToGlobal(GV));

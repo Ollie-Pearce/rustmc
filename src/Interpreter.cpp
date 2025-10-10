@@ -187,6 +187,9 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 	std::vector<std::pair<const GlobalVariable *, void *>> toReinitialize;
 
 	for (auto &v : GLOBALS(*M)) {
+		// errs() << "collectStaticAddresses_ln190_case";
+		// errs() << "Attempting get constant value for: ";
+		// v.dump();
 		char *ptr = static_cast<char *>(GVTOP(getConstantValue(&v)));
 		unsigned int typeSize = getDataLayout().getTypeAllocSize(v.getValueType());
 
@@ -196,6 +199,9 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 			if (!Init)
 				continue;
 
+			// errs() << "collectStaticAddresses_ln205_case";
+			// errs() << "Attempting get constant value for: ";
+			// v.dump();
 			char *basePtr = static_cast<char *>(GVTOP(getConstantValue(&v))); //Get the base ptr of v
 			uint64_t totalSize = getDataLayout().getTypeAllocSize(Init->getType()); //Get total size of type (may be agregate)
 
@@ -250,7 +256,7 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 					uint64_t fieldSize =
 						getDataLayout().getTypeAllocSize(FieldTy);
 					char *fieldPtr = basePtr + fieldOffset;
-					errs() << "Processing field:\n";
+					//errs() << "Processing field:\n";
 					Field->dump();
 					if (isa<ConstantAggregateZero>(Field) ||
 					    isa<UndefValue>(Field)) {
@@ -274,6 +280,9 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 									"supported in array "
 									"fields");
 							}
+							// errs() << "collectStaticAddresses_ln283_case";
+							// errs() << "Attempting get constant value for: ";
+							// Elem->dump();
 							GenericValue val = getConstantValue(Elem);
 							uint64_t intVal = val.IntVal.getZExtValue();
 							for (uint64_t j = 0; j < elemSize; ++j) {
@@ -335,6 +344,10 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 					}
 				} else if (auto *CE = dyn_cast<ConstantExpr>(Init)) {
 					// Constant expression (e.g., an address computation)
+					// Evaluate the constant expression
+					// errs() << "collectStaticAddresses_ln351_case";
+					// errs() << "Attempting get constant value for: ";
+					// CE->dump();
 					GenericValue val = getConstantValue(CE);
 					// Handle result as int or pointer
 					if (Init->getType()->isPointerTy()) {
@@ -363,6 +376,9 @@ void Interpreter::collectStaticAddresses(SAddrAllocator &alloctor)
 					}
 				} else {
 					// Fallback for any other constant type
+					// errs() << "collectStaticAddresses_ln382_case";
+					// errs() << "Attempting get constant value for: ";
+					// Init->dump();
 					GenericValue GV = getConstantValue(Init);
 					// Assume it fits in typeSize bytes (e.g., small integers)
 					for (uint64_t j = 0; j < typeSize; ++j) {
@@ -416,7 +432,9 @@ void Interpreter::setupErrorPolicy(Module *M, const Config *userConf)
 	auto *errnoVar = M->getGlobalVariable("errno");
 	if (!errnoVar)
 		return;
-
+	// errs() << "setupErrorPolicy_ln438_case";
+	// errs() << "Attempting get constant value for: ";
+	// errnoVar->dump();
 	errnoAddr = GVTOP(getConstantValue(errnoVar));
 	errnoTyp = errnoVar->getValueType();
 	return;
@@ -447,6 +465,9 @@ void Interpreter::setupFsInfo(Module *M, const Config *userConf)
 	/* Initialize the directory's inode -- assume that the first field is int
 	 * We track this here to have custom naming info */
 	unsigned int inodeSize = getTypeSize(FI.inodeTyp);
+	// errs() << "setupFsInfo_ln468_case";
+	// errs() << "Attempting get constant value for: ";
+	// inodeVar->dump();
 	FI.dirInode = static_cast<char *>(GVTOP(getConstantValue(inodeVar)));
 
 	Type *intTyp = FI.inodeTyp->getElementType(0);

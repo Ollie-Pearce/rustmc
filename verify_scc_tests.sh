@@ -212,7 +212,7 @@ echo " "
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f \
-  \( -name "${PROJECT_NAME}-*.bc" -o -name "signal_hook_registry-*.bc" \) \
+  \( -name "${PROJECT_NAME}-*.bc" -o -name "proptest-*.bc" \) \
   > "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
