@@ -7,13 +7,6 @@ while [ $# -gt 1 ]; do
       MIXED_LANGUAGE=true
       shift
       ;;
-    --features)
-      if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
-        echo "--features requires a value"; exit 1
-      fi
-      FEATURES_ARG="$2"
-      shift 2
-      ;;
     *)
       echo "Unknown argument: $1"
       exit 1
@@ -27,12 +20,6 @@ if [ "$#" -lt 1 ]; then
 fi
 
 TARGET_RUST_PROJECT=$1
-
-if [ -n "$FEATURES_ARG" ]; then
-  CARGO_FEATURES="--features $FEATURES_ARG"
-else
-  CARGO_FEATURES=""
-fi
 
 make
 
@@ -125,12 +112,10 @@ done >> "$UNIT_TEST_FILE"
 echo "Unit test function names written to: $UNIT_TEST_FILE"
 cargo clean
 
-echo "Cargo features: $CARGO_FEATURES"
-
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
-RUSTFLAGS="--emit=llvm-bc,llvm-ir \
+RUSTFLAGS="--emit=llvm-bc \
 -Zpanic_abort_tests \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
@@ -153,7 +138,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test $CARGO_FEATURES --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
@@ -172,7 +157,7 @@ while read -r test_file; do
     > "$DEPDIR/bitcode.txt"
 
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    -name "${PROJECT_NAME}*.bc" \
+    -name "${PROJECT_NAME}*.ll" \
   | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
   /usr/bin/llvm-link-18 --internalize -S \
