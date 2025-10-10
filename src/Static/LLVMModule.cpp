@@ -194,7 +194,7 @@ namespace LLVMModule {
 		{
 			llvm::FunctionPassManager fpm;
 
-			//fpm.addPass(splitRW());
+			fpm.addPass(splitRW());
 			/* Run after the inliner because it might generate new memcpys */
 			//
 
