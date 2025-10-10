@@ -211,7 +211,7 @@ namespace LLVMModule {
 			fpm.addPass(PromotePause());
 			//fpm.addPass(CollectIntrinsics());
 			
-			//fpm.addPass(IntrinsicLoweringPass());
+			fpm.addPass(IntrinsicLoweringPass());
 			
 	
 			if (conf->castElimination)
