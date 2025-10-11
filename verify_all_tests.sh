@@ -176,7 +176,6 @@ while read -r test_file; do
     timeout 1000s ./genmc --mixer \
       --transform-output=myout.ll \
       --print-exec-graphs \
-      --disable-function-inliner \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -215,7 +214,6 @@ while read -r test_func; do
   timeout 1000s ./genmc --mixer \
           --transform-output=myout.ll \
           --print-exec-graphs \
-          --disable-function-inliner \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
