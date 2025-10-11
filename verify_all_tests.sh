@@ -142,6 +142,7 @@ rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$car
 
 cd $DEPDIR
 
+rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
 echo " "
