@@ -115,7 +115,7 @@ cargo clean
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
-RUSTFLAGS="--emit=llvm-bc \
+RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
