@@ -194,10 +194,13 @@ namespace LLVMModule {
 		{
 			llvm::FunctionPassManager fpm;
 
+			//constant fold
 			fpm.addPass(splitRW());
 			/* Run after the inliner because it might generate new memcpys */
-			//
+			
 
+			//change return type
+			
 			//fpm.addPass(CollectIntrinsics());
 			
 			fpm.addPass(PromoteMemcpy());
