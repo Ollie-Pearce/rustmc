@@ -293,6 +293,10 @@ external_var_arg_string="Calling external var arg function"
 external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
 echo "external var args errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
+memcpy_string="Invalid call to memcpy()!"
+memcpy_count=$(grep -rl "$memcpy_string" . | wc -l)
+echo "memcpy errors: $memcpy_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
 echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
