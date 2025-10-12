@@ -157,9 +157,18 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    -name "${PROJECT_NAME}*.ll" \
-  | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  if [ "$stem" != "$PROJECT_NAME" ]; then
+    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+      -name "${PROJECT_NAME}*.ll" \
+    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  fi
+
+  # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
+
+  #find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" needed for concurrent-queue
+
+  echo "Bitcode files:"
+  cat bitcode.txt
 
   /usr/bin/llvm-link-18 --internalize -S \
     --override="$DEPDIR/override/my_pthread.ll" \
