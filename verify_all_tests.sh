@@ -288,8 +288,8 @@ memset_promotion_string="ERROR: Invalid call to memset()!"
 memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
 echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-ilist_iterator_string="llvm::ilist_iterator_w_bits"
-ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
+ilist_iterator_string="Assertion \`!NodePtr->isKnownSentinel()' failed."
+ilist_iterator_count=$(grep -rFl -- "$ilist_iterator_string" . | wc -l)
 echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 constant_unimplemented_string="Constant unimplemented for type"
