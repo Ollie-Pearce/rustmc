@@ -165,7 +165,7 @@ while read -r test_file; do
 
   # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
 
-  #find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" needed for concurrent-queue
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
 
   echo "Bitcode files:"
   cat bitcode.txt
