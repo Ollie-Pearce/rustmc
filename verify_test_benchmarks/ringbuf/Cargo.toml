@@ -10,7 +10,7 @@ license = "MIT/Apache-2.0"
 ringbuf = { path = ".", version = "0.4.8", default-features = false }
 
 [workspace]
-members = ["async", "blocking"]
+members = ["blocking"]
 
 [package]
 name = "ringbuf"
