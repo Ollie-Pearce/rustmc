@@ -206,6 +206,7 @@ echo " "
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "crossbeam_utils-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
