@@ -33,7 +33,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" = type { i64, [5 x i64] }
 
 @"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h833f4eb8744604c8E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
-
+@"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h9f315159ccaa6a69E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
 @_ZN15crossbeam_epoch5guard11unprotected11UNPROTECTED17hd20e8ac4d4ce9f6fE = global ptr null
 
 @"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" zeroinitializer
