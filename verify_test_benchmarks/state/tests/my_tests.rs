@@ -13,6 +13,7 @@ impl Drop for DroppingStruct {
 }
 
 // Ensure our DroppingStruct works as intended.
+#[no_mangle]
 #[test]
 fn test_dropping_struct() {
     let drop_flag = Arc::new(RwLock::new(false));
@@ -38,18 +39,21 @@ mod type_map_tests {
     // test if we want the `set` to succeed.
     static TYPE_MAP: TypeMap![Send + Sync] = <TypeMap![Send + Sync]>::new();
 
+#[no_mangle]
     #[test]
     fn simple_set_get() {
         assert!(TYPE_MAP.set(1u32));
         assert_eq!(*TYPE_MAP.get::<u32>(), 1);
     }
 
+#[no_mangle]
     #[test]
     fn dst_set_get() {
         assert!(TYPE_MAP.set::<[u32; 4]>([1, 2, 3, 4u32]));
         assert_eq!(*TYPE_MAP.get::<[u32; 4]>(), [1, 2, 3, 4]);
     }
 
+#[no_mangle]
     #[test]
     fn set_get_remote() {
         thread::spawn(|| {
@@ -59,6 +63,7 @@ mod type_map_tests {
         assert_eq!(*TYPE_MAP.get::<isize>(), 10);
     }
 
+#[no_mangle]
     #[test]
     fn two_put_get() {
         assert!(TYPE_MAP.set("Hello, world!".to_string()));
@@ -71,6 +76,7 @@ mod type_map_tests {
         assert_eq!(TYPE_MAP.get::<String>(), s_old);
     }
 
+#[no_mangle]
     #[test]
     fn many_puts_only_one_succeeds() {
         let mut threads = vec![];
@@ -86,6 +92,7 @@ mod type_map_tests {
     }
 
     // Ensure setting when already set doesn't cause a drop.
+#[no_mangle]
     #[test]
     fn test_no_drop_on_set() {
         let drop_flag = Arc::new(RwLock::new(false));
@@ -100,6 +107,7 @@ mod type_map_tests {
     }
 
     // Ensure dropping a type_map drops its contents.
+#[no_mangle]
     #[test]
     fn drop_inners_on_drop() {
         let drop_flag_a = Arc::new(RwLock::new(false));
@@ -135,6 +143,7 @@ mod type_map_tests_tls {
     // test if we want the `set` to succeed.
     static TYPE_MAP: TypeMap![Send + Sync] = <TypeMap![Send + Sync]>::new();
 
+#[no_mangle]
     #[test]
     fn test_simple() {
         assert!(TYPE_MAP.try_get_local::<u32>().is_none());
@@ -142,12 +151,14 @@ mod type_map_tests_tls {
         assert_eq!(*TYPE_MAP.get_local::<u32>(), 1);
     }
 
+#[no_mangle]
     #[test]
     fn test_double_put() {
         assert!(TYPE_MAP.set_local(|| 1i32));
         assert!(!TYPE_MAP.set_local(|| 1i32));
     }
 
+#[no_mangle]
     #[test]
     fn not_unique_when_sent() {
         assert!(TYPE_MAP.set_local(|| 1i64));
@@ -158,6 +169,7 @@ mod type_map_tests_tls {
         }).join().expect("Panic.");
     }
 
+#[no_mangle]
     #[test]
     fn type_map_tls_really_is_tls() {
         const THREADS: usize = 50;
@@ -190,6 +202,7 @@ mod type_map_tests_tls {
         assert_eq!(TYPE_MAP.get_local::<Cell<u8>>().get(), 0);
     }
 
+#[no_mangle]
     #[test]
     fn type_map_tls_really_is_tls_take_2() {
         thread::spawn(|| {
@@ -209,6 +222,7 @@ mod cell_tests {
     use std::sync::{Arc, RwLock};
     use std::thread;
 
+#[no_mangle]
     #[test]
     fn simple_put_get() {
         static CELL: InitCell<u32> = InitCell::new();
@@ -217,6 +231,7 @@ mod cell_tests {
         assert_eq!(*CELL.get(), 10);
     }
 
+#[no_mangle]
     #[test]
     fn no_double_put() {
         static CELL: InitCell<u32> = InitCell::new();
@@ -226,8 +241,9 @@ mod cell_tests {
         assert_eq!(*CELL.get(), 1);
     }
 
+#[no_mangle]
     #[test]
-    fn many_puts_only_one_succeeds() {
+    fn many_puts_only_one_succeeds_1() {
         static CELL: InitCell<u32> = InitCell::new();
 
         let mut threads = vec![];
@@ -244,8 +260,9 @@ mod cell_tests {
         assert_eq!(*CELL.get(), 10);
     }
 
+#[no_mangle]
     #[test]
-    fn dst_set_get() {
+    fn dst_set_get_1() {
         static CELL: InitCell<[u32; 4]> = InitCell::new();
 
         assert!(CELL.set([1, 2, 3, 4]));
@@ -253,8 +270,9 @@ mod cell_tests {
     }
 
     // Ensure dropping a `InitCell<T>` drops `T`.
+#[no_mangle]
     #[test]
-    fn drop_inners_on_drop() {
+    fn drop_inners_on_drop_1() {
         let drop_flag = Arc::new(RwLock::new(false));
         let dropping_struct = DroppingStruct(drop_flag.clone());
 
@@ -267,6 +285,7 @@ mod cell_tests {
         assert_eq!(*drop_flag.read().unwrap(), true);
     }
 
+#[no_mangle]
     #[test]
     fn clone() {
         let cell: InitCell<u32> = InitCell::new();
@@ -289,16 +308,18 @@ mod cell_tests_tls {
     use std::cell::Cell;
     use std::sync::{Arc, Barrier};
 
+#[no_mangle]
     #[test]
-    fn simple_put_get() {
+    fn simple_put_get_1() {
         static CELL: LocalInitCell<u32> = LocalInitCell::new();
 
         assert!(CELL.set(|| 10));
         assert_eq!(*CELL.get(), 10);
     }
 
+#[no_mangle]
     #[test]
-    fn no_double_put() {
+    fn no_double_put_1() {
         static CELL: LocalInitCell<u32> = LocalInitCell::new();
 
         assert!(CELL.set(|| 1));
@@ -306,8 +327,9 @@ mod cell_tests_tls {
         assert_eq!(*CELL.get(), 1);
     }
 
+#[no_mangle]
     #[test]
-    fn many_puts_only_one_succeeds() {
+    fn many_puts_only_one_succeeds_2() {
         static CELL: LocalInitCell<u32> = LocalInitCell::new();
 
         let mut threads = vec![];
@@ -324,6 +346,7 @@ mod cell_tests_tls {
         assert_eq!(*CELL.get(), 10);
     }
 
+#[no_mangle]
     #[test]
     fn cell_tls_really_is_tls() {
         const THREADS: usize = 50;
@@ -356,6 +379,7 @@ mod cell_tests_tls {
         assert_eq!(CELL.get().get(), 0);
     }
 
+#[no_mangle]
     #[test]
     fn cell_tls_really_is_tls_take_2() {
         static CELL: LocalInitCell<Cell<u8>> = LocalInitCell::new();
