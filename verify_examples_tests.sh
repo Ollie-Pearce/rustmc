@@ -170,7 +170,7 @@ mkdir -p "test_traces/${PROJECT_NAME}"
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "examples-*.ll" >> "$DEPDIR/bitcode.txt"
-DEP_OVERRIDE=find "$(pwd)/target-ir/debug/deps" -type f -name "sdd-*.ll"
+DEP_OVERRIDE=$(find "$(pwd)/target-ir/debug/deps" -type f -name "sdd-*.ll")
 echo "override is: $DEP_OVERRIDE"
 cd $DEPDIR
 
