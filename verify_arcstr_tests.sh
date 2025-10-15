@@ -171,9 +171,9 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  #find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-  #  -name "${PROJECT_NAME}*.bc" \
-  #| xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    -name "${PROJECT_NAME}*.bc" \
+  | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
   /usr/bin/llvm-link-18 --internalize -S \
     --override="$DEPDIR/override/my_pthread.ll" \
