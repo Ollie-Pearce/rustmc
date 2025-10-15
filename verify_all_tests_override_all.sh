@@ -189,24 +189,30 @@ rm -f "$tmp_bitcode"
 find "$(pwd)/target-ir/debug/deps" -type f -name '*.ll' ! -name "${PROJECT_NAME}-*.ll" -print \
   >>"$OVERRIDES_FILE"
 
-# 3) Build a runnable llvm-link command with properly quoted --override args
-cmdfile="$(mktemp)"; trap 'rm -f "$cmdfile"' EXIT
+TMPDIR=${TMPDIR:-/tmp}
+
+# create absolute tempfile
+cmdfile=$(mktemp "$TMPDIR/linkcmd.XXXXXX") || exit 1
+
+# ensure cleanup, even on signals
+trap 'rm -f -- "$cmdfile"' EXIT HUP INT TERM
+
+# write the command file
 {
   printf %s "exec /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll"
-
-  # add each override with correct single-quote escaping
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     q=$(printf %s "$p" | sed "s/'/'\\\\''/g")
     printf ' %s' "--override='$q'"
   done < "$OVERRIDES_FILE"
-
-  # outputs and response file
   printf ' %s\n' "-o combined_old.ll @bitcode.txt"
 } >"$cmdfile"
 
-# 4) Execute link and follow-up opt
-sh "$cmdfile"
+# strip CR in case earlier steps introduced CRLF
+tr -d '\r' <"$cmdfile" >"$cmdfile.$$" && mv -f "$cmdfile.$$" "$cmdfile"
+
+# run it using an absolute path; cwd changes are irrelevant
+sh -- "$cmdfile"
 
 exit 0
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
