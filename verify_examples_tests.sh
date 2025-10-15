@@ -130,35 +130,7 @@ find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
 done >> "$UNIT_TEST_FILE"
 
 echo "Unit test function names written to: $UNIT_TEST_FILE"
-cargo clean
 
-# Create temp file for output
-cargo_output_file=$(mktemp)
-
-RUSTFLAGS="--emit=llvm-bc,llvm-ir \
--Zpanic_abort_tests \
--C overflow-checks=off \
--C target-feature=-avx2 \
--C no-vectorize-slp \
--C no-vectorize-loops \
--C prefer-dynamic=no \
--C codegen-units=1 \
--C lto=no \
--C opt-level=0 \
--C debuginfo=2 \
--C llvm-args=--inline-threshold=9000 \
--C llvm-args=--bpf-expand-memcpy-in-order \
--C no-prepopulate-passes \
--C passes=ipsccp \
--C passes=globalopt \
--C passes=reassociate \
--C passes=argpromotion \
--C passes=typepromotion \
--C passes=lower-constant-intrinsics \
--C passes=memcpyopt \
--Z mir-opt-level=0 \
---target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
@@ -169,6 +141,8 @@ mkdir -p "test_traces/${PROJECT_NAME}"
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "examples-*.ll" >> "$DEPDIR/bitcode.txt"
+DEP_OVERRIDE=find "$(pwd)/target-ir/debug/deps" -type f -name "sdd-*.ll"
+echo "override is: $DEP_OVERRIDE"
 cd $DEPDIR
 
 /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
