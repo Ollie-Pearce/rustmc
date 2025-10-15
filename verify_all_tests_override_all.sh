@@ -205,11 +205,10 @@ cmdfile="$(mktemp)"; trap 'rm -f "$cmdfile"' EXIT
   printf ' %s\n' "-o combined_old.ll @bitcode.txt"
 } >"$cmdfile"
 
-cat "$cmdfile"
-
-exit 0
 # 4) Execute link and follow-up opt
 sh "$cmdfile"
+
+exit 0
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
   while read -r test_func; do
