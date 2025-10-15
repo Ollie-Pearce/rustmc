@@ -146,7 +146,7 @@ rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    \( -name "*.bc" -o -name "lib-*.bc" \) \
+    \( -name "*.ll" \) \
     > "$DEPDIR/bitcode.txt"
       echo "Bitcode files:"
   cat bitcode.txt
@@ -201,6 +201,8 @@ cd $DEPDIR
 echo "Bitcode files:"
 cat bitcode.txt
 
+/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
+/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
