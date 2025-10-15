@@ -138,7 +138,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --features tls --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
