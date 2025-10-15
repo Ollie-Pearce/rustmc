@@ -206,6 +206,7 @@ cmdfile="$(mktemp)"; trap 'rm -f "$cmdfile"' EXIT
 } >"$cmdfile"
 
 # 4) Execute link and follow-up opt
+cd $DEPDIR
 
 echo "$(pwd)"
 echo "Command: "
