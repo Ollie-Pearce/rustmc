@@ -138,17 +138,17 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --workspace --features tls --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
 rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    \( -name "*.ll" \) \
-    > "$DEPDIR/bitcode.txt"
-      echo "Bitcode files:"
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name '*.ll' \
+  > "$DEPDIR/bitcode.txt"
+  
+  echo "Bitcode files:"
   cat bitcode.txt
 
   /usr/bin/llvm-link-18 --internalize -S \
@@ -174,9 +174,10 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    ./genmc --mixer \
+    timeout 3600s ./genmc --mixer \
       --transform-output=myout.ll \
       --print-exec-graphs \
+      --disable-function-inliner \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -187,8 +188,10 @@ while read -r test_file; do
       --disable-stop-on-system-error \
       --unroll=2 \
       combined.ll > "$out" 2>&1
+
+    [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
   done < "$TEST_FN_DIR/${stem}.txt"
-  done < "$INTEGRATION_TEST_FILES"
+done < "$INTEGRATION_TEST_FILES"
 
 
 echo " "
@@ -205,22 +208,26 @@ echo " "
 echo " ================= Verifying Unit Tests ================= "
 echo " "
 
-while IFS= read -r test_func; do
-  [ -n "$test_func" ] || continue
+while read -r test_func; do
   echo "Verifying test function: $test_func"
-  ./genmc --mixer \
-    --transform-output=myout.ll \
-    --print-exec-graphs \
-    --disable-assume-propagation \
-    --disable-load-annotation \
-    --disable-confirmation-annotation \
-    --disable-spin-assume \
-    --program-entry-function="$test_func" \
-    --disable-estimation \
-    --print-error-trace \
-    --disable-stop-on-system-error \
-    --unroll=2 \
-    combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+  timeout 3600s ./genmc --mixer \
+          --transform-output=myout.ll \
+          --print-exec-graphs \
+          --disable-function-inliner \
+          --disable-assume-propagation \
+          --disable-load-annotation \
+          --disable-confirmation-annotation \
+          --disable-spin-assume \
+          --program-entry-function="$test_func" \
+          --disable-estimation \
+          --print-error-trace \
+          --disable-stop-on-system-error \
+          --unroll=2 \
+          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+
+  if [ $? -eq 124 ]; then
+      echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
+  fi
 done < "$UNIT_TEST_FILE"
 
 echo " "

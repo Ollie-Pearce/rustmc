@@ -124,7 +124,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C prefer-dynamic=no \
 -C codegen-units=1 \
 -C lto=no \
--C opt-level=0 \
+-C opt-level=3 \
 -C debuginfo=2 \
 -C llvm-args=--inline-threshold=9000 \
 -C llvm-args=--bpf-expand-memcpy-in-order \
@@ -208,7 +208,9 @@ echo " "
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "crossbeam_utils-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
