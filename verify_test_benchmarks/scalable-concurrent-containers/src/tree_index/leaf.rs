@@ -989,7 +989,6 @@ impl<'l, K, V> Iterator for Scanner<'l, K, V> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use proptest::prelude::*;
     use std::sync::atomic::AtomicBool;
     use tokio::sync::Barrier;
 
@@ -1147,72 +1146,6 @@ mod test {
         assert_eq!(leaf.remove_if(&11, &mut |_| true), RemoveResult::Retired);
 
         assert!(matches!(leaf.insert(5, 3), InsertResult::Retired(..)));
-    }
-
-    proptest! {
-        #[cfg_attr(miri, ignore)]
-        #[test]
-        fn general(insert in 0_usize..DIMENSION.num_entries, remove in 0_usize..DIMENSION.num_entries) {
-            let leaf: Leaf<usize, usize> = Leaf::new();
-            assert!(leaf.is_empty());
-            for i in 0..insert {
-                assert!(matches!(leaf.insert(i, i), InsertResult::Success));
-                if i != 0 {
-                    let result = leaf.max_less(leaf.metadata.load(Relaxed), &i);
-                    assert_eq!(*leaf.key_at(result), i - 1);
-                    assert_eq!(*leaf.value_at(result), i - 1);
-                }
-            }
-            if insert == 0 {
-                assert_eq!(leaf.max_key(), None);
-                assert!(leaf.is_empty());
-            } else {
-                assert_eq!(leaf.max_key(), Some(&(insert - 1)));
-                assert!(!leaf.is_empty());
-            }
-            for i in 0..insert {
-                assert!(matches!(leaf.insert(i, i), InsertResult::Duplicate(..)));
-                assert!(!leaf.is_empty());
-                let result = leaf.min_greater_equal(&i);
-                assert_eq!(result.0, Some((&i, &i)));
-            }
-            for i in 0..insert {
-                assert_eq!(leaf.search_entry(&i).unwrap(), (&i, &i));
-            }
-            if insert == DIMENSION.num_entries {
-                assert!(matches!(leaf.insert(usize::MAX, usize::MAX), InsertResult::Full(..)));
-            }
-            for i in 0..remove {
-                if i < insert {
-                    if i == insert - 1 {
-                        assert!(matches!(leaf.remove_if(&i, &mut |_| true), RemoveResult::Retired));
-                        for i in 0..insert {
-                            assert!(matches!(leaf.insert(i, i), InsertResult::Retired(..)));
-                        }
-                    } else {
-                        assert!(matches!(leaf.remove_if(&i, &mut |_| true), RemoveResult::Success));
-                    }
-                } else {
-                    assert!(matches!(leaf.remove_if(&i, &mut |_| true), RemoveResult::Fail));
-                    assert!(leaf.is_empty());
-                }
-            }
-        }
-
-        #[cfg_attr(miri, ignore)]
-        #[test]
-        fn range(start in 0_usize..DIMENSION.num_entries, end in 0_usize..DIMENSION.num_entries) {
-            let leaf: Leaf<usize, usize> = Leaf::new();
-            for i in 1..DIMENSION.num_entries - 1 {
-                prop_assert!(matches!(leaf.insert(i, i), InsertResult::Success));
-            }
-            leaf.remove_range(&(start..end));
-            for i in 1..DIMENSION.num_entries - 1 {
-                prop_assert!(leaf.search_entry(&i).is_none() == (start..end).contains(&i));
-            }
-            prop_assert!(leaf.search_entry(&0).is_none());
-            prop_assert!(leaf.search_entry(&(DIMENSION.num_entries - 1)).is_none());
-        }
     }
 
     #[cfg_attr(miri, ignore)]

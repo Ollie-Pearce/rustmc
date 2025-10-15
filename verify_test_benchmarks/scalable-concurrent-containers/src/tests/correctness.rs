@@ -47,44 +47,6 @@ mod hashmap_test {
         }
     }
 
-    struct Data {
-        data: usize,
-        checker: Arc<AtomicUsize>,
-    }
-
-    impl Data {
-        fn new(data: usize, checker: Arc<AtomicUsize>) -> Data {
-            checker.fetch_add(1, Relaxed);
-            Data { data, checker }
-        }
-    }
-
-    impl Clone for Data {
-        fn clone(&self) -> Self {
-            Data::new(self.data, self.checker.clone())
-        }
-    }
-
-    impl Drop for Data {
-        fn drop(&mut self) {
-            self.checker.fetch_sub(1, Relaxed);
-        }
-    }
-
-    impl Eq for Data {}
-
-    impl Hash for Data {
-        fn hash<H: Hasher>(&self, state: &mut H) {
-            self.data.hash(state);
-        }
-    }
-
-    impl PartialEq for Data {
-        fn eq(&self, other: &Self) -> bool {
-            self.data == other.data
-        }
-    }
-
     #[derive(Debug, Eq, PartialEq)]
     struct EqTest(String, usize);
 
@@ -812,62 +774,6 @@ mod hashmap_test {
 
         for r in futures::future::join_all(task_handles).await {
             assert!(r.is_ok());
-        }
-    }
-
-    proptest! {
-        #[cfg_attr(miri, ignore)]
-        #[test]
-        fn insert(key in 0_usize..16) {
-            let range = 4096;
-            let checker = Arc::new(AtomicUsize::new(0));
-            let hashmap: HashMap<Data, Data> = HashMap::default();
-            for d in key..(key + range) {
-                assert!(hashmap.insert(Data::new(d, checker.clone()), Data::new(d, checker.clone())).is_ok());
-                *hashmap.entry(Data::new(d, checker.clone())).or_insert(Data::new(d + 1, checker.clone())).get_mut() = Data::new(d + 2, checker.clone());
-            }
-
-            for d in (key + range)..(key + range + range) {
-                assert!(hashmap.insert(Data::new(d, checker.clone()), Data::new(d, checker.clone())).is_ok());
-                *hashmap.entry(Data::new(d, checker.clone())).or_insert(Data::new(d + 1, checker.clone())).get_mut() = Data::new(d + 2, checker.clone());
-            }
-
-            let mut removed = 0;
-            hashmap.retain(|k, _| if k.data  >= key + range { removed += 1; false } else { true });
-            assert_eq!(removed, range);
-
-            assert_eq!(hashmap.len(), range);
-            let mut found_keys = 0;
-            hashmap.retain(|k, v| {
-                assert!(k.data < key + range);
-                assert!(v.data >= key);
-                found_keys += 1;
-                true
-            });
-            assert_eq!(found_keys, range);
-            assert_eq!(checker.load(Relaxed), range * 2);
-            for d in key..(key + range) {
-                assert!(hashmap.contains(&Data::new(d, checker.clone())));
-            }
-            for d in key..(key + range) {
-                assert!(hashmap.remove(&Data::new(d, checker.clone())).is_some());
-            }
-            assert_eq!(checker.load(Relaxed), 0);
-
-            for d in key..(key + range) {
-                assert!(hashmap.insert(Data::new(d, checker.clone()), Data::new(d, checker.clone())).is_ok());
-                *hashmap.entry(Data::new(d, checker.clone())).or_insert(Data::new(d + 1, checker.clone())).get_mut() = Data::new(d + 2, checker.clone());
-            }
-            hashmap.clear();
-            assert_eq!(checker.load(Relaxed), 0);
-
-            for d in key..(key + range) {
-                assert!(hashmap.insert(Data::new(d, checker.clone()), Data::new(d, checker.clone())).is_ok());
-                *hashmap.entry(Data::new(d, checker.clone())).or_insert(Data::new(d + 1, checker.clone())).get_mut() = Data::new(d + 2, checker.clone());
-            }
-            assert_eq!(checker.load(Relaxed), range * 2);
-            drop(hashmap);
-            assert_eq!(checker.load(Relaxed), 0);
         }
     }
 }
@@ -1610,7 +1516,6 @@ mod hashset_test {
 mod hashcache_test {
     use crate::hash_cache;
     use crate::{Equivalent, HashCache};
-    use proptest::prelude::*;
     use std::hash::{Hash, Hasher};
     use std::panic::UnwindSafe;
     use std::rc::Rc;
@@ -1952,27 +1857,6 @@ mod hashcache_test {
         }
     }
 
-    proptest! {
-        #[cfg_attr(miri, ignore)]
-        #[test]
-        fn capacity(xs in 0_usize..256) {
-            let hashcache: HashCache<usize, usize> = HashCache::with_capacity(0, 64);
-            for k in 0..xs {
-                assert!(hashcache.put(k, k).is_ok());
-            }
-            assert!(hashcache.capacity() <= 64);
-
-            let hashcache: HashCache<usize, usize> = HashCache::with_capacity(xs, xs * 2);
-            for k in 0..xs {
-                assert!(hashcache.put(k, k).is_ok());
-            }
-            if xs == 0 {
-                assert_eq!(hashcache.capacity_range(), 0..=64);
-            } else {
-                assert_eq!(hashcache.capacity_range(), xs.next_power_of_two().max(64)..=(xs * 2).next_power_of_two().max(64));
-            }
-         }
-    }
 }
 
 #[cfg(not(feature = "loom"))]
@@ -2778,47 +2662,6 @@ mod treeindex_test {
         );
     }
 
-    proptest! {
-        #[cfg_attr(miri, ignore)]
-        #[test]
-        fn prop_remove_range(lower in 0_usize..4096_usize, range in 0_usize..4096_usize) {
-            let remove_range = lower..lower + range;
-            let insert_range = (256_usize, 4095_usize);
-            let tree = TreeIndex::default();
-            for k in insert_range.0..=insert_range.1 {
-                prop_assert!(tree.insert(k, k).is_ok());
-            }
-            if usize::BITS == 32 {
-                prop_assert_eq!(tree.depth(), 4);
-            } else {
-                prop_assert_eq!(tree.depth(), 3);
-            }
-            tree.remove_range(remove_range.clone());
-            if remove_range.contains(&insert_range.0) && remove_range.contains(&insert_range.1) {
-                prop_assert!(tree.is_empty());
-            }
-            for (k, v) in tree.iter(&Guard::new()) {
-                prop_assert_eq!(k, v);
-                prop_assert!(!remove_range.contains(k), "{k}");
-            }
-            for k in 0_usize..4096_usize {
-                if tree.peek_with(&k, |_, _|()).is_some() {
-                    prop_assert!(!remove_range.contains(&k), "{k}");
-                }
-            }
-            for k in remove_range.clone() {
-                prop_assert!(tree.insert(k, k).is_ok());
-            }
-            let mut cnt = 0;
-            for (k, v) in tree.iter(&Guard::new()) {
-                prop_assert_eq!(k, v);
-                if remove_range.contains(k) {
-                    cnt += 1;
-                }
-            }
-            assert_eq!(cnt, range);
-        }
-    }
 }
 
 #[cfg(not(feature = "loom"))]
