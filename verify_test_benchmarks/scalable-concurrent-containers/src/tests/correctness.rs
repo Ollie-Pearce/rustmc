@@ -1,8 +1,8 @@
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashmap_test {
-    use scc::hash_map::{self, Entry, Reserve};
-    use scc::{Equivalent, HashMap};
+    use crate::hash_map::{self, Entry, Reserve};
+    use crate::{Equivalent, HashMap};
     use proptest::prelude::*;
     use proptest::strategy::ValueTree;
     use proptest::test_runner::TestRunner;
@@ -100,7 +100,6 @@ mod hashmap_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn equivalent() {
         let hashmap: HashMap<EqTest, usize> = HashMap::default();
@@ -109,7 +108,6 @@ mod hashmap_test {
         assert!(hashmap.contains("HELLO"));
     }
 
-#[no_mangle]
     #[test]
     fn insert_drop() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -141,7 +139,6 @@ mod hashmap_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn clear_sync() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -160,7 +157,6 @@ mod hashmap_test {
     }
 
     #[cfg_attr(miri, ignore)]
-#[no_mangle]
     #[test]
     fn read_remove() {
         let hashmap = Arc::new(HashMap::<String, Vec<u8>>::new());
@@ -190,7 +186,6 @@ mod hashmap_test {
         assert!(task.join().is_ok());
     }
 
-#[no_mangle]
     #[test]
     fn from_iter() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -223,9 +218,8 @@ mod hashmap_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn clone_1() {
+    fn clone() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
 
         let hashmap: HashMap<usize, R> = HashMap::default();
@@ -242,7 +236,6 @@ mod hashmap_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn compare() {
         let hashmap1: HashMap<String, usize> = HashMap::new();
@@ -265,7 +258,6 @@ mod hashmap_test {
         assert_ne!(hashmap1, hashmap2);
     }
 
-#[no_mangle]
     #[test]
     fn local_ref() {
         struct L<'a>(&'a AtomicUsize);
@@ -657,7 +649,6 @@ mod hashmap_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn string_key() {
         let hashmap1: HashMap<String, u32> = HashMap::default();
@@ -826,9 +817,8 @@ mod hashmap_test {
 
     proptest! {
         #[cfg_attr(miri, ignore)]
-#[no_mangle]
         #[test]
-        fn insert_1_1(key in 0_usize..16) {
+        fn insert(key in 0_usize..16) {
             let range = 4096;
             let checker = Arc::new(AtomicUsize::new(0));
             let hashmap: HashMap<Data, Data> = HashMap::default();
@@ -885,9 +875,9 @@ mod hashmap_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashindex_test {
-    use scc::ebr::Guard;
-    use scc::hash_index::{self, Iter};
-    use scc::{Equivalent, HashIndex};
+    use crate::ebr::Guard;
+    use crate::hash_index::{self, Iter};
+    use crate::{Equivalent, HashIndex};
     use proptest::strategy::{Strategy, ValueTree};
     use proptest::test_runner::TestRunner;
     use std::collections::BTreeSet;
@@ -941,18 +931,16 @@ mod hashindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn equivalent_1() {
+    fn equivalent() {
         let hashindex: HashIndex<EqTest, usize> = HashIndex::default();
         assert!(hashindex.insert(EqTest("HELLO".to_owned(), 1), 1).is_ok());
         assert!(!hashindex.contains("NO"));
         assert!(hashindex.contains("HELLO"));
     }
 
-#[no_mangle]
     #[test]
-    fn compare_1() {
+    fn compare() {
         let hashindex1: HashIndex<String, usize> = HashIndex::new();
         let hashindex2: HashIndex<String, usize> = HashIndex::new();
         assert_eq!(hashindex1, hashindex2);
@@ -973,9 +961,8 @@ mod hashindex_test {
         assert_ne!(hashindex1, hashindex2);
     }
 
-#[no_mangle]
     #[test]
-    fn clear_sync_1() {
+    fn clear_sync() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         let hashindex: HashIndex<usize, R> = HashIndex::default();
 
@@ -1021,9 +1008,8 @@ mod hashindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn from_iter_1() {
+    fn from_iter() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
 
         let workload_size = 256;
@@ -1040,9 +1026,8 @@ mod hashindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn clone_2() {
+    fn clone() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         let hashindex: HashIndex<usize, R> = HashIndex::default();
 
@@ -1088,9 +1073,8 @@ mod hashindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn string_key_1() {
+    fn string_key() {
         let hashindex1: HashIndex<String, u32> = HashIndex::default();
         let hashindex2: HashIndex<u32, String> = HashIndex::default();
         let mut checker1 = BTreeSet::new();
@@ -1556,7 +1540,7 @@ mod hashindex_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashset_test {
-    use scc::{Equivalent, HashSet};
+    use crate::{Equivalent, HashSet};
     use std::hash::{Hash, Hasher};
     use std::panic::UnwindSafe;
     use std::rc::Rc;
@@ -1580,18 +1564,16 @@ mod hashset_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn equivalent_2() {
+    fn equivalent() {
         let hashset: HashSet<EqTest> = HashSet::default();
         assert!(hashset.insert(EqTest("HELLO".to_owned(), 1)).is_ok());
         assert!(!hashset.contains("NO"));
         assert!(hashset.contains("HELLO"));
     }
 
-#[no_mangle]
     #[test]
-    fn from_iter_2() {
+    fn from_iter() {
         let workload_size = 256;
         let hashset = (0..workload_size)
             .into_iter()
@@ -1600,9 +1582,8 @@ mod hashset_test {
         assert_eq!(hashset.len(), workload_size / 2);
     }
 
-#[no_mangle]
     #[test]
-    fn compare_2() {
+    fn compare() {
         let hashset1: HashSet<String> = HashSet::new();
         let hashset2: HashSet<String> = HashSet::new();
         assert_eq!(hashset1, hashset2);
@@ -1627,8 +1608,8 @@ mod hashset_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod hashcache_test {
-    use scc::hash_cache;
-    use scc::{Equivalent, HashCache};
+    use crate::hash_cache;
+    use crate::{Equivalent, HashCache};
     use proptest::prelude::*;
     use std::hash::{Hash, Hasher};
     use std::panic::UnwindSafe;
@@ -1681,16 +1662,14 @@ mod hashcache_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn equivalent_3() {
+    fn equivalent() {
         let hashcache: HashCache<EqTest, usize> = HashCache::default();
         assert!(hashcache.put(EqTest("HELLO".to_owned(), 1), 1).is_ok());
         assert!(!hashcache.contains("NO"));
         assert!(hashcache.contains("HELLO"));
     }
 
-#[no_mangle]
     #[test]
     fn put_drop() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -1720,7 +1699,6 @@ mod hashcache_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn put_full_clear_put() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -1782,7 +1760,6 @@ mod hashcache_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn put_retain_get() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -1824,7 +1801,6 @@ mod hashcache_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn sparse_cache() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -1978,9 +1954,8 @@ mod hashcache_test {
 
     proptest! {
         #[cfg_attr(miri, ignore)]
-#[no_mangle]
         #[test]
-        fn capacity_1_1(xs in 0_usize..256) {
+        fn capacity(xs in 0_usize..256) {
             let hashcache: HashCache<usize, usize> = HashCache::with_capacity(0, 64);
             for k in 0..xs {
                 assert!(hashcache.put(k, k).is_ok());
@@ -2003,9 +1978,9 @@ mod hashcache_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod treeindex_test {
-    use scc::ebr::Guard;
-    use scc::tree_index::{Iter, Range};
-    use scc::{Comparable, Equivalent, TreeIndex};
+    use crate::ebr::Guard;
+    use crate::tree_index::{Iter, Range};
+    use crate::{Comparable, Equivalent, TreeIndex};
     use proptest::prelude::*;
     use proptest::strategy::ValueTree;
     use proptest::test_runner::TestRunner;
@@ -2065,7 +2040,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn comparable() {
         let tree: TreeIndex<CmpTest, usize> = TreeIndex::default();
@@ -2100,9 +2074,8 @@ mod treeindex_test {
         assert!(tree.peek_with(&"Z", |_, _| true).unwrap());
     }
 
-#[no_mangle]
     #[test]
-    fn insert_drop_1() {
+    fn insert_drop() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         let tree: TreeIndex<usize, R> = TreeIndex::default();
 
@@ -2140,7 +2113,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn insert_remove() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -2163,7 +2135,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn insert_remove_clear() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -2218,9 +2189,8 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn clear_1() {
+    fn clear() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         let tree: TreeIndex<usize, R> = TreeIndex::default();
 
@@ -2241,9 +2211,8 @@ mod treeindex_test {
         println!("{cnt}");
     }
 
-#[no_mangle]
     #[test]
-    fn clone_3() {
+    fn clone() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         let tree: TreeIndex<usize, R> = TreeIndex::default();
 
@@ -2373,7 +2342,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn reclaim() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -2423,9 +2391,8 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn mixed_1() {
+    fn mixed() {
         let range = if cfg!(miri) { 64 } else { 4096 };
         let num_threads = if cfg!(miri) { 2 } else { 16 };
         let tree: Arc<TreeIndex<usize, usize>> = Arc::new(TreeIndex::new());
@@ -2484,9 +2451,8 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn compare_3() {
+    fn compare() {
         let tree1: TreeIndex<String, usize> = TreeIndex::new();
         let tree2: TreeIndex<String, usize> = TreeIndex::new();
         assert_eq!(tree1, tree2);
@@ -2507,7 +2473,6 @@ mod treeindex_test {
         assert_ne!(tree1, tree2);
     }
 
-#[no_mangle]
     #[test]
     fn complex() {
         let range = if cfg!(miri) { 4 } else { 4096 };
@@ -2606,9 +2571,8 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn remove_1_1_1() {
+    fn remove() {
         let num_threads = if cfg!(miri) { 2 } else { 16 };
         let tree: Arc<TreeIndex<usize, usize>> = Arc::new(TreeIndex::new());
         let barrier = Arc::new(Barrier::new(num_threads));
@@ -2654,9 +2618,8 @@ mod treeindex_test {
         assert_eq!(tree.depth(), 0);
     }
 
-#[no_mangle]
     #[test]
-    fn string_key_2() {
+    fn string_key() {
         let tree1: TreeIndex<String, u32> = TreeIndex::default();
         let tree2: TreeIndex<u32, String> = TreeIndex::default();
         let mut checker1 = BTreeSet::new();
@@ -2686,7 +2649,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn scanner() {
         let data_size = if cfg!(miri) { 128 } else { 4096 };
@@ -2759,7 +2721,6 @@ mod treeindex_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn range() {
         let tree: TreeIndex<String, usize> = TreeIndex::default();
@@ -2819,7 +2780,6 @@ mod treeindex_test {
 
     proptest! {
         #[cfg_attr(miri, ignore)]
-#[no_mangle]
         #[test]
         fn prop_remove_range(lower in 0_usize..4096_usize, range in 0_usize..4096_usize) {
             let remove_range = lower..lower + range;
@@ -2864,8 +2824,8 @@ mod treeindex_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod bag_test {
-    use scc::bag::IterMut;
-    use scc::Bag;
+    use crate::bag::IterMut;
+    use crate::Bag;
     use std::panic::UnwindSafe;
     use std::rc::Rc;
     use std::sync::atomic::AtomicUsize;
@@ -2899,9 +2859,8 @@ mod bag_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn reclaim_1() {
+    fn reclaim() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
         for workload_size in [2, 18, 32, 40, 120] {
             let mut bag: Bag<R> = Bag::default();
@@ -2923,9 +2882,8 @@ mod bag_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn from_iter_3() {
+    fn from_iter() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
 
         let workload_size = 16;
@@ -2938,7 +2896,6 @@ mod bag_test {
         assert_eq!(INST_CNT.load(Relaxed), 0);
     }
 
-#[no_mangle]
     #[test]
     fn into_iter() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -2988,11 +2945,11 @@ mod bag_test {
                             }
                             for _ in 0..workload_size {
                                 while bag32_clone.pop().is_none() {
-                                    scc::ebr::Guard::new().accelerate();
+                                    crate::ebr::Guard::new().accelerate();
                                     task::yield_now().await;
                                 }
                                 while bag_half_clone.pop().is_none() {
-                                    scc::ebr::Guard::new().accelerate();
+                                    crate::ebr::Guard::new().accelerate();
                                     task::yield_now().await;
                                 }
                             }
@@ -3067,8 +3024,8 @@ mod bag_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod queue_test {
-    use scc::ebr::Guard;
-    use scc::Queue;
+    use crate::ebr::Guard;
+    use crate::Queue;
     use std::panic::UnwindSafe;
     use std::rc::Rc;
     use std::sync::atomic::AtomicUsize;
@@ -3093,9 +3050,8 @@ mod queue_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn clone_4() {
+    fn clone() {
         let queue = Queue::default();
         queue.push(37);
         queue.push(3);
@@ -3114,9 +3070,8 @@ mod queue_test {
         assert!(queue_clone.pop().is_none());
     }
 
-#[no_mangle]
     #[test]
-    fn from_iter_4() {
+    fn from_iter() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
 
         let workload_size = 16;
@@ -3133,7 +3088,6 @@ mod queue_test {
         }
     }
 
-#[no_mangle]
     #[test]
     fn pop_all() {
         const NUM_ENTRIES: usize = 256;
@@ -3164,7 +3118,6 @@ mod queue_test {
         println!("{cnt}");
     }
 
-#[no_mangle]
     #[test]
     fn iter_push_pop() {
         const NUM_TASKS: usize = 4;
@@ -3224,9 +3177,8 @@ mod queue_test {
         println!("{cnt}");
     }
 
-#[no_mangle]
     #[test]
-    fn mpmc_1_1() {
+    fn mpmc() {
         const NUM_TASKS: usize = if cfg!(miri) { 3 } else { 6 };
         const NUM_PRODUCERS: usize = NUM_TASKS / 2;
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);
@@ -3288,8 +3240,8 @@ mod queue_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod stack_test {
-    use scc::ebr::Guard;
-    use scc::Stack;
+    use crate::ebr::Guard;
+    use crate::Stack;
     use std::{panic::UnwindSafe, rc::Rc, sync::Arc};
     use tokio::sync::Barrier as AsyncBarrier;
 
@@ -3305,9 +3257,8 @@ mod stack_test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn clone_5() {
+    fn clone() {
         let stack = Stack::default();
         stack.push(37);
         stack.push(3);
@@ -3326,9 +3277,8 @@ mod stack_test {
         assert!(stack_clone.pop().is_none());
     }
 
-#[no_mangle]
     #[test]
-    fn from_iter_5() {
+    fn from_iter() {
         let workload_size = 16;
         let stack = (0..workload_size).into_iter().collect::<Stack<usize>>();
         assert_eq!(stack.len(), workload_size);
@@ -3471,9 +3421,9 @@ mod stack_test {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod random_failure_test {
-    use scc::ebr::{Guard, Shared};
-    use scc::hash_map::Entry;
-    use scc::{HashCache, HashIndex, HashMap, TreeIndex};
+    use crate::ebr::{Guard, Shared};
+    use crate::hash_map::Entry;
+    use crate::{HashCache, HashIndex, HashMap, TreeIndex};
     use std::any::Any;
     use std::panic::catch_unwind;
     use std::sync::atomic::Ordering::{AcqRel, Relaxed};
@@ -3507,7 +3457,6 @@ mod random_failure_test {
 
     #[allow(clippy::too_many_lines)]
     #[cfg_attr(miri, ignore)]
-#[no_mangle]
     #[test]
     fn panic_safety() {
         static INST_CNT: AtomicUsize = AtomicUsize::new(0);

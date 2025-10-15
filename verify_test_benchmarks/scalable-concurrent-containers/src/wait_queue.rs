@@ -328,7 +328,6 @@ mod test {
     use std::thread::yield_now;
 
     #[cfg_attr(miri, ignore)]
-#[no_mangle]
     #[test]
     fn wait_queue_sync() {
         let num_tasks = 8;

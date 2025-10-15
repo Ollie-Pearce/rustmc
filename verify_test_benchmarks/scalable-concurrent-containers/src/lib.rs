@@ -74,6 +74,9 @@ mod serde;
 pub mod stack;
 pub use stack::Stack;
 
+#[cfg(test)]
+mod tests;
+
 pub mod tree_index;
 pub use tree_index::TreeIndex;
 

@@ -4,8 +4,8 @@
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod benchmark {
-    use scc::ebr::Guard;
-    use scc::{HashIndex, HashMap, TreeIndex};
+    use crate::ebr::Guard;
+    use crate::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
     use std::hash::{BuildHasher, Hash};
     use std::ptr::addr_of;
@@ -659,7 +659,6 @@ mod benchmark {
     }
 
     #[cfg_attr(miri, ignore)]
-#[no_mangle]
     #[test]
     fn benchmarks_sync() {
         hashmap_benchmark::<usize>(65536, vec![1, 2, 4]);
@@ -668,7 +667,6 @@ mod benchmark {
     }
 
     #[ignore]
-#[no_mangle]
     #[test]
     fn full_scale_benchmarks_sync() {
         hashmap_benchmark::<usize>(
@@ -691,8 +689,8 @@ mod benchmark {
 #[cfg(not(feature = "loom"))]
 #[cfg(test)]
 mod benchmark_async {
-    use scc::ebr::Guard;
-    use scc::{HashIndex, HashMap, TreeIndex};
+    use crate::ebr::Guard;
+    use crate::{HashIndex, HashMap, TreeIndex};
     use std::collections::hash_map::RandomState;
     use std::sync::atomic::AtomicUsize;
     use std::sync::atomic::Ordering::Relaxed;

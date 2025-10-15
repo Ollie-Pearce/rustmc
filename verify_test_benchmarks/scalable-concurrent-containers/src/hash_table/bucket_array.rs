@@ -287,7 +287,6 @@ mod test {
 
     use std::time::Instant;
 
-#[no_mangle]
     #[test]
     fn alloc() {
         let start = Instant::now();
@@ -302,9 +301,8 @@ mod test {
         println!("de-allocation took {:?}", after_dealloc - after_alloc);
     }
 
-#[no_mangle]
     #[test]
-    fn array_1() {
+    fn array() {
         for s in 0..BUCKET_LEN * 4 {
             let array: BucketArray<usize, usize, (), OPTIMISTIC> =
                 BucketArray::new(s, AtomicShared::default());

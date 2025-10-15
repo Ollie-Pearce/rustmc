@@ -2,9 +2,8 @@
 mod examples {
     use scc::Stack;
 
-#[no_mangle]
     #[test]
-    fn single_threaded_5() {
+    fn single_threaded() {
         let workload_size = 256;
         let stack: Stack<isize> = Stack::default();
         for i in 1..workload_size {

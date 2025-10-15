@@ -2,9 +2,8 @@
 mod examples {
     use scc::Bag;
 
-#[no_mangle]
     #[test]
-    fn single_threaded_2() {
+    fn single_threaded() {
         let workload_size = 256;
         let bag: Bag<isize> = Bag::default();
         for i in 1..workload_size {

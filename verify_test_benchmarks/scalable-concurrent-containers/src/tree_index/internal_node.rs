@@ -1161,9 +1161,8 @@ mod test {
         }
     }
 
-#[no_mangle]
     #[test]
-    fn bulk_1() {
+    fn bulk() {
         let internal_node = new_level_3_node();
         let guard = Guard::new();
         assert_eq!(internal_node.depth(1, &guard), 3);

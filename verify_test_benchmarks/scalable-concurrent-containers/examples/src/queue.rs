@@ -2,9 +2,8 @@
 mod examples {
     use scc::Queue;
 
-#[no_mangle]
     #[test]
-    fn single_threaded_1() {
+    fn single_threaded() {
         let workload_size = 256;
         let queue: Queue<isize> = Queue::default();
         for i in 1..workload_size {

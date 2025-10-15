@@ -4,9 +4,8 @@ mod examples {
     use std::sync::Arc;
     use std::thread;
 
-#[no_mangle]
     #[test]
-    fn single_threaded_4() {
+    fn single_threaded() {
         let workload_size = 256;
         let hashindex: HashIndex<isize, isize> = HashIndex::new();
         for i in 1..workload_size {
@@ -39,9 +38,8 @@ mod examples {
         assert!(hashindex.is_empty());
     }
 
-#[no_mangle]
     #[test]
-    fn multi_threaded_2() {
+    fn multi_threaded() {
         let workload_size = 256;
         let hashindex: Arc<HashIndex<isize, isize>> = Arc::default();
 
