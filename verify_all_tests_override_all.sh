@@ -208,10 +208,6 @@ cmdfile="$(mktemp)"; trap 'rm -f "$cmdfile"' EXIT
 # 4) Execute link and follow-up opt
 cd $DEPDIR
 
-echo "$(pwd)"
-echo "Command: "
-cat "$cmdfile"
-
 sh "$cmdfile"
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
