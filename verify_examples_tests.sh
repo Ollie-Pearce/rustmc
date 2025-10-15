@@ -175,9 +175,9 @@ echo "override is: $DEP_OVERRIDE"
 cd $DEPDIR
 
 /usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-/usr/bin/llvm-link-18 --internalize -S --override=$DEP_OVERRIDE -o combined_old.ll combined.ll
+/usr/bin/llvm-link-18 --internalize -S --override=$DEP_OVERRIDE -o combined_old_2.ll combined_old.ll
 
-/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old_2.ll -o combined.ll
 
 echo " "
 echo " ================= Verifying Example Tests ================= "
