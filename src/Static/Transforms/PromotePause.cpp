@@ -60,7 +60,7 @@ auto PromotePause::run(Function &F, FunctionAnalysisManager &FAM) -> PreservedAn
 
 		if (auto *CI = dyn_cast<CallInst>(&I)){
 			if (CI->getCalledFunction()) {
-				if (CI->getCalledFunction()->getName() == "llvm.x86.sse2.pause"){
+				if (CI->getCalledFunction()->getName() == "llvm.x86.sse2.pause" || CI->getCalledFunction()->getName() == "llvm.x86.avx.vzeroupper" ){
 					promoted.push_back(CI);
 					modified = true;
 				}
