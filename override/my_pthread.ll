@@ -56,7 +56,6 @@ target triple = "x86_64-unknown-linux-gnu"
 @"_ZN15crossbeam_epoch7default6HANDLE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hbbba5de96e2b923fE" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<fastrand::Rng>, !>" zeroinitializer
 @"_ZN3std2io5stdio14OUTPUT_CAPTURE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h962a965a9c91158eE" = thread_local global %"std::sys::thread_local::native::eager::Storage<core::cell::once::OnceCell<std::thread::Thread>>" zeroinitializer
 
-@"_ZN3std2io5stdio14OUTPUT_CAPTURE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h962a965a9c91158eE" = thread_local global %"std::sys::thread_local::native::eager::Storage<core::cell::Cell<core::option::Option<alloc::sync::Arc<std::sync::mutex::Mutex<alloc::vec::Vec<u8>>>>>>" zeroinitializer
 @_ZN9getrandom8backends27linux_android_with_fallback12GETRANDOM_FN17ha892328ab163d0b4E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @_ZN6memchr4arch6x86_646memchr11memchr2_raw2FN17he83e2edb8ee955e8E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @_ZN6memchr4arch6x86_646memchr11memrchr_raw2FN17h2e3a3f84fa601604E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
