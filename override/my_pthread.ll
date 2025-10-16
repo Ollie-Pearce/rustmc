@@ -46,7 +46,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" = type { i64, [5 x i64] }
 
 
-@_ZN9getrandom8backends27linux_android_with_fallback12GETRANDOM_FN17ha892328ab163d0b4E = external global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
+@_ZN9getrandom8backends27linux_android_with_fallback12GETRANDOM_FN17ha892328ab163d0b4E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @_ZN6memchr4arch6x86_646memchr11memchr2_raw2FN17he83e2edb8ee955e8E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @_ZN6memchr4arch6x86_646memchr11memrchr_raw2FN17h2e3a3f84fa601604E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @_ZN6memchr4arch6x86_646memchr9count_raw2FN17h0ea709ec7017c3d4E = global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
