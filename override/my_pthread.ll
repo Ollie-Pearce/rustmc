@@ -30,7 +30,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::option::Option<u8>" = type { i8, [1 x i8] }
 %"core::cell::RefCell<core::option::Option<tokio::runtime::scheduler::Handle>>" = type { i64, %"core::cell::UnsafeCell<core::option::Option<tokio::runtime::scheduler::Handle>>" }
 %"std::sys::thread_local::native::eager::Storage<tokio::runtime::context::Context>" = type { %"core::cell::UnsafeCell<tokio::runtime::context::Context>", i8, [7 x i8] }
-%"core::sync::atomic::AtomicUsize" = type { i64 }%"core::cell::UnsafeCell<core::option::Option<tokio::runtime::scheduler::Handle>>" = type { %"core::option::Option<tokio::runtime::scheduler::Handle>" }
+%"core::sync::atomic::AtomicUsize" = type { i64 }
 %"core::option::Option<tokio::runtime::scheduler::Handle>" = type { i64, [1 x i64] }
 %"std::sys::thread_local::native::eager::Storage<core::cell::once::OnceCell<std::thread::Thread>>" = type { ptr, i8, [7 x i8] }
 %"core::sync::atomic::AtomicPtr<core::ffi::c_void>" = type { ptr }
