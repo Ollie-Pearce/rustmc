@@ -145,7 +145,7 @@ cd $DEPDIR
 rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
-find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name '*.ll' ! -name 'state-7f9e508d8ad0e6b5.ll' > "$DEPDIR/bitcode.txt"
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name '*.ll' ! -name 'state-341e6617b7c6bfa2.ll' > "$DEPDIR/bitcode.txt"
   
   echo "Bitcode files:"
   cat bitcode.txt
