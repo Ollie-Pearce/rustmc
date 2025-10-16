@@ -7,13 +7,6 @@ while [ $# -gt 1 ]; do
       MIXED_LANGUAGE=true
       shift
       ;;
-    --features)
-      if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
-        echo "--features requires a value"; exit 1
-      fi
-      FEATURES_ARG="$2"
-      shift 2
-      ;;
     *)
       echo "Unknown argument: $1"
       exit 1
@@ -27,12 +20,6 @@ if [ "$#" -lt 1 ]; then
 fi
 
 TARGET_RUST_PROJECT=$1
-
-if [ -n "$FEATURES_ARG" ]; then
-  CARGO_FEATURES="--features $FEATURES_ARG"
-else
-  CARGO_FEATURES=""
-fi
 
 make
 
@@ -125,8 +112,6 @@ done >> "$UNIT_TEST_FILE"
 echo "Unit test function names written to: $UNIT_TEST_FILE"
 cargo clean
 
-echo "Cargo features: $CARGO_FEATURES"
-
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
@@ -139,7 +124,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C prefer-dynamic=no \
 -C codegen-units=1 \
 -C lto=no \
--C opt-level=0 \
+-C opt-level=3 \
 -C debuginfo=2 \
 -C llvm-args=--inline-threshold=9000 \
 -C llvm-args=--bpf-expand-memcpy-in-order \
@@ -153,10 +138,11 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test $CARGO_FEATURES --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
+rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
 echo " "
@@ -171,9 +157,20 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-  \( -name "${PROJECT_NAME}*.bc" -o -name "signal_hook_registry-*.bc" \) -print0 \
-| xargs -0 -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  if [ "$stem" != "$PROJECT_NAME" ]; then
+    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+      -name "${PROJECT_NAME}*.ll" \
+    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  fi
+
+  # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
+
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
+
+  echo "Bitcode files:"
+  cat bitcode.txt
 
   /usr/bin/llvm-link-18 --internalize -S \
     --override="$DEPDIR/override/my_pthread.ll" \
@@ -190,7 +187,6 @@ find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
     timeout 1000s ./genmc --mixer \
       --transform-output=myout.ll \
       --print-exec-graphs \
-      --disable-function-inliner \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -211,9 +207,13 @@ echo " ================= Finished Verifying Integration Tests ================= 
 echo " "
 
 cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f \
-  \( -name "${PROJECT_NAME}-*.bc" -o -name "proptest-*.bc" \) \
-  > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
@@ -231,7 +231,6 @@ while read -r test_func; do
   timeout 1000s ./genmc --mixer \
           --transform-output=myout.ll \
           --print-exec-graphs \
-          --disable-function-inliner \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -297,8 +296,8 @@ memset_promotion_string="ERROR: Invalid call to memset()!"
 memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
 echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-ilist_iterator_string="llvm::ilist_iterator_w_bits"
-ilist_iterator_count=$(grep -rl "$ilist_iterator_string" . | wc -l)
+ilist_iterator_string="Assertion \`!NodePtr->isKnownSentinel()' failed."
+ilist_iterator_count=$(grep -rFl -- "$ilist_iterator_string" . | wc -l)
 echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 constant_unimplemented_string="Constant unimplemented for type"
@@ -308,6 +307,10 @@ echo "constant unimplemented errors: $constant_unimplemented_count / $file_count
 external_var_arg_string="Calling external var arg function"
 external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
 echo "external var args errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
+memcpy_string="Invalid call to memcpy()!"
+memcpy_count=$(grep -rl "$memcpy_string" . | wc -l)
+echo "memcpy errors: $memcpy_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
