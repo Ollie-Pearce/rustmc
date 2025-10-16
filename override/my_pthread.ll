@@ -49,7 +49,7 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::cell::UnsafeCell<core::option::Option<tokio::runtime::scheduler::Handle>>" = type { %"core::fmt::rt::Count" }
 %"core::fmt::rt::Count" = type { i64, [1 x i64] }
 
-
+@_ZN14regex_automata4util4pool5inner17THREAD_ID_UNOWNED17h6de2118a2206992eE = local_unnamed_addr global i64 zeroinitializer
 @"_ZN8fastrand10global_rng3RNG29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h8b64f2c724ba8053E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<fastrand::Rng>, !>" zeroinitializer
 @"_ZN3sdd9collector15LOCAL_COLLECTOR29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hea132a096bdaccaaE" = thread_local global %"core::sync::atomic::AtomicPtr<parking_lot_core::parking_lot::HashTable>" zeroinitializer
 @"_ZN3sdd9collector16COLLECTOR_ANCHOR29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hbc6cc21065ab6f55E" = thread_local global i8 zeroinitializer
