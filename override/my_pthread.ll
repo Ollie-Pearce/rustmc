@@ -18,7 +18,20 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" = type { %"compiler::Block" }
 %"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>" = type { %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<core::option::Option<std::sync::mpmc::context::Context>>, ()>>" }
 %"proc_macro::bridge::client::HandleCounters" = type { %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32", %"core::sync::atomic::AtomicU32" }
-%"core::sync::atomic::AtomicUsize" = type { i64 }
+%"core::cell::UnsafeCell<tokio::runtime::context::Context>" = type { %"tokio::runtime::context::Context" }
+%"tokio::runtime::context::Context" = type { %"tokio::runtime::context::current::HandleCell", i64, ptr, i64, %"core::cell::Cell<core::option::Option<tokio::util::rand::FastRand>>", %"core::cell::Cell<tokio::task::coop::Budget>", i8, [1 x i8] }
+%"core::cell::Cell<core::option::Option<tokio::util::rand::FastRand>>" = type { %"core::cell::UnsafeCell<core::option::Option<tokio::util::rand::FastRand>>" }
+%"core::cell::UnsafeCell<core::option::Option<tokio::util::rand::FastRand>>" = type { %"core::option::Option<tokio::util::rand::FastRand>" }
+%"core::option::Option<tokio::util::rand::FastRand>" = type { i32, [2 x i32] }
+%"tokio::runtime::context::current::HandleCell" = type { %"core::cell::RefCell<core::option::Option<tokio::runtime::scheduler::Handle>>", i64 }
+%"core::cell::Cell<tokio::task::coop::Budget>" = type { %"core::cell::UnsafeCell<tokio::task::coop::Budget>" }
+%"core::cell::UnsafeCell<tokio::task::coop::Budget>" = type { %"tokio::task::coop::Budget" }
+%"tokio::task::coop::Budget" = type { %"core::option::Option<u8>" }
+%"core::option::Option<u8>" = type { i8, [1 x i8] }
+%"core::cell::RefCell<core::option::Option<tokio::runtime::scheduler::Handle>>" = type { i64, %"core::cell::UnsafeCell<core::option::Option<tokio::runtime::scheduler::Handle>>" }
+%"std::sys::thread_local::native::eager::Storage<tokio::runtime::context::Context>" = type { %"core::cell::UnsafeCell<tokio::runtime::context::Context>", i8, [7 x i8] }
+%"core::sync::atomic::AtomicUsize" = type { i64 }%"core::cell::UnsafeCell<core::option::Option<tokio::runtime::scheduler::Handle>>" = type { %"core::option::Option<tokio::runtime::scheduler::Handle>" }
+%"core::option::Option<tokio::runtime::scheduler::Handle>" = type { i64, [1 x i64] }
 %"std::sys::thread_local::native::eager::Storage<core::cell::once::OnceCell<std::thread::Thread>>" = type { ptr, i8, [7 x i8] }
 %"core::sync::atomic::AtomicPtr<core::ffi::c_void>" = type { ptr }
 %"core::cell::Cell<(usize, usize)>" = type { %"core::cell::UnsafeCell<(usize, usize)>" }
@@ -32,6 +45,8 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>>" = type { %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" }
 %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" = type { i64, [5 x i64] }
 
+
+@"_ZN5tokio7runtime7context7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hfe12cf6d6762051eE" = external thread_local global %"std::sys::thread_local::native::eager::Storage<tokio::runtime::context::Context>"
 @"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h833f4eb8744604c8E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
 @"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h9f315159ccaa6a69E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
 @_ZN15crossbeam_epoch5guard11unprotected11UNPROTECTED17hd20e8ac4d4ce9f6fE = global ptr null
