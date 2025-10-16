@@ -45,6 +45,9 @@ target triple = "x86_64-unknown-linux-gnu"
 %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>>" = type { %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" }
 %"std::sys::thread_local::native::lazy::State<parking_lot_core::parking_lot::ThreadData, ()>" = type { i64, [5 x i64] }
 
+@_ZN7bit_vec5FALSE17hfbe7eb3a560f9980E = local_unnamed_addr constant <{ [1 x i8] }> zeroinitializer, align 1
+@_ZN7bit_vec4TRUE17h4ed4ccfe10db752dE = local_unnamed_addr constant <{ [1 x i8] }> <{ [1 x i8] c"\01" }>, align 1
+
 
 @"_ZN5tokio7runtime7context7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17hfe12cf6d6762051eE" = external thread_local global %"std::sys::thread_local::native::eager::Storage<tokio::runtime::context::Context>"
 @"_ZN16parking_lot_core11parking_lot16with_thread_data11THREAD_DATA29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h833f4eb8744604c8E" = thread_local global %"std::sys::thread_local::native::lazy::Storage<parking_lot_core::parking_lot::ThreadData, ()>" zeroinitializer
