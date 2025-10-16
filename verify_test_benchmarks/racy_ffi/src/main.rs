@@ -21,5 +21,4 @@ fn test_C_counter() {
             racy_fn();
         }
 
-    0
 }
