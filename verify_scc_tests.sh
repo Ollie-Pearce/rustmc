@@ -157,11 +157,9 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  if [ "$stem" != "$PROJECT_NAME" ]; then
-    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-      -name "${PROJECT_NAME}*.ll" \
-    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
-  fi
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    -name "${PROJECT_NAME}*.ll" >> "$DEPDIR/bitcode.txt"
+  
 
   # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
 
