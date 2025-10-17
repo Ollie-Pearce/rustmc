@@ -140,6 +140,15 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 --target=x86_64-unknown-linux-gnu" \
 rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
+if [ "$MIXED_LANGUAGE" = true ]; then
+    for f in ./*.c; do
+      clang -O0 -g -S -emit-llvm \
+            -fno-discard-value-names \
+            -Xclang -disable-O0-optnone \
+            "$f" -o "target-ir/debug/deps/$(basename "$f" .c).ll"
+  done
+fi
+
 cd $DEPDIR
 
 rm -rf "test_traces/${PROJECT_NAME}"
@@ -151,12 +160,12 @@ find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name '*.ll' \
   echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize -S \
+  /usr/bin/llvm-link-18 --internalize \
     --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined_old.ll @bitcode.txt
+    -o combined_old.bc @bitcode.txt
 
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.ll -o combined.ll
+  /usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
 echo " ================= Verifying Integration Tests ================= "
@@ -175,7 +184,6 @@ while read -r test_file; do
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
     timeout 3600s ./genmc --mixer \
-      --transform-output=myout.ll \
       --disable-function-inliner \
       --disable-assume-propagation \
       --disable-load-annotation \
@@ -186,7 +194,7 @@ while read -r test_file; do
       --print-error-trace \
       --disable-stop-on-system-error \
       --unroll=2 \
-      combined.ll > "$out" 2>&1
+      combined.bc > "$out" 2>&1
 
     [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
   done < "$TEST_FN_DIR/${stem}.txt"
@@ -210,7 +218,6 @@ echo " "
 while read -r test_func; do
   echo "Verifying test function: $test_func"
   timeout 3600s ./genmc --mixer \
-          --transform-output=myout.ll \
           --disable-function-inliner \
           --disable-assume-propagation \
           --disable-load-annotation \
@@ -221,7 +228,7 @@ while read -r test_func; do
           --print-error-trace \
           --disable-stop-on-system-error \
           --unroll=2 \
-          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
@@ -232,10 +239,10 @@ echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
 
-#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.bc
 
 
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.bc
 
 
 # Above gives us:
@@ -298,4 +305,4 @@ segfault_count=$(grep -rl "$segfault_string" . | wc -l)
 echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 cd ../..
-#rm combined.ll combined_old.ll
+#rm combined.bc combined_old.bc
