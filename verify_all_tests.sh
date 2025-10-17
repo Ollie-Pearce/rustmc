@@ -172,21 +172,19 @@ while read -r test_file; do
   echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize -S \
+  /usr/bin/llvm-link-18 --internalize \
     --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined_old.ll @bitcode.txt
+    -o combined_old.bc @bitcode.txt
 
   /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.ll -o combined.ll
+    -expand-reductions combined_old.bc -o combined.bc
 
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 1000s ./genmc --mixer \
-      --transform-output=myout.ll \
-      --print-exec-graphs \
+    timeout 100s ./genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -196,7 +194,7 @@ while read -r test_file; do
       --print-error-trace \
       --disable-stop-on-system-error \
       --unroll=2 \
-      combined.ll > "$out" 2>&1
+      combined.bc > "$out" 2>&1
 
     [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
   done < "$TEST_FN_DIR/${stem}.txt"
@@ -216,8 +214,8 @@ cd $DEPDIR
 echo "Bitcode files:"
 cat bitcode.txt
 
-/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+/usr/bin/llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
+/usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -225,9 +223,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 1000s ./genmc --mixer \
-          --transform-output=myout.ll \
-          --print-exec-graphs \
+  timeout 100s ./genmc --mixer \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -237,7 +233,7 @@ while read -r test_func; do
           --print-error-trace \
           --disable-stop-on-system-error \
           --unroll=2 \
-          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
