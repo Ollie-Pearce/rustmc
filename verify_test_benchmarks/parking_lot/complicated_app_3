@@ -11,21 +11,13 @@ PASS_SO="${HOME}/Development/clutter/target/lib/libclutter.so"   # optional; set
 
 # fresh build that emits bitcode
 cargo clean
-RUSTFLAGS="-C codegen-units=1 -C embed-bitcode=yes -C relocation-model=pic --emit=llvm-bc,llvm-ir" \
-cargo rustc -- -C relocation-model=pic
+RUSTFLAGS="-C codegen-units=1 -C embed-bitcode=yes -C save-temps -C relocation-model=pic --emit=llvm-bc,llvm-ir" \
+rustup run RustMC cargo test --workspace --no-run
 
 cd target/debug/deps
 
 # drop no-opt stubs if any
 rm -f *no-opt*
-
-# OPTIONAL: run custom opt pass on every .bc
-if [ -n "${PASS_SO}" ] && [ -f "${PASS_SO}" ]; then
-  find . -name '*.bc' -print0 | while IFS= read -r -d '' bc; do
-    "${LLVM_HOME}/bin/opt" -load "${PASS_SO}" -o "${bc}.opt" "${bc}"
-    mv -f "${bc}.opt" "${bc}"
-  done
-fi
 
 # collect dep bitcode from rlibs
 TMP_BC_DIR="$(mktemp -d)"
