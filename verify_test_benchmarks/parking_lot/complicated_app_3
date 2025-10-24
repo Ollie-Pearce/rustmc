@@ -1,0 +1,66 @@
+#!/bin/bash
+set -euo pipefail
+set -x
+
+# --- config ---
+OUTPUT_DIR="$(pwd)"
+LLVM_HOME=/usr/lib/llvm-18
+RUST_SYSROOT_LIB="$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/lib"
+CRATE=parking_lot
+PASS_SO="${HOME}/Development/clutter/target/lib/libclutter.so"   # optional; set empty to skip
+
+# fresh build that emits bitcode
+cargo clean
+RUSTFLAGS="-C codegen-units=1 -C embed-bitcode=yes -C relocation-model=pic --emit=llvm-bc,llvm-ir" \
+cargo rustc -- -C relocation-model=pic
+
+cd target/debug/deps
+
+# drop no-opt stubs if any
+rm -f *no-opt*
+
+# OPTIONAL: run custom opt pass on every .bc
+if [ -n "${PASS_SO}" ] && [ -f "${PASS_SO}" ]; then
+  find . -name '*.bc' -print0 | while IFS= read -r -d '' bc; do
+    "${LLVM_HOME}/bin/opt" -load "${PASS_SO}" -o "${bc}.opt" "${bc}"
+    mv -f "${bc}.opt" "${bc}"
+  done
+fi
+
+# collect dep bitcode from rlibs
+TMP_BC_DIR="$(mktemp -d)"
+
+# 1) pull standalone .bc members from rlibs
+find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
+  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".bc" || true ) | while read -r M; do
+    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$M"
+    mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)"
+    mv -f "$M" "$TMP_BC_DIR/$(basename "$A" .rlib)/$(basename "$A" .rlib).$M"
+  done
+done
+
+# 2) extract embedded .llvmbc from .o members
+find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
+  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".o"  || true ) | while read -r O; do
+    mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)"
+    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$O"
+    "${LLVM_HOME}/bin/llvm-objcopy" --dump-section \
+      .llvmbc="$TMP_BC_DIR/$(basename "$A" .rlib)/$(basename "$A" .rlib).$O.bc" "$O" 2>/dev/null || true
+    rm -f "$O"
+  done
+done
+
+# link all CGU bitcode (+ deps if found) into one module
+shopt -s nullglob
+CRATE_CGUS=( "./${CRATE}-"*.rcgu.bc )
+DEPS_BC=( "$TMP_BC_DIR"/*/*.bc )
+
+
+"${LLVM_HOME}/bin/llvm-link" -o "$OUTPUT_DIR/$CRATE.whole.linked.bc" "${DEPS_BC[@]}"
+
+# optional human-readable IR for the whole program
+"${LLVM_HOME}/bin/llvm-dis" -o "$OUTPUT_DIR/$CRATE.whole.linked.ll" "$OUTPUT_DIR/$CRATE.whole.linked.bc"
+
+echo "Wrote:"
+echo "  ${OUTPUT_DIR}/${CRATE}.whole.linked.bc"
+echo "  ${OUTPUT_DIR}/${CRATE}.whole.linked.ll"
