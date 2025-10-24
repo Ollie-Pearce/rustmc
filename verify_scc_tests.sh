@@ -182,7 +182,7 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 1000s ./genmc --mixer \
+    timeout 3600s ./genmc --mixer \
       --transform-output=myout.ll \
       --print-exec-graphs \
       --disable-assume-propagation \
@@ -226,7 +226,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 1000s ./genmc --mixer \
+  timeout 3600s ./genmc --mixer \
           --transform-output=myout.ll \
           --print-exec-graphs \
           --disable-assume-propagation \
