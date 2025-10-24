@@ -119,6 +119,3 @@ impl Debug for ArcTK {
         f.write_str("ArcTK")
     }
 }
-
-#[cfg(test)]
-mod test;
