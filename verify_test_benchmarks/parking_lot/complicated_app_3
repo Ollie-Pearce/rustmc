@@ -64,3 +64,6 @@ DEPS_LL=( "$TMP_LL_DIR"/*/*.ll )
 echo "Wrote:"
 echo "  ${OUTPUT_DIR}/${CRATE}.whole.linked.ll"
 echo "  ${OUTPUT_DIR}/${CRATE}.whole.linked.bc"
+
+cp "$OUTPUT_DIR/$CRATE.whole.linked.ll" "../../combined_old.ll"
+cp "$OUTPUT_DIR/$CRATE.whole.linked.bc" "../../combined_old.bc"
