@@ -114,7 +114,6 @@ find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
 done >> "$UNIT_TEST_FILE"
 
 echo "Unit test function names written to: $UNIT_TEST_FILE"
-cargo clean
 
 RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
@@ -185,11 +184,11 @@ PROJECT_CGUS_LL=( "./${PROJECT_NAME}-"*.rcgu.ll )      # optional, same crate CG
 DEPS_LL=( "$TMP_LL_DIR"/*/*.ll )
 
 # Use only your crate’s harness + its CGUs + deps
-"/usr/bin/llvm-link" -S -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.ll" \
+"/usr/bin/llvm-link-18" -S -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.ll" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 # Optional .bc too
-"/usr/bin/llvm-link" -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.bc" \
+"/usr/bin/llvm-link-18" -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.bc" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 echo "Wrote:"
