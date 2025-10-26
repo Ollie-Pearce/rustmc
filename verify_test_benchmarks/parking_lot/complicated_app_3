@@ -8,7 +8,7 @@ LLVM_HOME=/usr/lib/llvm-18
 CRATE=parking_lot
 
 cargo clean
-RUSTFLAGS="-C codegen-units=1 -C embed-bitcode=yes --emit=llvm-ir" \
+RUSTFLAGS="-C codegen-units=1 -C embed-bitcode=yes --emit=llvm-bc,llvm-ir" \
 rustup run RustMC cargo test --lib --no-run
 
 cd target/debug/deps
