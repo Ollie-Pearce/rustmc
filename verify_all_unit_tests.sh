@@ -151,29 +151,29 @@ TMP_LL_DIR="$(mktemp -d)"
 
 # Extract .bc from .rlib and disassemble to .ll
 find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
-  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".bc" || true ) | while read -r M; do
+  ( "/usr/bin/llvm-ar" t "$A" | grep -F ".bc" || true ) | while read -r M; do
     mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)" "$TMP_LL_DIR/$(basename "$A" .rlib)"
-    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$M"
+    "/usr/bin/llvm-ar" x "$A" "$M"
     mv -f "$M" "$TMP_BC_DIR/$(basename "$A" .rlib)/"
     # disassemble to .ll
     for bc in "$TMP_BC_DIR/$(basename "$A" .rlib)/"*.bc; do
       [ -e "$bc" ] || continue
       base="$(basename "$bc" .bc)"
-      "${LLVM_HOME}/bin/llvm-dis" "$bc" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$base.ll"
+      "/usr/bin/llvm-dis" "$bc" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$base.ll"
     done
   done
 done
 
 # 2) .llvmbc sections from .o -> .ll
 find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
-  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".o" || true ) | while read -r O; do
+  ( "/usr/bin/llvm-ar" t "$A" | grep -F ".o" || true ) | while read -r O; do
     mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)" "$TMP_LL_DIR/$(basename "$A" .rlib)"
-    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$O"
+    "/usr/bin/llvm-ar" x "$A" "$O"
     OUTBC="$TMP_BC_DIR/$(basename "$A" .rlib)/$(basename "$A" .rlib).$O.bc"
-    "${LLVM_HOME}/bin/llvm-objcopy" --dump-section .llvmbc="$OUTBC" "$O" 2>/dev/null || true
+    "/usr/bin/llvm-objcopy" --dump-section .llvmbc="$OUTBC" "$O" 2>/dev/null || true
     rm -f "$O"
     if [ -s "$OUTBC" ]; then
-      "${LLVM_HOME}/bin/llvm-dis" "$OUTBC" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$(basename "$OUTBC" .bc).ll"
+      "/usr/bin/llvm-dis" "$OUTBC" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$(basename "$OUTBC" .bc).ll"
     fi
   done
 done
@@ -185,11 +185,11 @@ PROJECT_CGUS_LL=( "./${PROJECT_NAME}-"*.rcgu.ll )      # optional, same crate CG
 DEPS_LL=( "$TMP_LL_DIR"/*/*.ll )
 
 # Use only your crate’s harness + its CGUs + deps
-"${LLVM_HOME}/bin/llvm-link" -S -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.ll" \
+"/usr/bin/llvm-link" -S -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.ll" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 # Optional .bc too
-"${LLVM_HOME}/bin/llvm-link" -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.bc" \
+"/usr/bin/llvm-link" -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.bc" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 echo "Wrote:"
