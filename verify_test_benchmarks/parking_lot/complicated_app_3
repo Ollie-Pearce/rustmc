@@ -18,7 +18,7 @@ rm -f *no-opt*
 TMP_BC_DIR="$(mktemp -d)"
 TMP_LL_DIR="$(mktemp -d)"
 
-# 1) standalone .bc members -> .ll
+# Extract .bc from .rlib and disassemble to .ll
 find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
   ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".bc" || true ) | while read -r M; do
     mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)" "$TMP_LL_DIR/$(basename "$A" .rlib)"
