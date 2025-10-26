@@ -1,28 +1,19 @@
-; ModuleID = 'my_pthread.c'
-source_filename = "my_pthread.c"
+; ModuleID = 'llvm-link'
+source_filename = "llvm-link"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-%"core::sync::atomic::AtomicBool" = type { i8 }
-
-%"std::sys::thread_local::native::lazy::Storage<core::cell::Cell<(u64, u64)>, !>" = type { %"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<(u64, u64)>, !>>" }
-%"core::cell::UnsafeCell<std::sys::thread_local::native::lazy::State<core::cell::Cell<(u64, u64)>, !>>" = type { %"std::sys::thread_local::native::lazy::State<core::cell::Cell<(u64, u64)>, !>" }
-%"std::sys::thread_local::native::lazy::State<core::cell::Cell<(u64, u64)>, !>" = type { i64, [2 x i64] }
-
-
+@_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
+@__dso_handle = dso_local global ptr @__dso_handle, align 8
+@_ZN10std_detect6detect5cache5CACHE17ha70d35da6fb9c084E = local_unnamed_addr global <{ [16 x i8] }> zeroinitializer, align 8
+@"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local local_unnamed_addr global <{ [8 x i8], [8 x i8] }> <{ [8 x i8] zeroinitializer, [8 x i8] undef }>, align 8
+@_ZN3std2io5stdio6stderr8INSTANCE17h22db7be8253b8d66E = global <{ [24 x i8] }> zeroinitializer, align 8
 @_ZN3std3sys3pal4unix4rand3imp20getrandom_fill_bytes21GETRANDOM_UNAVAILABLE17h04e842afe27544adE = local_unnamed_addr global <{ [1 x i8] }> zeroinitializer, align 1
 @_ZN3std3sys3pal4unix4rand3imp9getrandom23GRND_INSECURE_AVAILABLE17hbc3f149190aeaa63E = local_unnamed_addr global <{ [1 x i8] }> <{ [1 x i8] c"\01" }>, align 1
 @"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h3cea3bcc94e317ffE" = thread_local local_unnamed_addr global <{ [8 x i8], [16 x i8] }> <{ [8 x i8] zeroinitializer, [16 x i8] undef }>, align 8
-@"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local local_unnamed_addr global <{ [8 x i8], [8 x i8] }> <{ [8 x i8] zeroinitializer, [8 x i8] undef }>, align 8
-@_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global <{ [8 x i8] }> zeroinitializer, align 8
 @"_ZN3std6thread10CURRENT_ID29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h72832091327b60bfE" = thread_local global <{ [8 x i8] }> zeroinitializer, align 8
 @"_ZN3std6thread7CURRENT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17ha4638e9f4485ca67E" = thread_local global <{ [9 x i8], [7 x i8] }> <{ [9 x i8] zeroinitializer, [7 x i8] undef }>, align 8
-@_ZN10std_detect6detect5cache5CACHE17ha70d35da6fb9c084E = global [2 x i64] [i64 undef, i64 undef], align 8
-
-
-
-@_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
-@__dso_handle = dso_local global ptr @__dso_handle, align 8
+@_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global <{ [8 x i8] }> zeroinitializer, align 8
 
 ; Function Attrs: alwaysinline nounwind uwtable
 define dso_local i32 @pthread_create(ptr noalias noundef %__newthread, ptr noalias noundef %__attr, ptr noundef %__start_routine, ptr noalias noundef %__arg) #0 {
@@ -38,7 +29,7 @@ entry:
   %0 = load ptr, ptr %__attr.addr, align 8
   %1 = load ptr, ptr %__start_routine.addr, align 8
   %2 = load ptr, ptr %__arg.addr, align 8
-  %call = call i32 @__VERIFIER_thread_create(ptr noundef %0, ptr noundef %1, ptr noundef %2) #5
+  %call = call i32 @__VERIFIER_thread_create(ptr noundef %0, ptr noundef %1, ptr noundef %2) #2
   %conv = sext i32 %call to i64
   %3 = load ptr, ptr %__newthread.addr, align 8
   store i64 %conv, ptr %3, align 8
@@ -57,7 +48,7 @@ entry:
   store i64 %__th, ptr %__th.addr, align 8
   store ptr %__thread_return, ptr %__thread_return.addr, align 8
   %0 = load i64, ptr %__th.addr, align 8
-  %call = call ptr @__VERIFIER_thread_join(i64 noundef %0) #5
+  %call = call ptr @__VERIFIER_thread_join(i64 noundef %0) #2
   store ptr %call, ptr %__retval, align 8
   %1 = load ptr, ptr %__thread_return.addr, align 8
   %cmp = icmp ne ptr %1, null
@@ -110,24 +101,6 @@ entry:
   ret i32 0
 }
 
-; Function Attrs: alwaysinline nobuiltin nounwind uwtable
-declare void @free(ptr noundef) #2
-
-; Function Attrs: nounwind
-declare void @__VERIFIER_free(ptr noundef) #1
-
-; Function Attrs: alwaysinline nobuiltin nounwind allocsize(0) uwtable
-declare ptr @malloc(i64 noundef) #3
-
-; Function Attrs: nounwind
-declare ptr @__VERIFIER_malloc(i64 noundef) #1
-
-; Function Attrs: alwaysinline nobuiltin nounwind allocsize(1) uwtable
-declare ptr @aligned_alloc(i64 noundef, i64 noundef) #4
-
-; Function Attrs: nounwind
-declare ptr @__VERIFIER_malloc_aligned(i64 noundef, i64 noundef) #1
-
 ; Function Attrs: alwaysinline nounwind uwtable
 define dso_local i32 @__cxa_thread_atexit_impl(ptr noundef %func, ptr noundef %ptr, ptr noundef %ptr2) #0 {
 entry:
@@ -138,7 +111,7 @@ entry:
   store ptr %ptr, ptr %ptr.addr, align 8
   store ptr %ptr2, ptr %ptr2.addr, align 8
   %0 = load ptr, ptr %func.addr, align 8
-  %call = call i32 @__VERIFIER_atexit(ptr noundef %0) #5
+  %call = call i32 @__VERIFIER_atexit(ptr noundef %0) #2
   ret i32 %call
 }
 
@@ -147,17 +120,14 @@ declare i32 @__VERIFIER_atexit(ptr noundef) #1
 
 attributes #0 = { alwaysinline nounwind uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #2 = { alwaysinline nobuiltin nounwind uwtable "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #3 = { alwaysinline nobuiltin nounwind allocsize(0) uwtable "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #4 = { alwaysinline nobuiltin nounwind allocsize(1) uwtable "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #5 = { nounwind }
+attributes #2 = { nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4}
-!llvm.ident = !{!5}
+!llvm.ident = !{!0}
+!llvm.module.flags = !{!1, !2, !3, !4, !5}
 
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{i32 8, !"PIC Level", i32 2}
-!2 = !{i32 7, !"PIE Level", i32 2}
-!3 = !{i32 7, !"uwtable", i32 2}
-!4 = !{i32 7, !"frame-pointer", i32 2}
-!5 = !{!"clang version 18.1.7 (https://github.com/llvm/llvm-project.git 8c0fe0d65ed85966c0ac075e896620c55ca95227)"}
+!0 = !{!"clang version 18.1.7 (https://github.com/llvm/llvm-project.git 8c0fe0d65ed85966c0ac075e896620c55ca95227)"}
+!1 = !{i32 1, !"wchar_size", i32 4}
+!2 = !{i32 8, !"PIC Level", i32 2}
+!3 = !{i32 7, !"PIE Level", i32 2}
+!4 = !{i32 7, !"uwtable", i32 2}
+!5 = !{i32 7, !"frame-pointer", i32 2}
