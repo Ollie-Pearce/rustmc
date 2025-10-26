@@ -185,22 +185,22 @@ PROJECT_CGUS_LL=( "./${PROJECT_NAME}-"*.rcgu.ll )      # optional, same crate CG
 DEPS_LL=( "$TMP_LL_DIR"/*/*.ll )
 
 # Use only your crate’s harness + its CGUs + deps
-"/usr/bin/llvm-link" -S -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.ll" \
+"/usr/bin/llvm-link" -S -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.ll" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 # Optional .bc too
-"/usr/bin/llvm-link" -o "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.bc" \
+"/usr/bin/llvm-link" -o "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.bc" \
   "${HARNESS_LL[@]}" "${PROJECT_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 echo "Wrote:"
-echo "  ${OUTPUT_DIR}/${PROJECT_NAME}.whole.linked.ll"
-echo "  ${OUTPUT_DIR}/${PROJECT_NAME}.whole.linked.bc"
+echo "  ${TARGET_RUST_PROJECT}/${PROJECT_NAME}.whole.linked.ll"
+echo "  ${TARGET_RUST_PROJECT}/${PROJECT_NAME}.whole.linked.bc"
 
 
-echo "output dir is: $OUTPUT_DIR"
+echo "output dir is: $TARGET_RUST_PROJECT"
 
-cp "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.ll" "$DEPDIR/combined_old.ll"
-cp "$OUTPUT_DIR/$PROJECT_NAME.whole.linked.bc" "$DEPDIR/combined_old.bc"
+cp "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.ll" "$DEPDIR/combined_old.ll"
+cp "$TARGET_RUST_PROJECT/$PROJECT_NAME.whole.linked.bc" "$DEPDIR/combined_old.bc"
 
 cd $DEPDIR
 
