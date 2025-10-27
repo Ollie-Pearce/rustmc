@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Automated experiment runner for RustMC tests
-Runs verify_single.sh on all tests in csv file and compares results
+Runs verify_single.sh on all tests in csv file and outputs results as CSV
 """
 
 import csv
@@ -320,102 +320,12 @@ class ExperimentRunner:
         self.results = all_results
         return all_results
 
-    def generate_report(self, output_file='experiment_results.json'):
-        """Generate detailed report"""
-        # Save JSON results
-        with open(output_file, 'w') as f:
-            json.dump(self.results, f, indent=2)
-
-        # Generate summary report
-        summary_file = output_file.replace('.json', '_summary.txt')
-        with open(summary_file, 'w') as f:
-            f.write(f"Experiment Results Summary\n")
-            f.write(f"Generated: {datetime.now().isoformat()}\n")
-            f.write(f"{'='*80}\n\n")
-
-            # Group by file
-            by_file = defaultdict(list)
-            for result in self.results:
-                by_file[result['file']].append(result)
-
-            for file, results in sorted(by_file.items()):
-                f.write(f"\nFile: {file}\n")
-                f.write(f"{'-'*80}\n")
-
-                for result in results:
-                    f.write(f"  Test: {result['test_name']}\n")
-                    f.write(f"    Should Panic: {result['should_panic']}\n")
-                    f.write(f"    Unroll Bound: {result.get('unroll_bound', '1')}\n")
-                    f.write(f"    Executions Explored: {result['executions_explored']}\n")
-                    f.write(f"    Status: {result['status']}\n")
-                    f.write(f"    Panic Found: {result['panic_found']}\n")
-                    f.write(f"    Crashed: {result['crashed']}\n")
-                    f.write(f"    Successful: {result['successful']}\n")
-                    if result.get('timeout'):
-                        f.write(f"    Timeout: True\n")
-                    f.write(f"    Matches Expected: {result.get('matches_expected', 'N/A')}\n")
-                    if 'match_reason' in result:
-                        f.write(f"    Match Reason: {result['match_reason']}\n")
-
-                    # Print per-test timing info
-                    if 'timing' in result and result['timing']:
-                        timing = result['timing']
-                        f.write(f"    Resource Usage:\n")
-                        f.write(f"      Max Memory: {timing.get('max_resident_set_size_mb', 0):.2f} MB\n")
-                        f.write(f"      CPU Time (user): {timing.get('user_time_seconds', 0):.2f}s\n")
-                        f.write(f"      CPU Time (system): {timing.get('system_time_seconds', 0):.2f}s\n")
-                        f.write(f"      Total CPU Time: {timing.get('total_time_seconds', 0):.2f}s\n")
-
-                    if result['error_messages']:
-                        f.write(f"    Errors:\n")
-                        for err in result['error_messages']:
-                            f.write(f"      - {err[:200]}\n")
-                    f.write("\n")
-
-            # Overall statistics
-            f.write(f"\n{'='*80}\n")
-            f.write(f"Overall Statistics\n")
-            f.write(f"{'='*80}\n")
-            f.write(f"Total tests: {len(self.results)}\n")
-            f.write(f"Matches expected: {sum(1 for r in self.results if r.get('matches_expected'))}\n")
-            f.write(f"Panics found: {sum(1 for r in self.results if r['panic_found'])}\n")
-            f.write(f"Crashes: {sum(1 for r in self.results if r['crashed'])}\n")
-            f.write(f"Successes: {sum(1 for r in self.results if r['status'] == 'SUCCESS')}\n")
-            f.write(f"Errors: {sum(1 for r in self.results if r['status'] == 'ERROR')}\n")
-
-            # Resource usage statistics
-            f.write(f"\n")
-            f.write(f"Resource Usage Statistics (per test):\n")
-            f.write(f"{'-'*80}\n")
-
-            # Collect tests with timing info
-            tests_with_timing = [r for r in self.results if r.get('timing')]
-
-            if tests_with_timing:
-                total_mem = sum(r['timing'].get('max_resident_set_size_mb', 0) for r in tests_with_timing)
-                total_cpu = sum(r['timing'].get('total_time_seconds', 0) for r in tests_with_timing)
-                max_mem = max(r['timing'].get('max_resident_set_size_mb', 0) for r in tests_with_timing)
-                avg_mem = total_mem / len(tests_with_timing) if tests_with_timing else 0
-                avg_cpu = total_cpu / len(tests_with_timing) if tests_with_timing else 0
-
-                f.write(f"  Total tests with timing data: {len(tests_with_timing)}\n")
-                f.write(f"  Total CPU time: {total_cpu:.2f}s ({total_cpu/60:.2f} minutes)\n")
-                f.write(f"  Average CPU time per test: {avg_cpu:.2f}s\n")
-                f.write(f"  Average memory per test: {avg_mem:.2f} MB\n")
-                f.write(f"  Peak memory usage: {max_mem:.2f} MB\n")
-            else:
-                f.write(f"  No timing information available\n")
-
-        print(f"\nResults saved to:")
-        print(f"  - {output_file}")
-        print(f"  - {summary_file}")
-
-        # Generate CSV output
-        csv_file = output_file.replace('.json', '.csv')
-        self.generate_csv(csv_file)
-        print(f"  - {csv_file}")
-
-        return summary_file
+    def generate_report(self, output_file='experiment_results.csv'):
+        """Generate CSV report"""
+        # Generate CSV output only
+        self.generate_csv(output_file)
+        print(f"\nResults saved to: {output_file}")
+        return output_file
 
     def generate_csv(self, output_file='experiment_results.csv'):
         """Generate CSV file with one line per test"""
@@ -435,12 +345,10 @@ class ExperimentRunner:
                 'timeout',
                 'executions_explored',
                 'matches_expected',
-                'match_reason',
                 'max_memory_mb',
                 'cpu_user_seconds',
                 'cpu_system_seconds',
-                'cpu_total_seconds',
-                'error_summary'
+                'cpu_total_seconds'
             ]
 
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -449,9 +357,6 @@ class ExperimentRunner:
             for result in self.results:
                 # Get timing info (now per-test)
                 timing = result.get('timing', {})
-
-                # Prepare error summary
-                error_summary = '; '.join(result.get('error_messages', []))[:500]
 
                 row = {
                     'file': result.get('file', ''),
@@ -465,12 +370,10 @@ class ExperimentRunner:
                     'timeout': result.get('timeout', False),
                     'executions_explored': result.get('executions_explored', 0),
                     'matches_expected': result.get('matches_expected', ''),
-                    'match_reason': result.get('match_reason', ''),
                     'max_memory_mb': f"{timing.get('max_resident_set_size_mb', 0):.2f}",
                     'cpu_user_seconds': f"{timing.get('user_time_seconds', 0):.3f}",
                     'cpu_system_seconds': f"{timing.get('system_time_seconds', 0):.3f}",
-                    'cpu_total_seconds': f"{timing.get('total_time_seconds', 0):.3f}",
-                    'error_summary': error_summary
+                    'cpu_total_seconds': f"{timing.get('total_time_seconds', 0):.3f}"
                 }
 
                 writer.writerow(row)
@@ -487,7 +390,7 @@ def main():
     parser.add_argument('--verify-script', default='verify_single.sh',
                         help='Path to verify_single.sh script')
     parser.add_argument('--file', help='Run only on specific file (e.g., atomic_relaxed_ported_genmc.rs)')
-    parser.add_argument('--output', default='experiment_results.json',
+    parser.add_argument('--output', default='experiment_results.csv',
                         help='Output file for results')
 
     args = parser.parse_args()
@@ -499,21 +402,18 @@ def main():
     )
 
     results = runner.run_all(file_filter=args.file)
-    summary = runner.generate_report(output_file=args.output)
+    runner.generate_report(output_file=args.output)
 
-    # Print summary
+    # Print summary statistics
     print("\n" + "="*80)
     print("SUMMARY")
     print("="*80)
-    with open(summary, 'r') as f:
-        # Print just the statistics section
-        lines = f.readlines()
-        in_stats = False
-        for line in lines:
-            if 'Overall Statistics' in line:
-                in_stats = True
-            if in_stats:
-                print(line.rstrip())
+    print(f"Total tests: {len(results)}")
+    print(f"Matches expected: {sum(1 for r in results if r.get('matches_expected'))}")
+    print(f"Panics found: {sum(1 for r in results if r['panic_found'])}")
+    print(f"Crashes: {sum(1 for r in results if r['crashed'])}")
+    print(f"Successes: {sum(1 for r in results if r['status'] == 'SUCCESS')}")
+    print(f"Errors: {sum(1 for r in results if r['status'] == 'ERROR')}")
 
 
 if __name__ == '__main__':

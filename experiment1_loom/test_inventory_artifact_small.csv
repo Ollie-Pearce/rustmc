@@ -1,8 +1,8 @@
 File Name,RustMC test file,Test Name,Should Panic,Ignored,unroll bound
 arc.rs,arc_ported_genmc.rs,basic_usage,No,No,1
 arc.rs,arc_ported_genmc.rs,sync_in_drop,No,No,1
-arc.rs,arc_ported_genmc.rs,try_unwrap_succeeds,No,No,2
+arc.rs,arc_ported_genmc.rs,try_unwrap_succeeds,No,No,1
 arc.rs,arc_ported_genmc.rs,try_unwrap_fails,No,No,1
-arc.rs,arc_ported_genmc.rs,try_unwrap_multithreaded,No,No,3
-atomic.rs,atomic_ported_genmc.rs,compare_and_swap_reads_old_values,Yes,Yes,1
-atomic.rs,atomic_ported_genmc.rs,fetch_add_atomic,No,No,1
+arc.rs,arc_ported_genmc.rs,try_unwrap_multithreaded,No,No,1
+atomic.rs,atomic_ported_genmc.rs,compare_and_swap_reads_old_values,Yes,Yes,2
+atomic.rs,atomic_ported_genmc.rs,fetch_add_atomic,No,No,2
