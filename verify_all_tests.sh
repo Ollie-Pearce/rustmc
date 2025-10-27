@@ -67,7 +67,7 @@ echo "Collecting integration tests..."
 INTEGRATION_TEST_FILES="$DEPDIR/integration_test_files.txt"
 : > "$INTEGRATION_TEST_FILES"
 
-find . -path "*/tests/*.rs" -type f | sort > "$INTEGRATION_TEST_FILES"
+find "$(pwd)" -path "*/tests/*.rs" -type f | sort > "$INTEGRATION_TEST_FILES"
 
 # For each test file, extract names of functions annotated with #[test]
 TEST_FN_DIR="$DEPDIR/test_functions/${PROJECT_NAME}"
@@ -110,7 +110,7 @@ find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
 done >> "$UNIT_TEST_FILE"
 
 echo "Unit test function names written to: $UNIT_TEST_FILE"
-cargo clean
+#cargo clean
 
 # Create temp file for output
 cargo_output_file=$(mktemp)
@@ -145,46 +145,41 @@ cd $DEPDIR
 rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
 
+./extract_integration_test_ir "$TARGET_RUST_PROJECT"
+
+echo "final print"
+
+cat "$INTEGRATION_TEST_FILES"
+
+
 echo " "
 echo " ================= Verifying Integration Tests ================= "
 echo " "
+
+
+  llvm-link-18 --internalize \
+    --override="$DEPDIR/override/my_pthread.ll" \
+    -o combined_old.bc combined_old.bc
+
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.bc -o combined.bc
+
 while read -r test_file; do
-  stem="$(basename "${test_file%.*}")"
-
-  echo "stem is: $stem"
-
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
-    > "$DEPDIR/bitcode.txt"
-
-  if [ "$stem" != "$PROJECT_NAME" ]; then
-    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-      -name "${PROJECT_NAME}*.ll" \
-    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
-  fi
 
   # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
+   stem="$(basename "${test_file%.*}")"
 
-  echo "Bitcode files:"
-  cat bitcode.txt
-
-  /usr/bin/llvm-link-18 --internalize \
-    --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined_old.bc @bitcode.txt
-
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.bc -o combined.bc
+  echo "stem is: $stem"
 
   while read -r test_func; do
-    echo "Verifying: $stem :: $test_func"
+    echo "Verifying: $test_func"
 
-    out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
+    echo "test function: $test_func"
 
-    timeout 100s ./genmc --mixer \
+    out="test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
+
+    timeout 3600s ./genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -204,18 +199,10 @@ echo " "
 echo " ================= Finished Verifying Integration Tests ================= "
 echo " "
 
-cd $TARGET_RUST_PROJECT
-find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
-cd $DEPDIR
+./extract_unit_test_ir "$TARGET_RUST_PROJECT"
 
-echo "Bitcode files:"
-cat bitcode.txt
-
-/usr/bin/llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
-/usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
+llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc combined_old.bc
+opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -223,7 +210,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 100s ./genmc --mixer \
+  timeout 3600s ./genmc --mixer \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -247,7 +234,7 @@ echo " "
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
 # Above gives us:
