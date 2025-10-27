@@ -4,7 +4,6 @@ set -x
 
 DEPDIR=$(pwd)
 
-#
 
 # --- config ---
 OUTPUT_DIR="$(pwd)"
@@ -136,5 +135,5 @@ echo "  ${OUTPUT_DIR}/${CRATE}.whole.linked.bc"
 
 echo "output dir is: $OUTPUT_DIR"
 
-cp "$OUTPUT_DIR/$CRATE.whole.linked.ll" "/home/ollie/Desktop/mixer/genmc-tool/combined_old.ll"
-cp "$OUTPUT_DIR/$CRATE.whole.linked.bc" "/home/ollie/Desktop/mixer/genmc-tool/combined_old.bc"
+cp "$OUTPUT_DIR/$CRATE.whole.linked.ll" "$DEPDIR/combined_old.ll"
+cp "$OUTPUT_DIR/$CRATE.whole.linked.bc" "$DEPDIR/combined_old.bc"
