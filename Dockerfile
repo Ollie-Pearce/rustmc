@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ clang util-linux \
     clang-18 llvm-18 llvm-18-dev \
     bash gawk vim openssh-client time \
+    miller \
  && rm -rf /var/lib/apt/lists/*
 
 # rustup (no default toolchain)
