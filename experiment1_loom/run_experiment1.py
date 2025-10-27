@@ -313,7 +313,7 @@ class ExperimentRunner:
 
         all_results = []
 
-        for rust_file, test_info in tests_to_run.items():
+        for rust_file, test_info in tests_to_run.items():        
             results = self.run_experiment_on_file(rust_file, test_info)
             all_results.extend(results)
 
@@ -482,7 +482,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run RustMC verification experiments')
     parser.add_argument('--csv', default='test_inventory_artifact.csv',
                         help='Path to test inventory CSV')
-    parser.add_argument('--ported-tests', default='ported_tests',
+    parser.add_argument('--ported-tests', default='loom-tests-ported',
                         help='Directory containing ported test files')
     parser.add_argument('--verify-script', default='verify_single.sh',
                         help='Path to verify_single.sh script')

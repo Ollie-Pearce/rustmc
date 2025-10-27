@@ -8,6 +8,7 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
+
 TARGET_RUST_FILE=$1
 UNROLL_BOUND=${2:-1}  # Default to 1 if not provided
 DEPDIR=$(pwd)
@@ -42,8 +43,6 @@ echo ""
 TOTAL_FUNCTIONS=$(echo "$ENTRY_FUNCTIONS" | wc -l)
 echo "Total functions to verify: $TOTAL_FUNCTIONS"
 echo ""
-
-make
 
 # Extract filename without extension for output naming
 FILENAME=$(basename "$TARGET_RUST_FILE" .rs)
@@ -87,7 +86,7 @@ fi
 echo "Bitcode files:"
 cat bitcode.txt
 
-/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
+/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/../override/my_pthread.ll -o combined_old.ll @bitcode.txt
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
 
 mkdir -p "test_traces/${FILENAME}"
@@ -126,7 +125,7 @@ while IFS= read -r ENTRY_FUNCTION; do
     echo " "
 
     /usr/bin/time -v -o "test_traces/${FILENAME}/${ENTRY_FUNCTION}_timing.txt" \
-        timeout 1000s ./genmc --mixer \
+        timeout 1000s ../genmc --mixer \
             --transform-output=myout.ll \
             --disable-function-inliner \
             --disable-assume-propagation \

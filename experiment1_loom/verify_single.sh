@@ -23,7 +23,7 @@ echo "Verifying: $RUST_FILE (unroll bound: $UNROLL_BOUND)"
 echo "=========================================="
 echo ""
 
-bash -c "./verify-nomangles.sh loom-tests-ported/$RUST_FILE $UNROLL_BOUND"
+bash -c "./verify-nomangles.sh $RUST_FILE $UNROLL_BOUND"
 
 echo ""
 echo "=========================================="
