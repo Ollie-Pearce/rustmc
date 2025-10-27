@@ -50,7 +50,7 @@ ALL_NM_OUTPUT="$(
   find . -type f \( -name '*.o' -o -name '*.rlib' \) -print0 \
   | xargs -0 -P"$(nproc)" -I{} sh -c '
         f="$1"
-        llvm-nm --quiet --defined-only --print-file-name "$f" 2>/dev/null
+        llvm-nm-18 --quiet --defined-only --print-file-name "$f" 2>/dev/null
       ' sh {}
 )"
 
@@ -85,8 +85,8 @@ while IFS= read -r rlib; do
   tmp="$(mktemp -d)"
 
   # extract only .o members into a temp dir
-  llvm-ar t "$rlib" | rg '\.o$' | while IFS= read -r m; do
-    llvm-ar p "$rlib" "$m" > "$tmp/$m"
+  llvm-ar-18 t "$rlib" | rg '\.o$' | while IFS= read -r m; do
+    llvm-ar-18 p "$rlib" "$m" > "$tmp/$m"
   done
 
   # for each .o, dump embedded bitcode and disassemble
@@ -94,12 +94,12 @@ while IFS= read -r rlib; do
     cd "$tmp"
     find . -type f -name '*.o' -print0 \
     | while IFS= read -r -d '' f; do
-        if llvm-readelf -S "$f" | rg -q '\.llvmbc'; then
+        if llvm-readelf-18 -S "$f" | rg -q '\.llvmbc'; then
           b="$outdir/${f#./}"
           b="${b%.o}"
           mkdir -p "$(dirname "$b")"
-          llvm-objcopy --dump-section .llvmbc="${b}.bc" "$f"
-          llvm-dis "${b}.bc" -o "${b}.ll"
+          llvm-objcopy-18 --dump-section .llvmbc="${b}.bc" "$f"
+          llvm-dis-18 "${b}.bc" -o "${b}.ll"
         fi
       done
   )
@@ -141,6 +141,4 @@ tmp="$(mktemp)"
 grep -v ' = external' "combined_extern_globals_definitions.ll" > "$tmp"
 mv "$tmp" "$OLD_PWD/combined_extern_globals_definitions.ll"
 
-/usr/bin/llvm-link-18 -S --internalize --override=combined_extern_globals_definitions.ll -o override/my_pthread.ll override/my_pthread.ll
-
-exit 0
+llvm-link-18 -S --internalize --override=combined_extern_globals_definitions.ll -o override/my_pthread.ll override/my_pthread.ll

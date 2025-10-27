@@ -57,7 +57,7 @@ EXTERNS_ABS="$(realpath extern_globals.txt)"
 
 OLD_PWD="$(pwd)"
 
-cd /home/ollie/Desktop/RustMC/rust/build/x86_64-unknown-linux-gnu
+cd $(dirname "$(rustup which --toolchain RustMC rustc)" | xargs dirname)/lib
 
 EXTERNS_FILE="$EXTERNS_ABS"
 
