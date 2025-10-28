@@ -118,7 +118,6 @@ cargo_output_file=$(mktemp)
 RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
 -C codegen-units=1 \
--C embed-bitcode=yes \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
 -C no-vectorize-slp \
@@ -164,8 +163,6 @@ mkdir -p "test_traces/${PROJECT_NAME}"
 
 llvm-dis-18 -o new_ir.ll combined.bc
 
-exit 0
-
 echo " "
 echo " ================= Verifying Integration Tests ================= "
 echo " "
@@ -183,8 +180,6 @@ while read -r test_file; do
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
     timeout 1000s ./genmc --mixer \
-      --transform-output=myout.ll \
-      --print-exec-graphs \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -218,8 +213,6 @@ while IFS= read -r test_func; do
   [ -n "$test_func" ] || continue
   echo "Verifying test function: $test_func"
   timeout 1000s ./genmc --mixer \
-    --transform-output=myout.ll \
-    --print-exec-graphs \
     --disable-assume-propagation \
     --disable-load-annotation \
     --disable-confirmation-annotation \
@@ -235,15 +228,6 @@ done < "$UNIT_TEST_FILE"
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
-
-#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
-
-
-#time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
-
-
-# Above gives us:
-# LLVM ERROR: Could not resolve external global address: _ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E
 
 cd test_traces/${PROJECT_NAME}/
 
