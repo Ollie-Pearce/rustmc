@@ -6,14 +6,16 @@ target triple = "x86_64-unknown-linux-gnu"
 @_ZN3std6thread10CURRENT_ID17h6a62d35e076fe504E = dso_local global i64 1, align 8
 @__dso_handle = dso_local global ptr @__dso_handle, align 8
 @_ZN10std_detect6detect5cache5CACHE17ha70d35da6fb9c084E = local_unnamed_addr global <{ [16 x i8] }> zeroinitializer, align 8
-@"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local local_unnamed_addr global <{ [8 x i8], [8 x i8] }> <{ [8 x i8] zeroinitializer, [8 x i8] undef }>, align 8
 @_ZN3std2io5stdio6stderr8INSTANCE17h22db7be8253b8d66E = global <{ [24 x i8] }> zeroinitializer, align 8
 @_ZN3std3sys3pal4unix4rand3imp20getrandom_fill_bytes21GETRANDOM_UNAVAILABLE17h04e842afe27544adE = local_unnamed_addr global <{ [1 x i8] }> zeroinitializer, align 1
 @_ZN3std3sys3pal4unix4rand3imp9getrandom23GRND_INSECURE_AVAILABLE17hbc3f149190aeaa63E = local_unnamed_addr global <{ [1 x i8] }> <{ [1 x i8] c"\01" }>, align 1
 @"_ZN3std4hash6random11RandomState3new4KEYS29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h3cea3bcc94e317ffE" = thread_local local_unnamed_addr global <{ [8 x i8], [16 x i8] }> <{ [8 x i8] zeroinitializer, [16 x i8] undef }>, align 8
+@"_ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E" = thread_local local_unnamed_addr global <{ [8 x i8], [8 x i8] }> <{ [8 x i8] zeroinitializer, [8 x i8] undef }>, align 8
 @"_ZN3std6thread10CURRENT_ID29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h72832091327b60bfE" = thread_local global <{ [8 x i8] }> zeroinitializer, align 8
 @"_ZN3std6thread7CURRENT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17ha4638e9f4485ca67E" = thread_local global <{ [9 x i8], [7 x i8] }> <{ [9 x i8] zeroinitializer, [7 x i8] undef }>, align 8
 @_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h541136d3707a013fE = global <{ [8 x i8] }> zeroinitializer, align 8
+@"_ZN10proc_macro6bridge6client5state12BRIDGE_STATE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h703a0e7681e6c7efE" = thread_local global <{ [8 x i8] }> zeroinitializer, align 8
+@_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = local_unnamed_addr global <{ [16 x i8] }> <{ [16 x i8] c"\01\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00" }>, align 4
 
 ; Function Attrs: alwaysinline nounwind uwtable
 define dso_local i32 @pthread_create(ptr noalias noundef %__newthread, ptr noalias noundef %__attr, ptr noundef %__start_routine, ptr noalias noundef %__arg) #0 {
