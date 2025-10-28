@@ -1,3 +1,8 @@
+----------------------------------------------------------------
+The .rs files in this folder are all adapted from the Loom test
+suite. Loom is published under the license below.
+----------------------------------------------------------------
+
 Copyright (c) 2019 Carl Lerche
 
 Permission is hereby granted, free of charge, to any
