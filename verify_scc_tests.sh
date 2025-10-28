@@ -157,9 +157,11 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-    -name "${PROJECT_NAME}*.ll" >> "$DEPDIR/bitcode.txt"
-  
+  if [ "$stem" != "$PROJECT_NAME" ]; then
+    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+      -name "${PROJECT_NAME}*.ll" \
+    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
+  fi
 
   # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
 
@@ -170,21 +172,21 @@ while read -r test_file; do
   echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize -S \
+  llvm-link-18 --internalize \
     --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined_old.ll @bitcode.txt
+    -o combined_old.bc @bitcode.txt
 
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.ll -o combined.ll
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.bc -o combined.bc
+
+  llvm-dis-18 -o new_ir.ll combined.bc 
 
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 3600s ./genmc --mixer \
-      --transform-output=myout.ll \
-      --print-exec-graphs \
+    timeout 1000s ./genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -194,7 +196,7 @@ while read -r test_file; do
       --print-error-trace \
       --disable-stop-on-system-error \
       --unroll=2 \
-      combined.ll > "$out" 2>&1
+      combined.bc > "$out" 2>&1
 
     [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
   done < "$TEST_FN_DIR/${stem}.txt"
@@ -209,16 +211,13 @@ find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPD
 find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
 find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
 find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
-find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
 cat bitcode.txt
 
-/usr/bin/llvm-link-18 --internalize -S --override=$DEPDIR/override/my_pthread.ll -o combined_old.ll @bitcode.txt
-/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.ll -o combined.ll
+llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
+opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -226,9 +225,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 3600s ./genmc --mixer \
-          --transform-output=myout.ll \
-          --print-exec-graphs \
+  timeout 1000s ./genmc --mixer \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -238,7 +235,7 @@ while read -r test_func; do
           --print-error-trace \
           --disable-stop-on-system-error \
           --unroll=2 \
-          combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
@@ -252,7 +249,7 @@ echo " "
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
 # Above gives us:
