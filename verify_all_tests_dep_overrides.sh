@@ -154,21 +154,18 @@ find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \( -name "*.bc" -o -nam
 > "$DEPDIR/dep_overrides.txt"
 
 
-llvm-link-18 --internalize --only-needed -o combined.bc @bitcode.txt
+llvm-link-18 -o combined.bc @bitcode.txt
 
 while read -r override_file; do
-  llvm-link-18 --internalize --only-needed --override="$override_file" -o combined.bc combined.bc
+  llvm-link-18 --override="$override_file" -o combined.bc combined.bc
   echo "Applied override: $override_file"
 done < "$DEPDIR/dep_overrides.txt"
 
 
 llvm-link-18 --internalize --override="$DEPDIR/override/my_pthread.ll" -o combined.bc combined.bc
 
-
-exit 0
-
-/usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.ll -o combined.ll
+/usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined.bc -o combined.bc
 
 
 
@@ -200,7 +197,7 @@ while read -r test_file; do
       --print-error-trace \
       --disable-stop-on-system-error \
       --unroll=2 \
-      combined.ll > "$out" 2>&1
+      combined.bc > "$out" 2>&1
   done < "$TEST_FN_DIR/${stem}.txt"
   done < "$INTEGRATION_TEST_FILES"
 
@@ -233,21 +230,12 @@ while IFS= read -r test_func; do
     --print-error-trace \
     --disable-stop-on-system-error \
     --unroll=2 \
-    combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+    combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 done < "$UNIT_TEST_FILE"
 
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
-
-#./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
-
-
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
-
-
-# Above gives us:
-# LLVM ERROR: Could not resolve external global address: _ZN3std4sync4mpmc7context7Context4with7CONTEXT29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h1e32d3ce09f1da45E
 
 cd test_traces/${PROJECT_NAME}/
 
