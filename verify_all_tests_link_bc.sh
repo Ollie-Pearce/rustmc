@@ -117,12 +117,13 @@ cargo_output_file=$(mktemp)
 
 RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -Zpanic_abort_tests \
+-C codegen-units=1 \
+-C embed-bitcode=yes \
 -C overflow-checks=off \
 -C target-feature=-avx2 \
 -C no-vectorize-slp \
 -C no-vectorize-loops \
 -C prefer-dynamic=no \
--C codegen-units=1 \
 -C lto=no \
 -C opt-level=3 \
 -C debuginfo=2 \
@@ -151,12 +152,17 @@ mkdir -p "test_traces/${PROJECT_NAME}"
       echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize \
-    --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined.bc @bitcode.txt
+  llvm-link-18 \
+    -o combined_old.bc @bitcode.txt
 
-  /usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu \
+  llvm-link-18 --internalize \
+    --override="$DEPDIR/override/my_pthread.ll" \
+    -o combined.bc combined_old.bc
+
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined.bc -o combined.bc
+
+llvm-dis-18 -o new_ir.ll combined.bc
 
 exit 0
 
@@ -176,7 +182,7 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    ./genmc --mixer \
+    timeout 1000s ./genmc --mixer \
       --transform-output=myout.ll \
       --print-exec-graphs \
       --disable-assume-propagation \
@@ -188,7 +194,7 @@ while read -r test_file; do
       --print-error-trace \
       --disable-stop-on-system-error \
       --unroll=2 \
-      combined.ll > "$out" 2>&1
+      combined.bc > "$out" 2>&1
   done < "$TEST_FN_DIR/${stem}.txt"
   done < "$INTEGRATION_TEST_FILES"
 
@@ -211,7 +217,7 @@ echo " "
 while IFS= read -r test_func; do
   [ -n "$test_func" ] || continue
   echo "Verifying test function: $test_func"
-  ./genmc --mixer \
+  timeout 1000s ./genmc --mixer \
     --transform-output=myout.ll \
     --print-exec-graphs \
     --disable-assume-propagation \
@@ -223,7 +229,7 @@ while IFS= read -r test_func; do
     --print-error-trace \
     --disable-stop-on-system-error \
     --unroll=2 \
-    combined.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+    combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 done < "$UNIT_TEST_FILE"
 
 echo " "
@@ -233,7 +239,7 @@ echo " "
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
 # Above gives us:
