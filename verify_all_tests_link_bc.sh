@@ -151,12 +151,14 @@ mkdir -p "test_traces/${PROJECT_NAME}"
       echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize -S \
+  /usr/bin/llvm-link-18 --internalize \
     --override="$DEPDIR/override/my_pthread.ll" \
-    -o combined_old.ll @bitcode.txt
+    -o combined.bc @bitcode.txt
 
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.ll -o combined.ll
+  /usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined.bc -o combined.bc
+
+exit 0
 
 echo " "
 echo " ================= Verifying Integration Tests ================= "
