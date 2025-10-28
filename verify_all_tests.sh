@@ -172,11 +172,11 @@ while read -r test_file; do
   echo "Bitcode files:"
   cat bitcode.txt
 
-  /usr/bin/llvm-link-18 --internalize \
+  llvm-link-18 --internalize \
     --override="$DEPDIR/override/my_pthread.ll" \
     -o combined_old.bc @bitcode.txt
 
-  /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
 
   while read -r test_func; do
@@ -214,8 +214,8 @@ cd $DEPDIR
 echo "Bitcode files:"
 cat bitcode.txt
 
-/usr/bin/llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
-/usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
+llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
+opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -247,7 +247,7 @@ echo " "
 #./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --program-entry-function="test_as_ptr_1_1 --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
-#/usr/bin/time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
+#time -v ./genmc --mixer --transform-output=myout.ll --print-exec-graphs --disable-function-inliner --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --program-entry-function="test_as_ptr_1_1" --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 combined.ll
 
 
 # Above gives us:
