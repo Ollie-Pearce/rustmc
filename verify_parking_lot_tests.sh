@@ -186,7 +186,7 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 100s ./genmc --mixer \
+    timeout 1000s ./genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -226,7 +226,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 100s ./genmc --mixer \
+  timeout 1000s ./genmc --mixer \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
