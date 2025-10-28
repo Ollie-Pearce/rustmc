@@ -154,20 +154,23 @@ find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \( -name "*.bc" -o -nam
 > "$DEPDIR/dep_overrides.txt"
 
 
-llvm-link-18 --internalize -S -o combined.ll @bitcode.txt
+llvm-link-18 --internalize -o combined.bc @bitcode.txt
 
 while read -r override_file; do
-  llvm-link-18 --internalize -S --override="$override_file" -o combined.ll combined.ll
+  llvm-link-18 --internalize --override="$override_file" -o combined.bc combined.bc
   echo "Applied override: $override_file"
 done < "$DEPDIR/dep_overrides.txt"
 
 
-llvm-link-18 --internalize -S --override="$DEPDIR/override/my_pthread.ll" -o combined.ll combined.ll
+llvm-link-18 --internalize -S --override="$DEPDIR/override/my_pthread.bc" -o combined.bc combined.bc
+
+
+exit 0
 
 /usr/bin/opt-18 -S -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.ll -o combined.ll
 
-exit 0
+
 
 echo " "
 echo " ================= Verifying Integration Tests ================= "
