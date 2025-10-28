@@ -164,7 +164,7 @@ done < "$DEPDIR/dep_overrides.txt"
 
 llvm-link-18 --internalize --override="$DEPDIR/override/my_pthread.ll" -o combined.bc combined.bc
 
-/usr/bin/opt-18 -mtriple=x86_64-unknown-linux-gnu \
+opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined.bc -o combined.bc
 
 
