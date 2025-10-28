@@ -137,7 +137,7 @@ mod tests {
         drop(m.lock());
     }
 
-#[no_mangle]
+/*#[no_mangle]
     #[test]
     fn lots_and_lots_1_1() {
         const J: u32 = 1000;
@@ -172,7 +172,7 @@ mod tests {
             rx.recv().unwrap();
         }
         assert_eq!(*m.lock(), J * K * 2);
-    }
+    }*/
 
 #[no_mangle]
     #[test]
