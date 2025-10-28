@@ -5,6 +5,7 @@ set -x
 # --- config ---
 DEPDIR=$(pwd)
 OUTPUT_DIR="$(pwd)"
+LLVM_HOME=/usr/lib/llvm-18
 
 while [ $# -gt 1 ]; do
   case "$1" in
@@ -73,29 +74,29 @@ TMP_LL_DIR="$(mktemp -d)"
 
 # Extract .bc from .rlib and disassemble to .ll
 find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
-  ( "llvm-ar-18" t "$A" | grep -F ".bc" || true ) | while read -r M; do
+  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".bc" || true ) | while read -r M; do
     mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)" "$TMP_LL_DIR/$(basename "$A" .rlib)"
-    "llvm-ar-18" x "$A" "$M"
+    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$M"
     mv -f "$M" "$TMP_BC_DIR/$(basename "$A" .rlib)/"
     # disassemble to .ll
     for bc in "$TMP_BC_DIR/$(basename "$A" .rlib)/"*.bc; do
       [ -e "$bc" ] || continue
       base="$(basename "$bc" .bc)"
-      "llvm-dis-18" "$bc" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$base.ll"
+      "${LLVM_HOME}/bin/llvm-dis" "$bc" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$base.ll"
     done
   done
 done
 
 # 2) .llvmbc sections from .o -> .ll
 find . -maxdepth 1 -type f -name 'lib*.rlib' -print0 | while IFS= read -r -d '' A; do
-  ( "llvm-ar-18" t "$A" | grep -F ".o" || true ) | while read -r O; do
+  ( "${LLVM_HOME}/bin/llvm-ar" t "$A" | grep -F ".o" || true ) | while read -r O; do
     mkdir -p "$TMP_BC_DIR/$(basename "$A" .rlib)" "$TMP_LL_DIR/$(basename "$A" .rlib)"
-    "llvm-ar-18" x "$A" "$O"
+    "${LLVM_HOME}/bin/llvm-ar" x "$A" "$O"
     OUTBC="$TMP_BC_DIR/$(basename "$A" .rlib)/$(basename "$A" .rlib).$O.bc"
-    "llvm-objcopy-18" --dump-section .llvmbc="$OUTBC" "$O" 2>/dev/null || true
+    "${LLVM_HOME}/bin/llvm-objcopy" --dump-section .llvmbc="$OUTBC" "$O" 2>/dev/null || true
     rm -f "$O"
     if [ -s "$OUTBC" ]; then
-      "llvm-dis-18" "$OUTBC" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$(basename "$OUTBC" .bc).ll"
+      "${LLVM_HOME}/bin/llvm-dis" "$OUTBC" -o "$TMP_LL_DIR/$(basename "$A" .rlib)/$(basename "$OUTBC" .bc).ll"
     fi
   done
 done
@@ -107,11 +108,11 @@ CRATE_CGUS_LL=( "./${CRATE}-"*.rcgu.ll )      # optional, same crate CGUs
 DEPS_LL=( "$TMP_LL_DIR"/*/*.ll )
 
 # Use only your crate’s harness + its CGUs + deps
-"llvm-link-18" -S -o "$OUTPUT_DIR/$CRATE.whole.linked.ll" \
+"${LLVM_HOME}/bin/llvm-link" -S -o "$OUTPUT_DIR/$CRATE.whole.linked.ll" \
   "${HARNESS_LL[@]}" "${CRATE_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 # Optional .bc too
-"llvm-link-18" -o "$OUTPUT_DIR/$CRATE.whole.linked.bc" \
+"${LLVM_HOME}/bin/llvm-link" -o "$OUTPUT_DIR/$CRATE.whole.linked.bc" \
   "${HARNESS_LL[@]}" "${CRATE_CGUS_LL[@]}" "${DEPS_LL[@]}"
 
 echo "Wrote:"
