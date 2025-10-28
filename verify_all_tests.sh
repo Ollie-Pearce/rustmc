@@ -179,6 +179,8 @@ while read -r test_file; do
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
 
+  llvm-dis-18 -o new_ir.ll combined.bc 
+
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
 
