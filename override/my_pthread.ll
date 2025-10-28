@@ -17,6 +17,41 @@ target triple = "x86_64-unknown-linux-gnu"
 @"_ZN10proc_macro6bridge6client5state12BRIDGE_STATE29_$u7b$$u7b$constant$u7d$$u7d$28_$u7b$$u7b$closure$u7d$$u7d$3VAL17h703a0e7681e6c7efE" = thread_local global <{ [8 x i8] }> zeroinitializer, align 8
 @_ZN10proc_macro6bridge6client14HandleCounters3get8COUNTERS17h3e162da0fb433beaE = local_unnamed_addr global <{ [16 x i8] }> <{ [16 x i8] c"\01\00\00\00\01\00\00\00\01\00\00\00\01\00\00\00" }>, align 4
 
+@_ZN4core7unicode12unicode_data11white_space14WHITESPACE_MAP17h78bfbf1a1051c34cE = dso_local global [256 x i8] [
+  i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2,
+  i8 2, i8 3, i8 3, i8 1, i8 1, i8 1, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 1, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 2, i8 2, i8 0, i8 0, i8 0, i8 0, i8 0, i8 2,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 2, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 1, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+  i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0
+], align 1
+
 ; Function Attrs: alwaysinline nounwind uwtable
 define dso_local i32 @pthread_create(ptr noalias noundef %__newthread, ptr noalias noundef %__attr, ptr noundef %__start_routine, ptr noalias noundef %__arg) #0 {
 entry:
