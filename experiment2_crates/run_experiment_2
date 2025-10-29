@@ -3,7 +3,7 @@ set -euo pipefail
 
 crates=("arc-swap" "archery" "arcstr" "atomic_float" "boxcar" "parking" "parking_lot" "ringbuf" "scc" "seize" "spin" "state" "thread_local" "try-lock")
 
-set_1=("thread_local" "boxcar" "state" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "parking" "atomic_float")
+set_1=("thread_local" "boxcar" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "parking" "atomic_float")
 
 for crate in "${set_1[@]}"; do
   echo "Verifying all tests for crate: $crate"
@@ -16,7 +16,7 @@ done
 
 ./verify_parking_lot_tests.sh "verify_test_benchmarks/parking_lot"
 
-
+./verify_state_tests.sh "verify_test_benchmarks/state"
 
 # missing: scc, atomic_float,
 # Pretty sure atomic_float is `verify_all_tests.sh`
