@@ -21,7 +21,6 @@ fi
 
 TARGET_RUST_PROJECT=$1
 
-
 make -C ..
 
 # Rename #[test] functions so they are all unique
@@ -164,7 +163,6 @@ while read -r test_file; do
     | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
   fi
 
-
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
@@ -172,7 +170,9 @@ while read -r test_file; do
   echo "Bitcode files:"
   cat bitcode.txt
 
-  llvm-link-18 --internalize --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+  llvm-link-18 --internalize \
+    --override=../override/my_pthread.ll \
+    -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
@@ -209,6 +209,7 @@ find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPD
 find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
 find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
 find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
+find "$(pwd)/target-ir/debug/deps" -type f -name "parking_lot_core-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
@@ -243,8 +244,6 @@ done < "$UNIT_TEST_FILE"
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
-
-
 
 cd test_traces/${PROJECT_NAME}/
 

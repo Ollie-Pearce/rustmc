@@ -1,3 +1,5 @@
+#!/bin/bash
+
 MIXED_LANGUAGE=false
 DEPDIR=$(pwd)
 
@@ -20,7 +22,6 @@ if [ "$#" -lt 1 ]; then
 fi
 
 TARGET_RUST_PROJECT=$1
-
 
 make -C ..
 
@@ -65,6 +66,7 @@ done
 
 # Collect Rust test file paths
 echo "Collecting integration tests..."
+rm -rf "$DEPDIR/integration_test_files.txt"
 INTEGRATION_TEST_FILES="$DEPDIR/integration_test_files.txt"
 : > "$INTEGRATION_TEST_FILES"
 
@@ -94,6 +96,7 @@ while read -r file; do
 done < "$INTEGRATION_TEST_FILES"
 
 echo "Collecting unit tests..."
+rm -rf "$DEPDIR/unit_test_functions.txt"
 UNIT_TEST_FILE="$DEPDIR/unit_test_functions.txt"
 > "$UNIT_TEST_FILE"
 
@@ -125,7 +128,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C prefer-dynamic=no \
 -C codegen-units=1 \
 -C lto=no \
--C opt-level=3 \
+-C opt-level=2 \
 -C debuginfo=2 \
 -C llvm-args=--inline-threshold=9000 \
 -C llvm-args=--bpf-expand-memcpy-in-order \
@@ -139,11 +142,12 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --all-features --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
-rm -rf "test_traces/${PROJECT_NAME}"
+rm -rf test_results/${PROJECT_NAME}_summary.txt
+rm -rf test_traces/${PROJECT_NAME}
 mkdir -p "test_traces/${PROJECT_NAME}"
 
 echo " "
@@ -158,26 +162,13 @@ while read -r test_file; do
     \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
     > "$DEPDIR/bitcode.txt"
 
-  if [ "$stem" != "$PROJECT_NAME" ]; then
-    find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-      -name "${PROJECT_NAME}*.ll" \
-    | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
-  fi
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
+    -name "${PROJECT_NAME}*.bc" \
+  | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
 
+  llvm-link-18 --internalize --override="../override/my_pthread.ll" -o combined_old.bc @bitcode.txt
 
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
-
-  echo "Bitcode files:"
-  cat bitcode.txt
-
-  llvm-link-18 --internalize --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
-
-  opt-18 -mtriple=x86_64-unknown-linux-gnu \
-    -expand-reductions combined_old.bc -o combined.bc
-
-  llvm-dis-18 -o new_ir.ll combined.bc 
+  opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
@@ -185,6 +176,9 @@ while read -r test_file; do
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
     timeout 3600s ../genmc --mixer \
+      --transform-output=myout.ll \
+      --print-exec-graphs \
+      --disable-function-inliner \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -206,16 +200,111 @@ echo " "
 
 cd $TARGET_RUST_PROJECT
 find "$(pwd)/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" > "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "pretty_assertions-*.bc" >> "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode.txt"
-find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
 echo "Bitcode files:"
 cat bitcode.txt
 
-llvm-link-18 --internalize --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
-opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
+llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
+opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
+
+# --- Report which externals are defined elsewhere in IR ---
+IR_DEPS_DIR="$TARGET_RUST_PROJECT/target-ir/debug/deps"
+[ -d "$IR_DEPS_DIR" ] || { echo "IR dir not found: $IR_DEPS_DIR" >&2; exit 1; }
+
+report_file="test_results/${PROJECT_NAME}_extern_def_sites.txt"
+mkdir -p test_results
+: > "$report_file"
+
+# Collect externals from this crate's IR: lines starting with 'declare ... @sym('
+# Handle quoted names (@"...") and unquoted (@sym).
+mapfile -t EXTERNAL_SYMS < <(
+  grep -hE '^[[:space:]]*declare[[:space:]].*\@' "$IR_DEPS_DIR"/${PROJECT_NAME}-*.ll 2>/dev/null \
+  | perl -ne 'if (/^\s*declare\b.*\@("?([^"(]+)"?)\(/) { print "$2\n"; }' \
+  | sort -u
+)
+
+if ((${#EXTERNAL_SYMS[@]}==0)); then
+  echo "No externals (declare) found in ${PROJECT_NAME}-*.ll under $IR_DEPS_DIR" | tee -a "$report_file"
+else
+  for sym in "${EXTERNAL_SYMS[@]}"; do
+    re="$(perl -e 'print quotemeta(shift)' "$sym")"
+
+    # Same-line 'define' with exact symbol, quoted or unquoted
+    mapfile -t matches < <(
+      grep -RHEn --include='*.ll' "^[[:space:]]*define[[:space:]].*\@(\"?$re\"?)\(" "$IR_DEPS_DIR" \
+      | cut -d: -f1 | sort -u
+    )
+
+    # Only print positives
+    if ((${#matches[@]})); then
+      printf '%s | In target-ir (%s)\n' "$sym" "$(printf '%s' "${matches[*]}")" | tee -a "$report_file"
+    fi
+  done
+fi
+
+echo "--------------------------------------------------------" | tee -a "$report_file"
+
+# --- Link all IR files that DEFINE externals from this crate ---
+IR_DEPS_DIR="$TARGET_RUST_PROJECT/target-ir/debug/deps"
+
+# 1) Recompute externals (declare lines) -> symbols
+mapfile -t EXTERNAL_SYMS < <(
+  grep -hE '^[[:space:]]*declare[[:space:]].*\@' "$IR_DEPS_DIR"/${PROJECT_NAME}-*.ll 2>/dev/null \
+  | perl -ne 'if (/^\s*declare\b.*\@("?([^"(]+)"?)\(/) { print "$2\n"; }' \
+  | sort -u
+)
+
+# 2) For each symbol, find *.ll files with SAME-LINE definition:  ^\s*define ... @sym(  or  @"sym"(
+declare -a DEF_LL_FILES=()
+
+if ((${#EXTERNAL_SYMS[@]})); then
+  for sym in "${EXTERNAL_SYMS[@]}"; do
+    re="$(perl -e 'print quotemeta(shift)' "$sym")"
+    # Collect matching files; append to DEF_LL_FILES
+    while IFS= read -r f; do
+      DEF_LL_FILES+=("$f")
+    done < <(
+      grep -RHEn --include='*.ll' "^[[:space:]]*define[[:space:]].*\@(\"?$re\"?)\(" "$IR_DEPS_DIR" \
+      | cut -d: -f1
+    )
+  done
+fi
+
+# 3) De-duplicate file list
+if ((${#DEF_LL_FILES[@]})); then
+  mapfile -t DEF_LL_FILES < <(printf '%s\n' "${DEF_LL_FILES[@]}" | sort -u)
+else
+  echo "No definition sites found for externals in ${PROJECT_NAME}-*.ll"
+fi
+
+# 4) Persist lists and link
+mkdir -p test_results
+printf '%s\n' "${DEF_LL_FILES[@]}" > "test_results/${PROJECT_NAME}_extern_def_ll_files.txt"
+
+# Add this crate’s own IR files to the link set
+mapfile -t OWN_LL_FILES < <(find "$IR_DEPS_DIR" -maxdepth 1 -type f -name "${PROJECT_NAME}-*.ll" | sort -u)
+
+# Prefer linking bitcode where available; fall back to .ll
+declare -a LINK_INPUTS=()
+for f in "${DEF_LL_FILES[@]}" "${OWN_LL_FILES[@]}"; do
+  b="${f%.ll}.bc"
+  if [ -f "$b" ]; then
+    LINK_INPUTS+=("$b")
+  else
+    LINK_INPUTS+=("$f")
+  fi
+done
+
+printf '%s\n' "${LINK_INPUTS[@]}" > "test_results/${PROJECT_NAME}_extern_def_link_inputs.txt"
+
+if ((${#LINK_INPUTS[@]})); then
+  llvm-link-18 -o extern_defs_only.bc "${LINK_INPUTS[@]}"
+  llvm-link-18 -S  --override=../override/my_pthread.ll -o extern_defs_only.ll "${LINK_INPUTS[@]}"
+  echo "Linked externals' definition units + ${PROJECT_NAME}-*.ll -> extern_defs_only.bc/.ll"
+fi
+
+opt-18 -S -mtriple=x86_64-unknown-linux-gnu -expand-reductions extern_defs_only.ll -o extern_defs_only.ll
 
 echo " "
 echo " ================= Verifying Unit Tests ================= "
@@ -224,6 +313,9 @@ echo " "
 while read -r test_func; do
   echo "Verifying test function: $test_func"
   timeout 3600s ../genmc --mixer \
+          --transform-output=myout.ll \
+          --print-exec-graphs \
+          --disable-function-inliner \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -233,7 +325,7 @@ while read -r test_func; do
           --print-error-trace \
           --disable-stop-on-system-error \
           --unroll=2 \
-          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+          extern_defs_only.ll > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
 
   if [ $? -eq 124 ]; then
       echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
@@ -243,8 +335,6 @@ done < "$UNIT_TEST_FILE"
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
-
-
 
 cd test_traces/${PROJECT_NAME}/
 

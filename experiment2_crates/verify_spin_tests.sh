@@ -21,7 +21,6 @@ fi
 
 TARGET_RUST_PROJECT=$1
 
-
 make -C ..
 
 # Rename #[test] functions so they are all unique
@@ -139,7 +138,7 @@ RUSTFLAGS="--emit=llvm-bc,llvm-ir \
 -C passes=memcpyopt \
 -Z mir-opt-level=0 \
 --target=x86_64-unknown-linux-gnu" \
-rustup run RustMC cargo test --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
+rustup run RustMC cargo test --all-features --workspace --target-dir target-ir --no-run > "$cargo_output_file" 2>&1
 
 cd $DEPDIR
 
@@ -172,12 +171,12 @@ while read -r test_file; do
   echo "Bitcode files:"
   cat bitcode.txt
 
-  llvm-link-18 --internalize --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+  llvm-link-18 --internalize \
+    --override=../override/my_pthread.ll \
+    -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
-
-  llvm-dis-18 -o new_ir.ll combined.bc 
 
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
@@ -243,7 +242,6 @@ done < "$UNIT_TEST_FILE"
 echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
-
 
 
 cd test_traces/${PROJECT_NAME}/
