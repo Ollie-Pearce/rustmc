@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+crate="${1:?usage: $0 <crate-name>}"
+
+case "$crate" in
+  thread_local)
+    ./verify_all_tests.sh "verify_test_benchmarks/thread_local"
+    ;;
+  boxcar)
+    ./verify_all_tests.sh "verify_test_benchmarks/boxcar"
+    ;;
+  state)
+    ./verify_all_tests.sh "verify_test_benchmarks/state"
+    ;;
+  arc-swap)
+    ./verify_all_tests.sh "verify_test_benchmarks/arc-swap"
+    ;;
+  arcstr)
+    ./verify_all_tests.sh "verify_test_benchmarks/arcstr"
+    ;;
+  ringbuf|ringbuf/blocking)
+    ./verify_all_tests.sh "verify_test_benchmarks/ringbuf/blocking"
+    ;;
+  try-lock)
+    ./verify_all_tests.sh "verify_test_benchmarks/try-lock"
+    ;;
+  seize)
+    ./verify_all_tests.sh "verify_test_benchmarks/seize"
+    ;;
+  parking)
+    ./verify_all_tests.sh "verify_test_benchmarks/parking"
+    ;;
+  atomic_float)
+    ./verify_all_tests.sh "verify_test_benchmarks/atomic_float"
+    ;;
+  archery)
+    ./verify_archery_tests.sh "verify_test_benchmarks/archery"
+    ;;
+  spin)
+    ./verify_spin_tests.sh "verify_test_benchmarks/spin"
+    ;;
+  parking_lot)
+    ./verify_parking_lot_tests.sh "verify_test_benchmarks/parking_lot"
+    ;;
+  *)
+    echo "unknown crate: $crate" >&2
+    exit 1
+    ;;
+esac
