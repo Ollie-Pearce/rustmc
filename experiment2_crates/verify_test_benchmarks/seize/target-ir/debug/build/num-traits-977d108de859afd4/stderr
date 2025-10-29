@@ -1,0 +1,7 @@
+error: Option 'target' given more than once
+
+error: Option 'target' given more than once
+
+warning: autocfg could not probe for `std`
+error: Option 'target' given more than once
+
