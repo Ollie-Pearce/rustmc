@@ -6,6 +6,10 @@ Claims / badges we're aiming for.
 
 small version of both experiments and what you should see 
 
+- one use case
+- small Exp 1
+- one small crate from Exp 2
+
 # Use cases
 
 ## Figures from paper
