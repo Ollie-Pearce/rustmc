@@ -83,14 +83,40 @@ segmentation fault errors: 0 / 11
 
 
 # Use cases
-
+Todo: I think move this below experiment 2
 ## Figures from paper
 
 The bug reproductions described in various figures in the paper can be found in `paper_use_cases`, these benchmarks can be run by executing the corresponding script, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
 
 ## Writing your own examples (re-usability)
 
-I
+You can follow the below steps in order to create a Rust program which can be verified by RustMC:
+- use `cargo new your_project`
+- Edit the `Cargo.toml` file and set edition to `edition = "2021"`
+- In `main.rs`, add the following attributes to the top of the file: 
+    ```
+    #![no_main]
+    #![feature(start)]
+    #![feature(thread_spawn_unchecked)]
+    #![no_builtins]
+    ```
+- Add a `start` function with the following definition:
+```
+#[start]
+#[no_mangle]
+fn start(_argc: isize, _argv: *const *const u8) -> isize {
+    main();
+    0
+}
+```
+- Add a main function with the following definition:
+```
+#[no_mangle]
+fn main() -> i32 {
+    0
+}
+```
+- In order to run RustMC on the program you will need to link the bitcode files produced by rust's `--emit=llvm-bc` flag and provide this as input using the `--program-entry-function=main` flag. It should be simple enough to adapt one of the existing scripts for running one of our use cases in order to achieve this.
 
 # Experiment 1 (loom tests)
 
@@ -217,8 +243,10 @@ All times were taken from the `time ./verify_crate` command and include building
 - seize: 32m55.264s FIX RESULTS
 - thread_local: 0m18.491s
 - parking MULTIPLE MAINS. GET BACK OLD TEST
-- arcstr 1m46.961
-- arc-swap
+- arcstr 1m46.961s
+- arc-swap 3m31.588s
+- State: DOES NOT WORK (because I renamed a test)
+- parking_lot
 
 ## Verifying new crates (re-usability):
 
