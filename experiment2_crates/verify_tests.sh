@@ -254,9 +254,9 @@ success_search_string="Verification complete. No errors were detected."
 success_count=$(grep -rl "$success_search_string" . | wc -l)
 echo "Verification success: $success_count / $file_count" > ../../test_results/${PROJECT_NAME}_summary.txt
 
-#unsupported_intrinsic_string="LLVM ERROR: Code generator does not support intrinsic function"
-#unsupported_intrinsic_count=$(grep -rl "$unsupported_intrinsic_string" . | wc -l)
-#echo "Unsupported intrinsic errors: $unsupported_intrinsic_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+thread_panicked_string="Thread panicked"
+thread_panic_count=$(grep -rl "$thread_panicked_string" . | wc -l)
+echo "Panic called: $thread_panic_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
 uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
@@ -278,14 +278,6 @@ external_address_string="LLVM ERROR: Could not resolve external global address:"
 external_address_count=$(grep -rl "$external_address_string" . | wc -l)
 echo "External address errors: $external_address_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
-memset_promotion_string="ERROR: Invalid call to memset()!"
-memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
-echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
-
-#ilist_iterator_string="Assertion \`!NodePtr->isKnownSentinel()' failed."
-#ilist_iterator_count=$(grep -rFl -- "$ilist_iterator_string" . | wc -l)
-#echo "ilist iterator errors: $ilist_iterator_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
-
 constant_unimplemented_string="Constant unimplemented for type"
 constant_unimplemented_count=$(grep -rl "$constant_unimplemented_string" . | wc -l)
 echo "constant unimplemented errors: $constant_unimplemented_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
@@ -294,14 +286,14 @@ external_var_arg_string="Calling external var arg function"
 external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
 echo "external var args errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
+memset_promotion_string="ERROR: Invalid call to memset()!"
+memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
+echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+
 memcpy_count=$(
   grep -rlE "Invalid call to memcpy\(\)!|Assertion \`!NodePtr->isKnownSentinel\(\)' failed\." . | wc -l
 )
 echo "memcpy errors: $memcpy_count / $file_count" >> "../../test_results/${PROJECT_NAME}_summary.txt"
-
-#memcpy_string="Invalid call to memcpy()!"
-#memcpy_count=$(grep -rl "$memcpy_string" . | wc -l)
-#echo "memcpy errors: $memcpy_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
 
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
