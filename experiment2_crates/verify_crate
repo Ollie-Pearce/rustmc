@@ -20,7 +20,7 @@ case "$crate" in
     ./verify_tests.sh "verify_test_benchmarks/arcstr"
     ;;
   ringbuf|ringbuf/blocking)
-    ./verify_tests.sh "verify_test_benchmarks/ringbuf/blocking"
+    ./verify_ringbuf.sh "verify_test_benchmarks/ringbuf/blocking"
     ;;
   try-lock)
     ./verify_tests.sh "verify_test_benchmarks/try-lock"
