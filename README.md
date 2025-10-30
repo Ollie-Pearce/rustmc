@@ -214,42 +214,40 @@ The following tests have a very large state space and could not be verified in a
 The following tests call the external `rust_begin_unwind` function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or test....(ability to unwind after a panic?):
 
 ##### arcstr
-
 ```
 test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, test_substr_using_panic1, test_substr_using_panic2
 ```
 
-
-
 ##### spin
-
-#### `panic, mutex_arc_access_in_unwind, rw_access_in_unwind`
-
-
+```
+panic, mutex_arc_access_in_unwind, rw_access_in_unwind
+```
 
 ##### parking_lot
-
-`test_mutex_arc_access_in_unwind_1_1_1, test_mutex_arc_access_in_unwind_1_1, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_rr, test_rw_arc_no_poison_rw, test_rw_arc_access_in_unwind, poison_bad, wait_for_force_to_finish`
+```
+test_mutex_arc_access_in_unwind_1_1_1, test_mutex_arc_access_in_unwind_1_1, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_rr, test_rw_arc_no_poison_rw, test_rw_arc_access_in_unwind, poison_bad, wait_for_force_to_finish
+```
 
 ##### arc-swap
-
-`panic_with_hook`
+```
+panic_with_hook
+```
 
 ### Time taken to verify crates:
 All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification
 
 - atomic_float: 0m6.746s
-- spin: 12m4.211s
+- spin: 12m4.211s  (?)
 - ringbuf: 0m15.755s
 - seize: 32m55.264s
 - thread_local: 0m18.491s
-- parking MULTIPLE MAINS. GET BACK OLD TEST
+- parking: 
 - arcstr 1m46.961s
 - arc-swap 3m31.588s
 - state: 0m39.276s
 - try_lock: 0m1.576s
 - parking_lot:
-- 
+- archery: 6m30.792s (?)
 
 ## Verifying new crates (re-usability):
 
