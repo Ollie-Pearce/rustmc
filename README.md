@@ -7,14 +7,24 @@ The purpose of this artifact is to allow the reviewer to verify the main claims 
 
 1. RustMC works as expected for the various examples given in the paper (Figures 1, 5, 6, 9, and 10).
 
-2. Experiment 1 (Table 1) is reproducable
+2. Experiment 1 (Table 1) is reproducible
 
-3. Experiment 2 (Figures 7 and 8) are reproducable
-
+3. Experiment 2 (Figures 7 and 8) are reproducible
 
 We aim for all badges: Available (via our zenodo link), Functional
 (see points 1-3 above), Reusable (code is documented and we provide
 documentation for adding new benchmarks).
+
+
+The source code of our tool and our datasets are included in the
+docker image and public repository. It includes
+
+- The source code our adaptation of GenMC (Mixer)
+- The source code of the Rust tool chain with selected inlined functions
+- The dataset for Experiment 1 (`experiment1_loom/loom-tests-ported/`)
+- The dataset for Experiment 2 (`experiment2_crates/verify_test_benchmarks/`)
+- Use cases from paper (`paper_use_cases/`)
+  
 
 ---
 
@@ -119,10 +129,10 @@ mlr --icsv --opprint cat  experiment_results.csv
 NB: compared to submitted paper, we have added a missing test which is
 analysed successfully (test `mutex_into_inner` in file
 `mutex`). Following an improvement of our tool chain, four tests that
-use to _wrongly_ panic, now crash due to an unknown external function
+used to _wrongly_ panic, now crash due to an unknown external function
 (tests `initial_thread`, `threads_have_unique_ids`, `thread_names`,
-`park_unpark` in file ` thread_api`). While this changes some numbers,
-our overall conclusions remain the same.  The improvement involve
+`park_unpark` in file `thread_api`). While this changes some numbers,
+our overall conclusions remain the same.  The improvement involves
 using statics from the stdlib rather than having them
 zero-initialized.
 
@@ -139,8 +149,13 @@ You will find the results of the verification in `test_traces/` and `test_result
 ---
 
 ## 2. Experiment 2 (Crates)
-Due to the significant demands imposed by linking, transforming and verifying large LLVM modules this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine running Ubuntu 22.04.5 LTS with the following specifications: 
-`CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids), Cores (Physical) 48 (24), Memory: 128GB`
+
+Due to the significant demands imposed by linking, transforming and verifying large LLVM modules parts of this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine running with the following specifications: 
+
+- CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
+- Cores (Physical) 48 (24)
+- Memory: 128GB`
+- OS: Ubuntu 22.04.5 LTS 
 
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
 
@@ -169,7 +184,10 @@ For a quick litmus test we recommend running the archery or thread_local crates 
 
 #### Tests with an excessive state space
 
-The following tests have a very large state space and could not be verified in an hour, we have commented them out however if you would like to reactivate them you can uncomment them in the following files:
+The following tests have a very large state space and could not be
+verified in an hour (they are considered as timeouts in Fig 8), we
+have commented them out however if you would like to reactivate them
+you can uncomment them in the following files:
 
 - parking_lot/src/mutex.rs | `lots_and_lots_1_1`
 - parking_lot/src/fair_mutex.rs | `lots_and_lots_1_1_1`
@@ -219,16 +237,14 @@ All times were taken from the `time ./verify_crate` command and include building
 
 
 
-NB: Following the previously mentioned improvements to our toolchain and a change to the verification driver script for the archery crate we now support an additional archery test and 10 addition spin tests. Unfortunately this change disabled support for try-lock's `fmt_debug()` test. 
+NB: Following the previously mentioned improvements to our toolchain and a change to the verification driver script for the `archery` crate we now support an additional archery test and 10 addition spin tests. Unfortunately this change disabled support for `try-lock`'s `fmt_debug()` test. 
 
 
-### Verifying new crates (re-usability):
+### Verifying new crates (reusability):
 
-The following several steps may be taken in order to run RustMC on a crate outside our benchmark set 
+For completeness, we give instructions to verify an additional crate (outside our benchmark set). We note that following these steps requires advanced expertise in Rust (as building an arbitrary crate from scratch is non-trivial).
 
-
-
-1. Add the crate to `verify_test_benchmarks`
+1. Add the crate (source code) to `verify_test_benchmarks`
 
 2. Copy the `verify_tests_script` and add new IR files from the dependencies of the crate to verify
 
@@ -249,18 +265,30 @@ The following several steps may be taken in order to run RustMC on a crate outsi
 
 ---
 
-## 3. Verifing  use cases and examples from the paper
+## 3. Verifying  use cases and examples from the paper
 
 ## Figures from paper
 
-The bug reproductions described in various figures in the paper can be found in the `paper_use_cases/` directory. To verify all of the snippets included in the figures of the paper, run `./run_all_figures`. To run an individual snippet run the corresponding script for the snippet's figure number in the paper, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
+The code corresponding to all figures in the paper can be found in the `paper_use_cases/` directory. 
+
+To verify all of the snippets included in the figures of the paper, run 
+```
+./run_all_figures
+```
+
+To run an individual snippet run the corresponding script for the snippet's figure number in the paper, e.g. 
+```
+./run_figure1.sh
+```
+in order to verify a program containing the data race bug described in Figure 1. Results are output in the `benchmark_results` directory.
 
 
 
-## Writing your own examples (re-usability)
+## Writing your own examples (reusability)
 
-You can follow the below steps in order to create a Rust program which can be verified by RustMC:
-- use `cargo new your_project`
+You can follow the steps below to write your own Rust program which can be verified by RustMC:
+
+- Run `cargo new your_project`
 - Edit the `Cargo.toml` file and set edition to `edition = "2021"`
 - In `main.rs`, add the following attributes to the top of the file: 
     ```
@@ -285,18 +313,13 @@ fn main() -> i32 {
     0
 }
 ```
-- In order to run RustMC on the program you will need to link the bitcode files produced by rust's `--emit=llvm-bc` flag and provide this as input using the `--program-entry-function=main` flag. It should be simple enough to adapt one of the existing scripts for running one of our use cases in order to achieve this.
 
-# High-level description of source
+- In order to run RustMC on the program you will need to link the
+  bitcode files produced by rust's `--emit=llvm-bc` flag and provide
+  this as input using the `--program-entry-function=main` flag. It
+  should be simple enough to adapt one of the existing scripts for
+  running one of our use cases in order to achieve this.
 
-The source code of our tool and our datasets are included in the
-docker image and public repository. It includes
 
-- The source code our adaptation of GenMC (Mixer)
-- The source code of the Rust tool chain with selected inlined functions
-- The dataset for Experiment 1 (`experiment1_loom/loom-tests-ported/`)
-- The dataset for Experiment 2 (`experiment2_crates/verify_test_benchmarks/`)
-- Use cases from paper (`paper_use_cases/`)
-  
   
 
