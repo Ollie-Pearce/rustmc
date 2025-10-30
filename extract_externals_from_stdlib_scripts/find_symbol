@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SYM="${1:?Usage: $0 SYMBOL_NAME}"
+
+find . -type f \( -name '*.o' -o -name '*.rlib' \) -print0 \
+| xargs -0 -P"$(nproc)" -I{} sh -c '
+  f="$1"; sym="$2"
+  llvm-nm-18 --quiet --defined-only --print-file-name "$f" 2>/dev/null
+' sh {} "$SYM" \
+| rg -F "$SYM"

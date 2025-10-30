@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+rlib="${1:?Usage: $0 path/to/libsomething.rlib}"
+outdir="${rlib%.rlib}.bcdir"
+mkdir -p "$outdir"
+tmp=$(mktemp -d)
+
+# extract only .o members into a temp dir
+llvm-ar-18 t "$rlib" | rg '\.o$' | while read -r m; do
+  llvm-ar-18 p "$rlib" "$m" > "$tmp/$m"
+done
+
+# for each .o, dump embedded bitcode and disassemble
+( cd "$tmp"
+  find . -type f -name '*.o' -print0 | while IFS= read -r -d '' f; do
+    if llvm-readelf-18 -S "$f" | rg -q '\.llvmbc'; then
+      b="$outdir/${f#./}"; b="${b%.o}"
+      mkdir -p "$(dirname "$b")"
+      llvm-objcopy-18 --dump-section .llvmbc="${b}.bc" "$f"
+      llvm-dis-18 "${b}.bc" -o "${b}.ll"
+      echo "$rlib:${f#./} -> ${b}.bc  ${b}.ll"
+    fi
+  done
+)
+
