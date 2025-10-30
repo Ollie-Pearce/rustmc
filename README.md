@@ -1,6 +1,6 @@
 # Introduction
 
-Claims / badges we're aiming for.
+Claims / badges we're aiming for (and which section does what).
 
 # Smoke tests
 
@@ -14,7 +14,7 @@ small version of both experiments and what you should see
 
 ## Figures from paper
 
-## Writing your own examples
+## Writing your own examples (re-usability)
 
 # Experiment 1 (loom tests)
 
@@ -98,7 +98,7 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 
 `panic_with_hook`
 
-## Verifying new crates:
+## Verifying new crates (re-usability):
 
 In order to run RustMC on ... several steps must be taken #
 
