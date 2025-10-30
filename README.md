@@ -81,45 +81,6 @@ memcpy errors: 0 / 11
 segmentation fault errors: 0 / 11
 ```
 
-
-# Use cases
-Todo: I think move this below experiment 2
-## Figures from paper
-
-The bug reproductions described in various figures in the paper can be found in the `paper_use_cases/` directory. To verify all of the snippets included in the figures of the paper, run `./run_all_figures`. To run an individual snippet run the corresponding script for the snippet's figure number in the paper, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
-
-
-
-## Writing your own examples (re-usability)
-
-You can follow the below steps in order to create a Rust program which can be verified by RustMC:
-- use `cargo new your_project`
-- Edit the `Cargo.toml` file and set edition to `edition = "2021"`
-- In `main.rs`, add the following attributes to the top of the file: 
-    ```
-    #![no_main]
-    #![feature(start)]
-    #![feature(thread_spawn_unchecked)]
-    #![no_builtins]
-    ```
-- Add a `start` function with the following definition:
-```
-#[start]
-#[no_mangle]
-fn start(_argc: isize, _argv: *const *const u8) -> isize {
-    main();
-    0
-}
-```
-- Add a main function with the following definition:
-```
-#[no_mangle]
-fn main() -> i32 {
-    0
-}
-```
-- In order to run RustMC on the program you will need to link the bitcode files produced by rust's `--emit=llvm-bc` flag and provide this as input using the `--program-entry-function=main` flag. It should be simple enough to adapt one of the existing scripts for running one of our use cases in order to achieve this.
-
 # Experiment 1 (loom tests)
 
 To replicate the results in Table 1, navigate to `experiment1_loom/` and run the following command (takes ~15 minutes):
@@ -172,8 +133,7 @@ You will find the results of the verification in `test_traces/` and `test_result
 ---
 
 # Experiment 2 (Crates)
-
-All tests were run on a machine with the following specifications: 
+Due to the significant demands imposed by linking, transforming and verifying large LLVM modules this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine running Ubuntu 22.04.5 LTS with the following specifications: 
 `CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids), Cores (Physical) 48 (24), Memory: 128GB`
 
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
@@ -184,7 +144,7 @@ To replicate the results in Table 2, navigate to `experiment2_crates/` and run t
 
 This will run RustMC on all the tests in the sample set and report the results in the `test_results` directory
 
-Some of the crates we use for testing contain many dependencies which makes linking and transforming the necessary LLVM bitcode demanding, to run a smaller set of benchmarks use the `--run_small` flag.
+Some of the crates we use for testing contain many dependencies which makes linking transforming and interpreting the necessary LLVM bitcode demanding, to run a smaller set of benchmarks use the `--run_small` flag, this will only run tests which took less than half an hour to verify in our benchmarks which can be found in the "Time to verify" section.
 
 
 
@@ -213,7 +173,7 @@ The following tests have a very large state space and could not be verified in a
 
 #### Tests which panic
 
-The following tests call the external `rust_begin_unwind` function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or test....(ability to unwind after a panic?):
+The following tests call an external function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or intentionally panic.
 
 ##### arcstr
 ```
@@ -235,21 +195,26 @@ test_mutex_arc_access_in_unwind_1_1_1, test_mutex_arc_access_in_unwind_1_1, test
 panic_with_hook
 ```
 
-### Time taken to verify crates:
+### Time to verify:
 All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification
 
 - atomic_float: 0m6.746s
-- spin: 12m4.211s  (?)
+- spin: 12m4.211s
 - ringbuf: 0m15.755s
 - seize: 32m55.264s
 - thread_local: 0m18.491s
-- parking: 
+- parking: 0m19.504s
 - arcstr 1m46.961s
 - arc-swap 3m31.588s
 - state: 0m39.276s
 - try_lock: 0m1.576s
-- parking_lot:
-- archery: 6m30.792s (?)
+- parking_lot: 1h24m16.143s
+- archery: 6m30.792s
+
+
+
+NB: Following the previously mentioned improvements to our toolchain and a change to the verification driver script for the archery crate we now support an additional archery test and 10 addition spin tests. Unfortunately this change disabled support for try-lock's `fmt_debug()` test. 
+
 
 ## Verifying new crates (re-usability):
 
@@ -265,7 +230,7 @@ The following several steps may be taken in order to run RustMC on a crate outsi
 
 4. Sometimes crates will make use of external statics from the standard library. In order to define these statics, first build the toolchain with `RUSTFLAGS="-C embed-bitcode" ./x build library` this will also set any functions in the `library/` directory you have applied the inline attribute to appear in the llvm-ir generated by the rust compiler. Then move the scripts in the `extract_externals_from_stdlib_scripts` directory into the custom toolchain's `rust/build/x86_64-unknown-linux-gnu` directory, to retrieve the llvm-ir for the external symbols you require:
     - Run the `find_symbol` script with the external static you require as an argument
-    - Compile the identified rlibs into llvm-ir using the `extract_ir_from_rlib` script and add the external statics from the resulting module to `override/my_pthread.ll`. TODO BETTER PATH DESCRIPTION
+    - Compile the identified rlibs into llvm-ir using the `extract_ir_from_rlib` script and add the external statics from the resulting module to `override/my_pthread.ll`.
 
 5. Run `rustup toolchain link RustMC /rust/build/x86_64-unknown-linux-gnu/stage1` in order to link your newly built toolchain.
 
@@ -277,10 +242,51 @@ The following several steps may be taken in order to run RustMC on a crate outsi
   We suggest using the `verify_tests.sh` script as a starting point. This script links a few common dependencies in order to resolve external function errors but does not link all of a crates llvm bitcode modules together as this can lead to a significant performance slowdown due to the due to the complexity of transforming, interpreting, and verifying large-scale LLVM modules.
 
 
+# Use cases
+Todo: I think move this below experiment 2
+## Figures from paper
+
+The bug reproductions described in various figures in the paper can be found in the `paper_use_cases/` directory. To verify all of the snippets included in the figures of the paper, run `./run_all_figures`. To run an individual snippet run the corresponding script for the snippet's figure number in the paper, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
+
+
+
+## Writing your own examples (re-usability)
+
+You can follow the below steps in order to create a Rust program which can be verified by RustMC:
+- use `cargo new your_project`
+- Edit the `Cargo.toml` file and set edition to `edition = "2021"`
+- In `main.rs`, add the following attributes to the top of the file: 
+    ```
+    #![no_main]
+    #![feature(start)]
+    #![feature(thread_spawn_unchecked)]
+    #![no_builtins]
+    ```
+- Add a `start` function with the following definition:
+```
+#[start]
+#[no_mangle]
+fn start(_argc: isize, _argv: *const *const u8) -> isize {
+    main();
+    0
+}
+```
+- Add a main function with the following definition:
+```
+#[no_mangle]
+fn main() -> i32 {
+    0
+}
+```
+- In order to run RustMC on the program you will need to link the bitcode files produced by rust's `--emit=llvm-bc` flag and provide this as input using the `--program-entry-function=main` flag. It should be simple enough to adapt one of the existing scripts for running one of our use cases in order to achieve this.
+
 # High-level description of source
 
 - Mixer/GenMC
 - Rust tool chain
+- Experiment 1, Loom tests
+- Experiment 2, crates
+- Use cases from paper
   
   
 
@@ -288,4 +294,4 @@ The following several steps may be taken in order to run RustMC on a crate outsi
 
 ---
 
-Due to the ... resources required to link, transform and verify large LLVM modules this experiment may require significant system resources. Our tests were run with ...
+
