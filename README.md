@@ -44,6 +44,9 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 # Experiment 2 (Crates)
 
+All tests were run on a machine with the following specifications: 
+`CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids), Cores (Physical) 48 (24), Memory: 128GB`
+
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
 
 ```
