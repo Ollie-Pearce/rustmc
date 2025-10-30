@@ -29,7 +29,7 @@ case "$crate" in
     ./verify_tests.sh "verify_test_benchmarks/seize"
     ;;
   parking)
-    ./verify_tests.sh "verify_test_benchmarks/parking"
+    ./verify_parking_tests.sh "verify_test_benchmarks/parking"
     ;;
   atomic_float)
     ./verify_tests.sh "verify_test_benchmarks/atomic_float"
