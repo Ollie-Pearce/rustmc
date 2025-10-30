@@ -22,9 +22,11 @@ documentation for adding new benchmarks).
 
 ### Verify one use case
 
-`cd paper && ./run_figure1.sh`
+Run `cd paper && ./run_figure1.sh`
 
 In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected.
+
+TODO: Ollie show expected output
 
 ### Run a sample of Experiment 1
 
@@ -41,15 +43,18 @@ Panics found: 0
 
 ### Run a sample of Experiment 2
 
-TODO: Ollie pick a small crate as an example (and show expected output)
+Run `cd experiment2_crates/ && ./verify_crate boxcar`
 
+In `test_traces/boxcar` you should see the results of each test
+
+TODO: Ollie show expected output
 
 
 # Use cases
 
 ## Figures from paper
 
-TODO: Ollie say how to run each/all examples
+The bug reproductions described in various figures in the paper can be found in `paper_use_cases`, these benchmarks can be run by executing the corresponding script, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
 
 ## Writing your own examples (re-usability)
 
@@ -172,6 +177,8 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 `panic_with_hook`
 
 ### Time taken to verify crates:
+All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification
+
 
 - spin: 12m4.211s FIX RESULTS
 - ringbuf: 0m15.755s FIX RESULTS
@@ -192,7 +199,7 @@ In order to run RustMC on ... several steps must be taken #
 
 # Use cases from paper:
 
-The bug reproductions described in various figures in the paper can be found in `paper_use_cases`, these benchmarks can be run by executing the corresponding script, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
+
 
 # High-level description of source
 
