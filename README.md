@@ -19,9 +19,9 @@ documentation for adding new benchmarks).
 
 # Early smoke tests
 
-To test that all is working as expected, you can do the following
+`cd paper && ./run_figure1.sh`
 
-
+In `benchmark_results/` you should see an execution trace and an error message indicating the race in this program was detected.
 ### Verify one use case
 
 TODO: Ollie pick an example (Fig 1?) and show expected output
@@ -173,8 +173,9 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 
 ### Time taken to verify crates:
 
-
-
+- spin: 12m4.211s FIX RESULTS
+- ringbuf: 0m15.755s FIX RESULTS
+- 
 
 
 ## Verifying new crates (re-usability):
