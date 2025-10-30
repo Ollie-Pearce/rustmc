@@ -110,7 +110,12 @@ In order to run RustMC on ... several steps must be taken #
 4. With a rust toolchain built with ` ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and ...
 
 
+# High-level description of source
 
+- Mixer/GenMC
+- Rust tool chain
+  
+  
 
 
 
