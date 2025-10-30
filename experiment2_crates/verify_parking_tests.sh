@@ -148,7 +148,7 @@ find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name '*.ll' ! -name 'p
 
 
   llvm-link-18 --internalize \
-    --override="$DEPDIR/override/my_pthread.ll" \
+    --override=../override/my_pthread.ll \
     -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
