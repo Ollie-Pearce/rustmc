@@ -55,6 +55,10 @@ To replicate the results in Table 2, navigate to `experiment2_crates/` and run t
 
 This will run RustMC on all the tests in the sample set and report the results in the `test_results` directory
 
+Some of the crates we use for testing contain many dependencies which makes linking and transforming the necessary LLVM bitcode demanding, to run a smaller set of benchmarks use the `--run_small` flag.
+
+
+
 
 In order to verify tests from a single crate run
 
@@ -67,6 +71,8 @@ Traces of test executions can be found in `test_traces`, by default we do not pr
 For a quick litmus test we recommend running the archery or thread_local crates with the above `verify_crate` script
 
 ### Edge cases
+
+#### Tests with an excessive state space
 
 The following tests have a very large state space and could not be verified in an hour, we have commented them out however if you would like to reactivate them you can uncomment them in the following files:
 
@@ -100,6 +106,12 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 ##### arc-swap
 
 `panic_with_hook`
+
+### Time taken to verify crates:
+
+
+
+
 
 ## Verifying new crates (re-usability):
 
