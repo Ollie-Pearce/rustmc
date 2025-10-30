@@ -134,6 +134,10 @@ In order to run RustMC on ... several steps must be taken #
 4. With a rust toolchain built with ` ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and ...
 
 
+# Use cases from paper:
+
+The bug reproductions described in various figures in the paper can be found in `paper_use_cases`, these benchmarks can be run by executing the corresponding script, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
+
 # High-level description of source
 
 - Mixer/GenMC
