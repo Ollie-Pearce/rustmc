@@ -55,7 +55,7 @@ Below, we assume the first commands are run from the home directory of the docke
 
 ### 1. Verify the example from Figure 1
 
-Run `cd paper && ./run_figure1.sh`
+Run `cd paper_use_cases && ./run_figure1.sh`
 
 In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected.
 
