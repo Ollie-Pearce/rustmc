@@ -16,11 +16,13 @@ We aim for all badges: Available (via our zenodo link), Functional
 (see points 1-3 above), Reusable (code is documented and we provide
 documentation for adding new benchmarks).
 
+---
 
 # Early smoke tests
 
+Below, we assume the first commands are run from the home directory of the docker container.
 
-### Verify one use case
+### 1. Verify the example from Figure 1
 
 Run `cd paper && ./run_figure1.sh`
 
@@ -47,7 +49,7 @@ Number of blocked executions seen: 1
 Total wall-clock time: 2.86s
 ```
 
-### Run a sample of Experiment 1
+### 2. Run a sample of Experiment 1
 
 Run `cd experiment1_loom/ && ./run_experiment1.py --csv test_inventory_artifact_small.csv` (~15 seconds). It should end with
   
@@ -60,7 +62,7 @@ Matches expected: 5
 Panics found: 0
 ```
 
-### Run a sample of Experiment 2
+### 3. Run a sample of Experiment 2
 
 Run `cd experiment2_crates/ && ./verify_crate boxcar`
 
@@ -81,7 +83,11 @@ memcpy errors: 0 / 11
 segmentation fault errors: 0 / 11
 ```
 
-# Experiment 1 (loom tests)
+---
+
+# Replicating the results of the paper
+
+## 1. Experiment 1 (loom tests)
 
 To replicate the results in Table 1, navigate to `experiment1_loom/` and run the following command (takes ~15 minutes):
 
@@ -132,7 +138,7 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 ---
 
-# Experiment 2 (Crates)
+## 2. Experiment 2 (Crates)
 Due to the significant demands imposed by linking, transforming and verifying large LLVM modules this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine running Ubuntu 22.04.5 LTS with the following specifications: 
 `CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids), Cores (Physical) 48 (24), Memory: 128GB`
 
@@ -216,7 +222,7 @@ All times were taken from the `time ./verify_crate` command and include building
 NB: Following the previously mentioned improvements to our toolchain and a change to the verification driver script for the archery crate we now support an additional archery test and 10 addition spin tests. Unfortunately this change disabled support for try-lock's `fmt_debug()` test. 
 
 
-## Verifying new crates (re-usability):
+### Verifying new crates (re-usability):
 
 The following several steps may be taken in order to run RustMC on a crate outside our benchmark set 
 
@@ -241,9 +247,10 @@ The following several steps may be taken in order to run RustMC on a crate outsi
 
   We suggest using the `verify_tests.sh` script as a starting point. This script links a few common dependencies in order to resolve external function errors but does not link all of a crates llvm bitcode modules together as this can lead to a significant performance slowdown due to the due to the complexity of transforming, interpreting, and verifying large-scale LLVM modules.
 
+---
 
-# Use cases
-Todo: I think move this below experiment 2
+## 3. Verifing  use cases and examples from the paper
+
 ## Figures from paper
 
 The bug reproductions described in various figures in the paper can be found in the `paper_use_cases/` directory. To verify all of the snippets included in the figures of the paper, run `./run_all_figures`. To run an individual snippet run the corresponding script for the snippet's figure number in the paper, e.g. `./run_figure1.sh` in order to verify a program containing the data race bug described in figure 1. Results are output in the `benchmark_results` directory.
@@ -282,16 +289,14 @@ fn main() -> i32 {
 
 # High-level description of source
 
-- Mixer/GenMC
-- Rust tool chain
-- Experiment 1, Loom tests
-- Experiment 2, crates
-- Use cases from paper
+The source code of our tool and our datasets are included in the
+docker image and public repository. It includes
+
+- The source code our adaptation of GenMC (Mixer)
+- The source code of the Rust tool chain with selected inlined functions
+- The dataset for Experiment 1 (`experiment1_loom/loom-tests-ported/`)
+- The dataset for Experiment 2 (`experiment2_crates/verify_test_benchmarks/`)
+- Use cases from paper (`paper_use_cases/`)
   
   
-
-
-
----
-
 
