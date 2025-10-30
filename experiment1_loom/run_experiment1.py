@@ -229,13 +229,8 @@ class ExperimentRunner:
                         result['error_messages'].append(f"{desc}: {error_msg[:200]}")
 
             # Determine final status if still unknown
-            if result['status'] == 'UNKNOWN':
-                if result['crashed'] and not result['panic_found']:
-                    result['status'] = 'CRASH'
-                elif result['executions_explored'] > 0 and not result['crashed']:
-                    result['status'] = 'COMPLETED'
-                else:
-                    result['status'] = 'CRASH'
+            if not result['status'] == 'PANIC_FOUND' and not result['status'] == 'SUCCESS' and not result['status'] == 'TIMEOUT':
+                result['status'] = 'CRASH'
 
             # Compare to expected
             should_panic = test['should_panic'].lower() == 'yes'
@@ -405,9 +400,6 @@ def main():
     print(f"Total tests: {len(results)}")
     print(f"Matches expected: {sum(1 for r in results if r.get('matches_expected'))}")
     print(f"Panics found: {sum(1 for r in results if r['panic_found'])}")
-    print(f"Crashes: {sum(1 for r in results if r['crashed'])}")
-    print(f"Successes: {sum(1 for r in results if r['status'] == 'SUCCESS')}")
-    print(f"Errors: {sum(1 for r in results if r['status'] == 'ERROR')}")
 
 
 if __name__ == '__main__':

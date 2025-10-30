@@ -1,42 +1,87 @@
 # Introduction
 
-Claims / badges we're aiming for (and which section does what).
+This paper introduces RustMC, a tool to detect errors in concurrent
+programs written in Rust.
 
-# Smoke tests
+The purpose of this artifact is to allow the reviewer to verify the main claims we make in the paper:
 
-small version of both experiments and what you should see 
+1. RustMC works as expected for the various examples given in the paper (Figures 1, 5, 6, 9, and 10).
 
-- one use case
-- small Exp 1
-- one small crate from Exp 2
+2. Experiment 1 (Table 1) is reproducable
+
+3. Experiment 2 (Figures 7 and 8) are reproducable
+
+
+We aim for all badges: Available (via our zenodo link), Functional
+(see points 1-3 above), Reusable (code is documented and we provide
+documentation for adding new benchmarks).
+
+
+# Early smoke tests
+
+To test that all is working as expected, you can do the following
+
+
+### Verify one use case
+
+TODO: Ollie pick an example (Fig 1?) and show expected output
+
+### Run a sample of Experiment 1
+
+Run `cd experiment1_loom/ && ./run_experiment1.py --csv test_inventory_artifact_small.csv` (~15 seconds). It should end with
+  
+ ```
+================================================================================
+SUMMARY
+================================================================================
+Total tests: 7
+Matches expected: 5
+Panics found: 0
+```
+
+### Run a sample of Experiment 2
+
+TODO: Ollie pick a small crate as an example (and show expected output)
+
+
 
 # Use cases
 
 ## Figures from paper
 
+TODO: Ollie say how to run each/all examples
+
 ## Writing your own examples (re-usability)
+
+TODO: Ollie explain briefly how to make your own example (or modify existing one)
 
 # Experiment 1 (loom tests)
 
-To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command:
+To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command (takes ~15 minutes):
 
 ```
-./run_experiment1.py --csv test_inventory_artifact.csv --ported-tests loom-tests-ported/
+./run_experiment1.py
 ```
 
-This will run RustMC on each test in the inventory and store the results in `experiment_results.csv`. You can view the csv file in a human-readable way with
+This will run RustMC on each test in the inventory and store the results in `experiment_results.csv`. If all goes well, the script should end with:
+
+```
+Results saved to: experiment_results.csv
+
+================================================================================
+SUMMARY
+================================================================================
+Total tests: 72
+Matches expected: 49
+Panics found: 17
+```
+
+
+You can view the csv file in a human-readable way with
 
 ```
 mlr --icsv --opprint cat  experiment_results.csv 
 ```
-
-If you'd like to run an individual file for further investigation, run 
-
-```
-./verify_single.sh loom-tests-ported/arc_ported_genmc.rs 
-```
-
-You will find the results of the verification in `test_traces/` and `test_results/`.
 
 
 NB: compared to submitted paper, we have added a missing test which is
@@ -48,6 +93,16 @@ use to _wrongly_ panic, now crash due to an unknown external function
 our overall conclusions remain the same.  The improvement involve
 using statics from the stdlib rather than having them
 zero-initialized.
+
+
+If you'd like to run an individual file for further investigation, run 
+
+```
+./verify_single.sh loom-tests-ported/arc_ported_genmc.rs 
+```
+
+You will find the results of the verification in `test_traces/` and `test_results/`.
+
 
 ---
 
