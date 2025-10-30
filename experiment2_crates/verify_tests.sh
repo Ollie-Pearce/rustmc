@@ -244,6 +244,10 @@ echo " "
 echo " ================= Finished Verifying Unit Tests ================= "
 echo " "
 
+
+
+cd test_traces/${PROJECT_NAME}/
+
 file_count=$(ls | wc -l)
 
 success_search_string="Verification complete. No errors were detected."
