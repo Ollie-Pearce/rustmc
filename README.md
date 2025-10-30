@@ -56,7 +56,7 @@ Errors: 0
 To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command (takes ~15 minutes):
 
 ```
-./run_experiment1.py --csv test_inventory_artifact.csv --ported-tests loom-tests-ported/
+./run_experiment1.py
 ```
 
 This will run RustMC on each test in the inventory and store the results in `experiment_results.csv`. If all goes well, the script should end with:
