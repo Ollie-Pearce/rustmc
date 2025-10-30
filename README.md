@@ -24,6 +24,7 @@ To test that all is working as expected, you can do the following
 
 ### Verify one use case
 
+TODO: Ollie pick an example (Fig 1?) and show expected output
 
 ### Run a sample of Experiment 1
 
@@ -43,13 +44,19 @@ Errors: 0
 
 ### Run a sample of Experiment 2
 
+TODO: Ollie pick a small crate as an example (and show expected output)
+
 
 
 # Use cases
 
 ## Figures from paper
 
+TODO: Ollie say how to run each/all examples
+
 ## Writing your own examples (re-usability)
+
+TODO: Ollie explain briefly how to make your own example (or modify existing one)
 
 # Experiment 1 (loom tests)
 
