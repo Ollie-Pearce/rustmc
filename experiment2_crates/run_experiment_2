@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+mode="${1:-all}"
+
+if [ "$mode" = "--run_small" ]; then
+    echo "Verifying all tests for crate: boxcar"
+    ./verify_tests.sh "verify_test_benchmarks/boxcar"
+
+    ./verify_tests.sh "verify_test_benchmarks/thread_local"
+
+    ./verify_archery_tests.sh "verify_test_benchmarks/archery"
+
+    exit 0
+fi
+
+
+
 crates=("arc-swap" "archery" "arcstr" "atomic_float" "boxcar" "parking" "parking_lot" "ringbuf" "scc" "seize" "spin" "state" "thread_local" "try-lock")
 
 set_1=("thread_local" "boxcar" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "parking" "atomic_float")
 
 for crate in "${set_1[@]}"; do
   echo "Verifying all tests for crate: $crate"
-  ./verify_all_tests.sh "verify_test_benchmarks/$crate"
+  ./verify_tests.sh "verify_test_benchmarks/$crate"
 done
 
 ./verify_archery_tests.sh "verify_test_benchmarks/archery"
@@ -19,5 +34,5 @@ done
 ./verify_state_tests.sh "verify_test_benchmarks/state"
 
 # missing: scc, atomic_float,
-# Pretty sure atomic_float is `verify_all_tests.sh`
+# Pretty sure atomic_float is `verify_tests.sh`
 # scc has a "verify_scc_tests.sh" but idk if it works
