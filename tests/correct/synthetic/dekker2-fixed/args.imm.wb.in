@@ -1,3 +1,0 @@
--check-consistency-type=full -check-consistency-point=exec  | -DN=2
--check-consistency-type=full -check-consistency-point=exec  | -DN=3
--check-consistency-type=full -check-consistency-point=exec  | -DN=4
