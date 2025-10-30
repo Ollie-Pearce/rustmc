@@ -57,7 +57,7 @@ Below, we assume the first commands are run from the home directory of the docke
 
 Run `cd paper_use_cases && ./run_figure1.sh`
 
-In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected.
+In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected. You can view the file with `more benchmark_results/figure1_output.txt`, and observe:
 
 ```
 *** Compilation complete.
@@ -95,9 +95,9 @@ Panics found: 0
 
 ### 3. Run a sample of Experiment 2
 
-Run `cd experiment2_crates/ && ./verify_crate boxcar`
+Run `cd experiment2_crates/ && ./verify_crate boxcar` (~2 minutes)
 
-In `test_traces/boxcar` you should see the results of each test and in `test_results/boxcar` you should see the following:
+In `test_traces/boxcar` you should see the results of each test and in `test_results/boxcar_summary.txt` you should see the following:
 
 ```
 Verification success: 11 / 11
