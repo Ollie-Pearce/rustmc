@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+crate="${1:?usage: $0 <crate-name>}"
+
+case "$crate" in
+  thread_local)
+    ./verify_tests.sh "verify_test_benchmarks/thread_local-rs"
+    ;;
+  boxcar)
+    ./verify_tests.sh "verify_test_benchmarks/boxcar"
+    ;;
+  state)
+    ./verify_tests.sh "verify_test_benchmarks/state"
+    ;;
+  arc-swap)
+    ./verify_tests.sh "verify_test_benchmarks/arc-swap"
+    ;;
+  arcstr)
+    ./verify_tests.sh "verify_test_benchmarks/arcstr"
+    ;;
+  ringbuf|ringbuf/blocking)
+    ./verify_tests.sh "verify_test_benchmarks/ringbuf/blocking"
+    ;;
+  try-lock)
+    ./verify_tests.sh "verify_test_benchmarks/try-lock"
+    ;;
+  seize)
+    ./verify_tests.sh "verify_test_benchmarks/seize"
+    ;;
+  parking)
+    ./verify_parking_tests.sh "verify_test_benchmarks/parking"
+    ;;
+  atomic_float)
+    ./verify_tests.sh "verify_test_benchmarks/atomic_float"
+    ;;
+  archery)
+    ./verify_archery_tests.sh "verify_test_benchmarks/archery"
+    ;;
+  spin)
+    ./verify_spin_tests.sh "verify_test_benchmarks/spin-rs"
+    ;;
+  parking_lot)
+    ./verify_parking_lot_tests.sh "verify_test_benchmarks/parking_lot"
+    ;;
+  scc|scalable-concurrent-containers)
+    ./verify_scc_tests.sh "verify_test_benchmarks/scalable-concurrent-containers"
+    ;;
+  *)
+    echo "unknown crate: $crate" >&2
+    exit 1
+    ;;
+esac
