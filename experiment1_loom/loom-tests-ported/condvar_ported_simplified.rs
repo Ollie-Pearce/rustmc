@@ -1,5 +1,6 @@
 // Ported from loom condvar.rs
 // Tests condition variable notify_one and notify_all
+// EXPECTED: Both should pass (not marked #[should_panic])
 
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::SeqCst;
@@ -50,12 +51,9 @@ impl Inc {
 #[no_mangle]
 fn notify_one() {
     let inc = Arc::new(Inc::new());
-
-    for _ in 0..1 {
-        let inc = inc.clone();
-        thread::spawn(move || inc.inc());
-    }
-
+    let inc_clone = inc.clone();
+    
+    thread::spawn(move || inc_clone.inc());
     inc.wait();
 }
 
@@ -63,17 +61,18 @@ fn notify_one() {
 fn notify_all() {
     let inc = Arc::new(Inc::new());
 
-    let mut waiters = Vec::new();
-    for _ in 0..2 {
-        let inc = inc.clone();
-        waiters.push(thread::spawn(move || inc.wait()));
-    }
+    // Create exactly 2 waiters without using Vec
+    let inc1 = inc.clone();
+    let inc2 = inc.clone();
+    let inc3 = inc.clone();
+    
+    let waiter1 = thread::spawn(move || inc1.wait());
+    let waiter2 = thread::spawn(move || inc2.wait());
 
-    thread::spawn(move || inc.inc_all()).join().expect("inc");
+    thread::spawn(move || inc3.inc_all()).join().expect("inc");
 
-    for th in waiters {
-        th.join().expect("waiter");
-    }
+    waiter1.join().expect("waiter1");
+    waiter2.join().expect("waiter2");
 }
 
 fn main() {
