@@ -19,12 +19,12 @@ documentation for adding new benchmarks).
 
 # Early smoke tests
 
-`cd paper && ./run_figure1.sh`
 
-In `benchmark_results/` you should see an execution trace and an error message indicating the race in this program was detected.
 ### Verify one use case
 
-TODO: Ollie pick an example (Fig 1?) and show expected output
+`cd paper && ./run_figure1.sh`
+
+In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected.
 
 ### Run a sample of Experiment 1
 

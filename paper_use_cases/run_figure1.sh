@@ -20,5 +20,5 @@ find $DEPDIR/racy_ffi/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > 
 
 llvm-link-18 --internalize --override=../../override/my_pthread.ll -o combined.bc @bitcode.txt 
 
-../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error --transform-output=myout2.ll $DEPDIR/racy_ffi/combined.bc > $DEPDIR/benchmark_results/racy_test_output.txt
+../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/racy_ffi/combined.bc > $DEPDIR/benchmark_results/figure1_output.txt
 
