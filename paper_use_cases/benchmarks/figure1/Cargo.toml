@@ -1,7 +1,9 @@
 [package]
-name = "real_world_example"
+name = "figure1"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libc = "0.2.169"
+
+[build-dependencies]
+cc = "1.0"

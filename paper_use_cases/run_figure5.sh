@@ -4,7 +4,7 @@ cd ..
 
 make
 
-cd $DEPDIR/rand_atomicity_violation_reproduction
+cd $DEPDIR/benchmarks/figure5
 
 cargo clean
  
@@ -12,9 +12,9 @@ export RUSTFLAGS=" -C overflow-checks=off -C panic=abort --emit=llvm-bc -C opt-l
 rustup run RustMC cargo run --target x86_64-unknown-linux-gnu 
 
 
-find $DEPDIR/rand_atomicity_violation_reproduction/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
+find $DEPDIR/benchmarks/figure5/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
 
-llvm-link-18 --internalize --override=../../override/my_pthread.ll -o combined.bc @bitcode.txt 
+llvm-link-18 --override=../../../override/my_pthread.ll -o combined.bc @bitcode.txt 
 
-../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error --transform-output=myout2.ll $DEPDIR/rand_atomicity_violation_reproduction/combined.bc > $DEPDIR/benchmark_results/rand_atomicity_violation_reproduction.txt
+../../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/benchmarks/figure5/combined.bc > $DEPDIR/benchmark_results/figure5_output.txt 2>&1
 

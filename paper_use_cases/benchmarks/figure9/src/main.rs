@@ -14,9 +14,6 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 use std::ptr::addr_of_mut;
 
-//static atomic_forty_two: AtomicU64 = AtomicU64::new(0);
-//static mut nax: u64 = 0;
-
 #[start]
 #[no_mangle]
 #[inline(always)]
@@ -28,21 +25,19 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[no_mangle]
 #[inline(always)]
 fn main() -> i32 {
-    let mut x: i64 = 2;
+    let data = vec![1, 2, 3, 4];
+    let idx = Arc::new(AtomicUsize::new(0));
+    let other_idx = idx.clone();
 
-    let x_ptr = &mut x as *mut i64;
+    thread::spawn(move || { 
+        other_idx.fetch_add(10, Ordering::SeqCst); 
+    });
     
-    unsafe {
-        let x_ptr_2: &mut i64 = &mut *x_ptr; 
-
-        let handle = thread::spawn(move || {
-            *x_ptr_2 = 5; 
-        });
-
-        *x_ptr = 10;
-
-        handle.join().unwrap();
+    if idx.load(Ordering::SeqCst) < data.len() {
+        unsafe {
+            let i = idx.load(Ordering::SeqCst);
+            let x = *data.get_unchecked(i); 
+        }
     }
-    let y = x; 
     0
 }

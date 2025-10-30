@@ -4,7 +4,7 @@ cd ..
 
 make
 
-cd $DEPDIR/raw_ptr_race
+cd $DEPDIR/benchmarks/figure10
 
 cargo clean
  
@@ -12,9 +12,9 @@ export RUSTFLAGS=" -C overflow-checks=off -C panic=abort --emit=llvm-bc -C opt-l
 rustup run RustMC cargo run --target x86_64-unknown-linux-gnu 
 
 
-find $DEPDIR/raw_ptr_race/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
+find $DEPDIR/benchmarks/figure10/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
 
-llvm-link-18 --override=../../override/my_pthread.ll -o combined.bc @bitcode.txt 
+llvm-link-18 --override=../../../override/my_pthread.ll -o combined.bc @bitcode.txt 
 
-../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/raw_ptr_race/combined.bc > $DEPDIR/benchmark_results/raw_ptr_race.txt
+../../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/benchmarks/figure10/combined.bc > $DEPDIR/benchmark_results/figure10_output.txt 2>&1
 

@@ -5,7 +5,7 @@ cd ..
 
 make
 
-cd $DEPDIR/racy_ffi
+cd $DEPDIR/benchmarks/figure1
 
 cargo clean
  
@@ -13,12 +13,12 @@ export RUSTFLAGS=" -C overflow-checks=off -C panic=abort --emit=llvm-bc -C opt-l
 rustup run RustMC cargo run --target x86_64-unknown-linux-gnu 
 
 clang -O0 -emit-llvm -c racy.c -o racy.bc
-mv racy.bc $DEPDIR/racy_ffi/target/x86_64-unknown-linux-gnu/debug/deps
+mv racy.bc $DEPDIR/benchmarks/figure1/target/x86_64-unknown-linux-gnu/debug/deps
 
 
-find $DEPDIR/racy_ffi/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
+find $DEPDIR/benchmarks/figure1/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
 
-llvm-link-18 --internalize --override=../../override/my_pthread.ll -o combined.bc @bitcode.txt 
+llvm-link-18 --override=../../../override/my_pthread.ll -o combined.bc @bitcode.txt 
 
-../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/racy_ffi/combined.bc > $DEPDIR/benchmark_results/figure1_output.txt
+../../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/benchmarks/figure1/combined.bc > $DEPDIR/benchmark_results/figure1_output.txt 2>&1
 

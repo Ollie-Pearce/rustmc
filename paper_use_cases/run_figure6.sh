@@ -4,7 +4,7 @@ cd ..
 
 make
 
-cd $DEPDIR/internment_unsafe_sync_reproduction/
+cd $DEPDIR/benchmarks/figure6
 
 cargo clean
  
@@ -12,9 +12,9 @@ export RUSTFLAGS=" -C overflow-checks=off -C panic=abort --emit=llvm-bc -C opt-l
 rustup run RustMC cargo run --target x86_64-unknown-linux-gnu 
 
 
-find $DEPDIR/internment_unsafe_sync_reproduction/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
+find $DEPDIR/benchmarks/figure6/target/x86_64-unknown-linux-gnu/debug/deps -name "*.bc" > bitcode.txt
 
-llvm-link-18 --internalize --override=../../override/my_pthread.ll -o combined.bc @bitcode.txt 
+llvm-link-18 --override=../../../override/my_pthread.ll -o combined.bc @bitcode.txt 
 
-../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error --transform-output=myout2.ll $DEPDIR/internment_unsafe_sync_reproduction/combined.bc > $DEPDIR/benchmark_results/internment_unsafe_sync_reproduction.txt
+../../../genmc --mixer --program-entry-function=main --disable-estimation --print-error-trace --disable-stop-on-system-error $DEPDIR/benchmarks/figure6/combined.bc > $DEPDIR/benchmark_results/figure6_output.txt 2>&1
 
