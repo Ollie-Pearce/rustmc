@@ -196,11 +196,14 @@ All times were taken from the `time ./verify_crate` command and include building
 - spin: 12m4.211s FIX RESULTS
 - ringbuf: 0m15.755s FIX RESULTS
 - seize: 32m55.264s FIX RESULTS
-
+- thread_local: 0m18.491s
+- parking MULTIPLE MAINS. GET BACK OLD TEST
+- arcstr 1m46.961
+- arc-swap
 
 ## Verifying new crates (re-usability):
 
-In order to run RustMC on ... several steps must be taken #
+The following several steps may be taken in order to run RustMC on a crate outside our benchmark set 
 
 
 
