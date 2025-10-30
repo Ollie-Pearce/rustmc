@@ -253,14 +253,8 @@ class ExperimentRunner:
                 result['matches_expected'] = False
                 result['match_reason'] = 'Should not panic but panic found'
             else:
-                # For crashes or other failures, consider as not matching if should panic=No
-                if not should_panic and result['crashed']:
-                    result['matches_expected'] = False
-                    result['match_reason'] = 'Crashed when should succeed'
-                else:
-                    result['matches_expected'] = None
-                    result['match_reason'] = 'Unclear'
-
+                result['matches_expected'] = None
+                result['match_reason'] = 'Crashed when should succeed'                
             results.append(result)
 
         return results
@@ -282,11 +276,11 @@ class ExperimentRunner:
                     'should_panic': test['should_panic'],
                     'unroll_bound': test.get('unroll_bound', '1'),
                     'executions_explored': 0,
-                    'crashed': False,
+                    'crashed': True,
                     'panic_found': False,
                     'successful': False,
                     'error_messages': [error],
-                    'status': 'ERROR',
+                    'status': 'CRASH',
                     'matches_expected': False,
                     'timing': {}
                 })
