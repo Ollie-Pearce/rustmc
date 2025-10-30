@@ -51,9 +51,31 @@ The following tests have a very large state space and could not be verified in a
 
 
 
-The following tests call the external `rust_begin_unwind` function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or test....:
+#### Tests which panic
+
+The following tests call the external `rust_begin_unwind` function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or test....(ability to unwind after a panic?):
+
+##### arcstr
+
+```
+test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, test_substr_using_panic1, test_substr_using_panic2
+```
 
 
+
+##### spin
+
+#### `panic, mutex_arc_access_in_unwind, rw_access_in_unwind`
+
+
+
+##### parking_lot
+
+`test_mutex_arc_access_in_unwind_1_1_1, test_mutex_arc_access_in_unwind_1_1, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_wr, test_rw_arc_no_poison_rr, test_rw_arc_no_poison_rw, test_rw_arc_access_in_unwind, poison_bad, wait_for_force_to_finish`
+
+##### arc-swap
+
+`panic_with_hook`
 
 ## Verifying new crates:
 
