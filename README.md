@@ -1,146 +1,76 @@
-GenMC
-=====
-Generic Model Checking for C Programs
--------------------------------------
+# Experiment 1 (loom tests)
 
-GenMC is a stateless model checker for C programs that works on the
-level of LLVM Intermediate Representation.
+To replicate the results in Table 1, run the following command:
 
-This repository mirrors an internal repository and is only updated periodically.
-For changes between different versions please refer to the CHANGELOG.
+```
+./run_experiment1.py --csv test_inventory_artifact.csv --ported-tests loom-tests-ported/
+```
 
-Author: Michalis Kokologiannakis.
+This will run RustMC on each test in the inventory and store the results in `experiment_results.csv`. You can view the csv file in a human-readable way with
 
-* [Getting GenMC](#getting-genmc)
-* [Usage](#usage)
-* [Troubleshooting](#troubleshooting)
-* [License](#license)
-* [Contact](#contact)
+```
+mlr --icsv --opprint cat  experiment_results.csv 
+```
 
-<a name="getting-genmc">Getting GenMC</a>
------------------------------------------
+If you'd like to run an invidivual file for further investigation, run 
 
-### Using Docker
+```
+./verify_single.sh loom-tests-ported/arc_ported_genmc.rs 
+```
 
-To pull a container containing GenMC from [Docker Hub](https://hub.docker.com)
-please issue the following command:
-
-		docker pull genmc/genmc
-
-### Building from source
-
-#### Dependencies
-
-You will need a C++20-compliant compiler and an LLVM installation.
-The LLVM versions currently supported are:
-10.0.1, 11.0.0, 12.0.1, 13.0.0, 14.0.0, 15.0.0, 16.0.0 (deprecated:
-7.0.1, 8.0.1, 9.0.1).
-
-##### GNU/Linux
-
-In order to use the tool on a Debian-based installation, you need the
-following packages:
-
-		autoconf  automake  clang  llvm  llvm-dev  libffi-dev
-		zlib1g-dev libedit-dev
-
-##### Max OS X
-
-Using `brew`, the following packages are necessary:
-
-		autoconf automake llvm libffi
-
-#### Installing
-
-##### GNU/Linux
-
-For a default build issue:
-
-		autoreconf --install
-		./configure
-		make
-
-This will leave the `genmc` executable in the build directory.
-You can either run it from there (as in the examples below), or issue
-`make install`.
-
-Alternatively, the following following command will build the `genmc`
-executable in parallel and will also run a subset of all the tests
-that come with the system to see if the system was built correctly or
-not:
-
-		make -j check
-
-##### Mac OS X
-
-For a default build issue:
-
-		autoreconf --install
-		./configure AR=llvm-ar
-		make
-
-<a name="usage">Usage</a>
--------------------------
-
-* To see a list of available options run:
-
-		./genmc --help
-
-* To run a particular testcase run:
-
-		./genmc [options] <file>
-
-* For more detailed usage examples please refer to the [manual](doc/manual.pdf).
+You will find the results of the verification in `test_traces/` and `test_results/`.
 
 
-<a name="troubleshooting">Troubleshooting</a>
----------------------------------------------
 
-* Undefined references to symbols that involve types `std::__cxx11` during linking:
+---
 
-	This probably indicates that you are using an old version of LLVM with a new
-	version of libstdc++. Configuring with the following flags should fix the problem:
+# Experiment 2 (Crates)
 
-			CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" ./configure --with-llvm=LLVM_PATH
+To replicate the results in Table 2, run the following command:
 
-* Linking problems under Arch Linux:
+```
+./run_experiment2 
+```
 
-    Arch Linux does not provide the `libclang*.a` files required for linking
-	against `clang` libraries. In order to for linking to succeed, please
-	change the last line in `src/Makefile.am` to the following:
-
-			genmc_LDADD = libgenmc.a -lclang-cpp
+This will run RustMC on all the tests in the sample set and report the results in the `test_results` directory
 
 
-<a name="license">License</a>
------------------------------
+In order to verify tests from a single crate run
 
-GenMC (with the exception of some files, see [Exceptions](#exceptions))
-is distributed under the GPL, version 3 or (at your option) later.
-Please see the COPYING file for details on GPLv3.
+```
+./verify_crate CRATE
+```
 
-### <a name="exceptions">Exceptions</a>
-
-Part of the code in the files listed below are originating from
-the [LLVM Compiler Framework](https://llvm.org), version 3.5.
-These parts are licensed under the University of Illinois/NCSA
-Open Source License as well as under GPLv3. Please see the LLVMLICENSE
-file for details on the University of Illinois/NCSA Open Source License.
-
-		src/Interpreter.h
-		src/Interpreter.cpp
-		src/Execution.cpp
-		src/ExternalFunctions.cpp
-
-Additionally, the files within the `include` directory are licensed
-under their own licenses.
-
-Please see the respective header for more information on a specific
-file's license.
+Traces of test executions can be found in `test_traces`, by default we do not print the execution graph as this slows down verification significantly however a full trace of each execution can be printed by adding a `--print-exec-graphs` to the script used to verify a crate. Results are output to the `test_results` directory. 
 
 
-<a name="contact">Contact</a>
-------------------------
 
-For feedback, questions, and bug reports please send an e-mail to
-`michalis AT mpi-sws DOT org`.
+### Edge cases
+
+The following tests have a very large state space and could not be verified in an hour, we have commented them out however if you would like to reactivate them you can uncomment them in the following files:
+
+
+
+The following tests call the external `rust_begin_unwind` function in order to initiate a panic. We consider this a successful verification as they either have the `#[should_panic]` attribute or test....:
+
+
+
+## Verifying new crates:
+
+In order to run RustMC on ... several steps must be taken #
+
+
+
+1. Add the crate to `verify_test_benchmarks`
+2. Copy the `verify_tests_script` and add new IR files from the dependencies of the crate to verify
+3. If any stdlib functions are external you can clone the `Ollie-Pearce/rust` repo, manually add the `#[inline(always)]` attribute to them and run `./x build library` to build the standard library
+4. With a rust toolchain built with ` ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and ...
+
+
+
+
+
+
+---
+
+Due to the ... resources required to link, transform and verify large LLVM modules this experiment may require significant system resources. Our tests were run with ...
