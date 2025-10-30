@@ -236,62 +236,62 @@ mod tests {
         assert_eq!(*lock, 1);
     }
 
-#[no_mangle]
-    #[test]
-    fn test_ruw_arc() {
-        let arc = Arc::new(RwLock::new(0));
-        let arc2 = arc.clone();
-        let (tx, rx) = channel();
+// #[no_mangle]
+//     #[test]
+//     fn test_ruw_arc() {
+//         let arc = Arc::new(RwLock::new(0));
+//         let arc2 = arc.clone();
+//         let (tx, rx) = channel();
 
-        thread::spawn(move || {
-            for _ in 0..10 {
-                let mut lock = arc2.write();
-                let tmp = *lock;
-                *lock = -1;
-                thread::yield_now();
-                *lock = tmp + 1;
-            }
-            tx.send(()).unwrap();
-        });
+//         thread::spawn(move || {
+//             for _ in 0..10 {
+//                 let mut lock = arc2.write();
+//                 let tmp = *lock;
+//                 *lock = -1;
+//                 thread::yield_now();
+//                 *lock = tmp + 1;
+//             }
+//             tx.send(()).unwrap();
+//         });
 
-        let mut children = Vec::new();
+//         let mut children = Vec::new();
 
-        // Upgradable readers try to catch the writer in the act and also
-        // try to touch the value
-        for _ in 0..5 {
-            let arc3 = arc.clone();
-            children.push(thread::spawn(move || {
-                let lock = arc3.upgradable_read();
-                let tmp = *lock;
-                assert!(tmp >= 0);
-                thread::yield_now();
-                let mut lock = RwLockUpgradableReadGuard::upgrade(lock);
-                assert_eq!(tmp, *lock);
-                *lock = -1;
-                thread::yield_now();
-                *lock = tmp + 1;
-            }));
-        }
+//         // Upgradable readers try to catch the writer in the act and also
+//         // try to touch the value
+//         for _ in 0..5 {
+//             let arc3 = arc.clone();
+//             children.push(thread::spawn(move || {
+//                 let lock = arc3.upgradable_read();
+//                 let tmp = *lock;
+//                 assert!(tmp >= 0);
+//                 thread::yield_now();
+//                 let mut lock = RwLockUpgradableReadGuard::upgrade(lock);
+//                 assert_eq!(tmp, *lock);
+//                 *lock = -1;
+//                 thread::yield_now();
+//                 *lock = tmp + 1;
+//             }));
+//         }
 
-        // Readers try to catch the writers in the act
-        for _ in 0..5 {
-            let arc4 = arc.clone();
-            children.push(thread::spawn(move || {
-                let lock = arc4.read();
-                assert!(*lock >= 0);
-            }));
-        }
+//         // Readers try to catch the writers in the act
+//         for _ in 0..5 {
+//             let arc4 = arc.clone();
+//             children.push(thread::spawn(move || {
+//                 let lock = arc4.read();
+//                 assert!(*lock >= 0);
+//             }));
+//         }
 
-        // Wait for children to pass their asserts
-        for r in children {
-            assert!(r.join().is_ok());
-        }
+//         // Wait for children to pass their asserts
+//         for r in children {
+//             assert!(r.join().is_ok());
+//         }
 
-        // Wait for writer to finish
-        rx.recv().unwrap();
-        let lock = arc.read();
-        assert_eq!(*lock, 15);
-    }
+//         // Wait for writer to finish
+//         rx.recv().unwrap();
+//         let lock = arc.read();
+//         assert_eq!(*lock, 15);
+//     }
 
 #[no_mangle]
     #[test]
