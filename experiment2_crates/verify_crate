@@ -43,6 +43,9 @@ case "$crate" in
   parking_lot)
     ./verify_parking_lot_tests.sh "verify_test_benchmarks/parking_lot"
     ;;
+  scc|scalable-concurrent-containers)
+    ./verify_scc_tests.sh "verify_test_benchmarks/scalable-concurrent-containers"
+    ;;
   *)
     echo "unknown crate: $crate" >&2
     exit 1
