@@ -170,19 +170,17 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 3600s ./genmc --mixer \
-      --transform-output=myout.ll \
-      --disable-function-inliner \
-      --disable-assume-propagation \
-      --disable-load-annotation \
-      --disable-confirmation-annotation \
-      --disable-spin-assume \
-      --program-entry-function="$test_func" \
-      --disable-estimation \
-      --print-error-trace \
-      --disable-stop-on-system-error \
-      --unroll=2 \
-      combined.bc > "$out" 2>&1
+    timeout 3600s ../genmc --mixer \
+          --disable-assume-propagation \
+          --disable-load-annotation \
+          --disable-confirmation-annotation \
+          --disable-spin-assume \
+          --program-entry-function="$test_func" \
+          --disable-estimation \
+          --print-error-trace \
+          --disable-stop-on-system-error \
+          --unroll=2 \
+          combined.bc > "$out" 2>&1
 
     [ $? -eq 124 ] && echo "TIMEOUT" >> "$out"
   done < "$TEST_FN_DIR/${stem}.txt"
@@ -206,7 +204,6 @@ echo " "
 while read -r test_func; do
   echo "Verifying test function: $test_func"
   timeout 3600s ./genmc --mixer \
-          --transform-output=myout.ll \
           --disable-function-inliner \
           --disable-assume-propagation \
           --disable-load-annotation \
