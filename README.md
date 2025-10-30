@@ -1,3 +1,17 @@
+# Introduction
+
+Claims / badges we're aiming for.
+
+# Smoke tests
+
+small version of both experiments and what you should see 
+
+# Use cases
+
+## Figures from paper
+
+## Writing your own examples
+
 # Experiment 1 (loom tests)
 
 To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command:
