@@ -205,6 +205,7 @@ The following tests have a very large state space and could not be verified in a
 
 - parking_lot/src/mutex.rs | `lots_and_lots_1_1`
 - parking_lot/src/fair_mutex.rs | `lots_and_lots_1_1_1`
+- parking_lot/src/rwlock.rs | `test_ruw_arc`
 - spin-rs/src/mutex/ticket.rs | `lots_and_lots`
 - spin-rs/src/mutex/spin.rs | `lots_and_lots_2`
 
@@ -237,16 +238,18 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 ### Time taken to verify crates:
 All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification
 
-
-- spin: 12m4.211s FIX RESULTS
-- ringbuf: 0m15.755s FIX RESULTS
-- seize: 32m55.264s FIX RESULTS
+- atomic_float: 0m6.746s
+- spin: 12m4.211s
+- ringbuf: 0m15.755s
+- seize: 32m55.264s
 - thread_local: 0m18.491s
 - parking MULTIPLE MAINS. GET BACK OLD TEST
 - arcstr 1m46.961s
 - arc-swap 3m31.588s
-- State: DOES NOT WORK (because I renamed a test)
-- parking_lot
+- state: 0m39.276s
+- try_lock: 0m1.576s
+- parking_lot:
+- 
 
 ## Verifying new crates (re-usability):
 
