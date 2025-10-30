@@ -1,3 +1,21 @@
+# Introduction
+
+Claims / badges we're aiming for (and which section does what).
+
+# Smoke tests
+
+small version of both experiments and what you should see 
+
+- one use case
+- small Exp 1
+- one small crate from Exp 2
+
+# Use cases
+
+## Figures from paper
+
+## Writing your own examples (re-usability)
+
 # Experiment 1 (loom tests)
 
 To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command:
@@ -80,7 +98,7 @@ test_from_parts_unchecked_err, repeat_string_panics, test_substr_using_panic0, t
 
 `panic_with_hook`
 
-## Verifying new crates:
+## Verifying new crates (re-usability):
 
 In order to run RustMC on ... several steps must be taken #
 
@@ -92,7 +110,12 @@ In order to run RustMC on ... several steps must be taken #
 4. With a rust toolchain built with ` ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and ...
 
 
+# High-level description of source
 
+- Mixer/GenMC
+- Rust tool chain
+  
+  
 
 
 
