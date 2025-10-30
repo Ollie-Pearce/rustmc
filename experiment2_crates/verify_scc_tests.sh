@@ -175,7 +175,7 @@ while read -r test_file; do
   cat bitcode.txt
 
   llvm-link-18 --internalize \
-    --override="$DEPDIR/override/my_pthread.ll" \
+    --override=../override/my_pthread.ll \
     -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
@@ -186,7 +186,7 @@ while read -r test_file; do
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 3600s ./genmc --mixer \
+    timeout 3600s ../genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -216,7 +216,7 @@ cd $DEPDIR
 echo "Bitcode files:"
 cat bitcode.txt
 
-llvm-link-18 --internalize --override=$DEPDIR/override/my_pthread.ll -o combined_old.bc @bitcode.txt
+llvm-link-18 --internalize --override../override/my_pthread.ll -o combined_old.bc @bitcode.txt
 opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
 
 echo " "
@@ -225,7 +225,7 @@ echo " "
 
 while read -r test_func; do
   echo "Verifying test function: $test_func"
-  timeout 3600s ./genmc --mixer \
+  timeout 3600s ../genmc --mixer \
           --disable-assume-propagation \
           --disable-load-annotation \
           --disable-confirmation-annotation \
@@ -299,6 +299,3 @@ echo "memcpy errors: $memcpy_count / $file_count" >> ""$DEPDIR/test_results/${PR
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
 echo "segmentation fault errors: $segfault_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
-
-
-
