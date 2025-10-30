@@ -137,42 +137,42 @@ mod tests {
         drop(m.lock());
     }
 
-/*#[no_mangle]
-    #[test]
-    fn lots_and_lots_1_1() {
-        const J: u32 = 1000;
-        const K: u32 = 3;
+// #[no_mangle]
+//     #[test]
+//     fn lots_and_lots_1_1() {
+//         const J: u32 = 1000;
+//         const K: u32 = 3;
 
-        let m = Arc::new(Mutex::new(0));
+//         let m = Arc::new(Mutex::new(0));
 
-        fn inc(m: &Mutex<u32>) {
-            for _ in 0..J {
-                *m.lock() += 1;
-            }
-        }
+//         fn inc(m: &Mutex<u32>) {
+//             for _ in 0..J {
+//                 *m.lock() += 1;
+//             }
+//         }
 
-        let (tx, rx) = channel();
-        for _ in 0..K {
-            let tx2 = tx.clone();
-            let m2 = m.clone();
-            thread::spawn(move || {
-                inc(&m2);
-                tx2.send(()).unwrap();
-            });
-            let tx2 = tx.clone();
-            let m2 = m.clone();
-            thread::spawn(move || {
-                inc(&m2);
-                tx2.send(()).unwrap();
-            });
-        }
+//         let (tx, rx) = channel();
+//         for _ in 0..K {
+//             let tx2 = tx.clone();
+//             let m2 = m.clone();
+//             thread::spawn(move || {
+//                 inc(&m2);
+//                 tx2.send(()).unwrap();
+//             });
+//             let tx2 = tx.clone();
+//             let m2 = m.clone();
+//             thread::spawn(move || {
+//                 inc(&m2);
+//                 tx2.send(()).unwrap();
+//             });
+//         }
 
-        drop(tx);
-        for _ in 0..2 * K {
-            rx.recv().unwrap();
-        }
-        assert_eq!(*m.lock(), J * K * 2);
-    }*/
+//         drop(tx);
+//         for _ in 0..2 * K {
+//             rx.recv().unwrap();
+//         }
+//         assert_eq!(*m.lock(), J * K * 2);
+//     }
 
 #[no_mangle]
     #[test]
