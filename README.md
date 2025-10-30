@@ -26,7 +26,26 @@ Run `cd paper && ./run_figure1.sh`
 
 In `benchmark_results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected.
 
-TODO: Ollie show expected output
+```
+*** Compilation complete.
+*** Transformation complete.
+Final counter value: 10
+Final counter value: 10
+Error: Non-atomic race!
+Event (3, 1) conflicts with event (2, 2) in graph:
+<-1, 0> main:
+	(0, 1): MALLOC _1
+	(0, 2): Wna (, 0x0) main.rs:22
+	(0, 3): Wna (, 0x0) main.rs:22
+	(0, 4): Wna (, 0x0) main.rs:22
+	(0, 5): MALLOC _4
+...
+
+*** Verification unsuccessful.
+Number of complete executions explored: 0
+Number of blocked executions seen: 1
+Total wall-clock time: 2.86s
+```
 
 ### Run a sample of Experiment 1
 
