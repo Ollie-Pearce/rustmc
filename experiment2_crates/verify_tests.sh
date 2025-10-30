@@ -252,49 +252,49 @@ file_count=$(ls | wc -l)
 
 success_search_string="Verification complete. No errors were detected."
 success_count=$(grep -rl "$success_search_string" . | wc -l)
-echo "Verification success: $success_count / $file_count" > ../../test_results/${PROJECT_NAME}_summary.txt
+echo "Verification success: $success_count / $file_count" > "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 thread_panicked_string="Thread panicked"
 thread_panic_count=$(grep -rl "$thread_panicked_string" . | wc -l)
-echo "Panic called: $thread_panic_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "Panic called: $thread_panic_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
 uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
-echo "Uninitialised read errors: $uninitialised_read_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "Uninitialised read errors: $uninitialised_read_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 no_entry_string="ERROR: Could not find program's entry point function!"
 no_entry_count=$(grep -rl "$no_entry_string" . | wc -l)
-echo "No entry point errors: $no_entry_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "No entry point errors: $no_entry_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 external_function_string="ERROR: Tried to execute an unknown external function:"
 external_function_count=$(grep -rl "$external_function_string" . | wc -l)
-echo "External function errors: $external_function_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "External function errors: $external_function_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 visit_atomic_rmw_string="visitAtomicRMWInst"
 visit_atomic_rmw_count=$(grep -rl "$visit_atomic_rmw_string" . | wc -l)
-echo "AtomicRMW errors: $visit_atomic_rmw_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "AtomicRMW errors: $visit_atomic_rmw_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 external_address_string="LLVM ERROR: Could not resolve external global address:"
 external_address_count=$(grep -rl "$external_address_string" . | wc -l)
-echo "External address errors: $external_address_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "External address errors: $external_address_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 constant_unimplemented_string="Constant unimplemented for type"
 constant_unimplemented_count=$(grep -rl "$constant_unimplemented_string" . | wc -l)
-echo "constant unimplemented errors: $constant_unimplemented_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "constant unimplemented errors: $constant_unimplemented_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 external_var_arg_string="Calling external var arg function"
 external_var_arg_count=$(grep -rl "$external_var_arg_string" . | wc -l)
-echo "external var args errors: $external_var_arg_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "external var args errors: $external_var_arg_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 memset_promotion_string="ERROR: Invalid call to memset()!"
 memset_promotion_count=$(grep -rl "$memset_promotion_string" . | wc -l)
-echo "Memset promotion errors: $memset_promotion_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "Memset promotion errors: $memset_promotion_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 memcpy_count=$(
   grep -rlE "Invalid call to memcpy\(\)!|Assertion \`!NodePtr->isKnownSentinel\(\)' failed\." . | wc -l
 )
-echo "memcpy errors: $memcpy_count / $file_count" >> "../../test_results/${PROJECT_NAME}_summary.txt"
+echo "memcpy errors: $memcpy_count / $file_count" >> ""$DEPDIR/test_results/${PROJECT_NAME}_summary.txt""
 
 segfault_string="Segmentation fault"
 segfault_count=$(grep -rl "$segfault_string" . | wc -l)
-echo "segmentation fault errors: $segfault_count / $file_count" >> ../../test_results/${PROJECT_NAME}_summary.txt
+echo "segmentation fault errors: $segfault_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"

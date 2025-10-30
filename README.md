@@ -45,9 +45,22 @@ Panics found: 0
 
 Run `cd experiment2_crates/ && ./verify_crate boxcar`
 
-In `test_traces/boxcar` you should see the results of each test
+In `test_traces/boxcar` you should see the results of each test and in `test_results/boxcar` you should see the following:
 
-TODO: Ollie show expected output
+```
+Verification success: 11 / 11
+Panic called: 0 / 11
+Uninitialised read errors: 0 / 11
+No entry point errors: 0 / 11
+External function errors: 0 / 11
+AtomicRMW errors: 0 / 11
+External address errors: 0 / 11
+constant unimplemented errors: 0 / 11
+external var args errors: 0 / 11
+Memset promotion errors: 0 / 11
+memcpy errors: 0 / 11
+segmentation fault errors: 0 / 11
+```
 
 
 # Use cases
@@ -58,7 +71,7 @@ The bug reproductions described in various figures in the paper can be found in 
 
 ## Writing your own examples (re-usability)
 
-TODO: Ollie explain briefly how to make your own example (or modify existing one)
+I
 
 # Experiment 1 (loom tests)
 
@@ -182,7 +195,7 @@ All times were taken from the `time ./verify_crate` command and include building
 
 - spin: 12m4.211s FIX RESULTS
 - ringbuf: 0m15.755s FIX RESULTS
-- 
+- seize: 32m55.264s FIX RESULTS
 
 
 ## Verifying new crates (re-usability):
@@ -194,11 +207,9 @@ In order to run RustMC on ... several steps must be taken #
 1. Add the crate to `verify_test_benchmarks`
 2. Copy the `verify_tests_script` and add new IR files from the dependencies of the crate to verify
 3. If any stdlib functions are external you can clone the `Ollie-Pearce/rust` repo, manually add the `#[inline(always)]` attribute to them and run `./x build library` to build the standard library
-4. With a rust toolchain built with ` ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and ...
+4. With a rust toolchain built with `RUSTFLAGS="-C embed-bitcode" ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and compiling the identified rlibs and object files using the `..
 
-
-# Use cases from paper:
-
+TODO: Ollie complete
 
 
 # High-level description of source
