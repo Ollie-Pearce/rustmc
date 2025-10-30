@@ -120,7 +120,7 @@ fn main() -> i32 {
 
 # Experiment 1 (loom tests)
 
-To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command (takes ~15 minutes):
+To replicate the results in Table 1, navigate to `experiment1_loom/` and run the following command (takes ~15 minutes):
 
 ```
 ./run_experiment1.py
@@ -257,7 +257,9 @@ The following several steps may be taken in order to run RustMC on a crate outsi
 1. Add the crate to `verify_test_benchmarks`
 2. Copy the `verify_tests_script` and add new IR files from the dependencies of the crate to verify
 3. If any stdlib functions are external you can clone the `Ollie-Pearce/rust` repo, manually add the `#[inline(always)]` attribute to them and run `./x build library` to build the standard library
-4. With a rust toolchain built with `RUSTFLAGS="-C embed-bitcode" ./x build library` external symbols from the standard library can be identified by running the `find_symbol` script and compiling the identified rlibs and object files using the `..
+4. Sometimes crates will make use of external statics from the standard library. In order to define these statics, with a rust toolchain built with `RUSTFLAGS="-C embed-bitcode" ./x build library` move the scripts in the `extract_externals_from_stdlib_scripts` directory into the custom toolchain's `rust/build/x86_64-unknown-linux-gnu` directory and then:
+    - Run the `find_symbol` script with the external static you require as an argument
+    - Compile the identified rlibs into llvm-ir using the `extract_ir_from_rlib` script and add the external statics from the resulting module to `override/my_pthread.ll`. TODO BETTER PATH DESCRIPTION
 
 TODO: Ollie complete
 
