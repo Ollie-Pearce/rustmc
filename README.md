@@ -1,6 +1,6 @@
 # Experiment 1 (loom tests)
 
-To replicate the results in Table 1, run the following command:
+To replicate the results in Table 1, navigate to `experiment1_loom/`run the following command:
 
 ```
 ./run_experiment1.py --csv test_inventory_artifact.csv --ported-tests loom-tests-ported/
@@ -26,7 +26,7 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 # Experiment 2 (Crates)
 
-To replicate the results in Table 2, run the following command:
+To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
 
 ```
 ./run_experiment2 
