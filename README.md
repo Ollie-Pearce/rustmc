@@ -35,6 +35,8 @@ You will need Docker to run our artifact.
 Any hardware that can run an x86-64bit Docker container.  We tested
 the container in Linux running on an Intel architecture and an M4 (ARM) mac.
 
+Download the [artifact from Zenodo](https://zenodo.org/).
+
 To load the container, run
 
 ```
@@ -171,11 +173,11 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 ## 2. Experiment 2 (Crates)
 
-Due to the significant demands imposed by linking, transforming and verifying large LLVM modules parts of this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine running with the following specifications: 
+Due to the significant demands imposed by linking, transforming and verifying large LLVM modules parts of this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine with the following specifications: 
 
 - CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
 - Cores (Physical) 48 (24)
-- Memory: 128GB`
+- Memory: 128GB
 - OS: Ubuntu 22.04.5 LTS 
 
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
