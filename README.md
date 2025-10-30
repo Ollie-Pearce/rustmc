@@ -12,7 +12,7 @@ This will run RustMC on each test in the inventory and store the results in `exp
 mlr --icsv --opprint cat  experiment_results.csv 
 ```
 
-If you'd like to run an invidivual file for further investigation, run 
+If you'd like to run an individual file for further investigation, run 
 
 ```
 ./verify_single.sh loom-tests-ported/arc_ported_genmc.rs 
@@ -43,7 +43,7 @@ In order to verify tests from a single crate run
 
 Traces of test executions can be found in `test_traces`, by default we do not print the execution graph as this slows down verification significantly however a full trace of each execution can be printed by adding a `--print-exec-graphs` to the script used to verify a crate. Results are output to the `test_results` directory. 
 
-For a quick litmus test we recommend running 
+For a quick litmus test we recommend running the archery or thread_local crates with the above `verify_crate` script
 
 ### Edge cases
 
