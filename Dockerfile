@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang-18 llvm-18 llvm-18-dev \
     llvm-18-tools ripgrep \
     bash gawk vim openssh-client \
+    time miller \
  && rm -rf /var/lib/apt/lists/*
 
 
