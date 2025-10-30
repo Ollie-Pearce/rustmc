@@ -43,13 +43,16 @@ In order to verify tests from a single crate run
 
 Traces of test executions can be found in `test_traces`, by default we do not print the execution graph as this slows down verification significantly however a full trace of each execution can be printed by adding a `--print-exec-graphs` to the script used to verify a crate. Results are output to the `test_results` directory. 
 
-
+For a quick litmus test we recommend running 
 
 ### Edge cases
 
 The following tests have a very large state space and could not be verified in an hour, we have commented them out however if you would like to reactivate them you can uncomment them in the following files:
 
-
+- parking_lot/src/mutex.rs | `lots_and_lots_1_1`
+- parking_lot/src/fair_mutex.rs | `lots_and_lots_1_1_1`
+- spin-rs/src/mutex/ticket.rs | `lots_and_lots`
+- spin-rs/src/mutex/spin.rs | `lots_and_lots_2`
 
 #### Tests which panic
 

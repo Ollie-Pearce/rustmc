@@ -596,43 +596,43 @@ mod tests {
         drop(m.lock());
     }
 
-#[no_mangle]
-    #[test]
-    fn lots_and_lots_1() {
-        static M: FairMutex<()> = FairMutex::<_>::new(());
-        static mut CNT: u32 = 0;
-        const J: u32 = 1000;
-        const K: u32 = 3;
+// #[no_mangle]
+//     #[test]
+//     fn lots_and_lots_1() {
+//         static M: FairMutex<()> = FairMutex::<_>::new(());
+//         static mut CNT: u32 = 0;
+//         const J: u32 = 1000;
+//         const K: u32 = 3;
 
-        fn inc() {
-            for _ in 0..J {
-                unsafe {
-                    let _g = M.lock();
-                    CNT += 1;
-                }
-            }
-        }
+//         fn inc() {
+//             for _ in 0..J {
+//                 unsafe {
+//                     let _g = M.lock();
+//                     CNT += 1;
+//                 }
+//             }
+//         }
 
-        let (tx, rx) = channel();
-        for _ in 0..K {
-            let tx2 = tx.clone();
-            thread::spawn(move || {
-                inc();
-                tx2.send(()).unwrap();
-            });
-            let tx2 = tx.clone();
-            thread::spawn(move || {
-                inc();
-                tx2.send(()).unwrap();
-            });
-        }
+//         let (tx, rx) = channel();
+//         for _ in 0..K {
+//             let tx2 = tx.clone();
+//             thread::spawn(move || {
+//                 inc();
+//                 tx2.send(()).unwrap();
+//             });
+//             let tx2 = tx.clone();
+//             thread::spawn(move || {
+//                 inc();
+//                 tx2.send(()).unwrap();
+//             });
+//         }
 
-        drop(tx);
-        for _ in 0..2 * K {
-            rx.recv().unwrap();
-        }
-        assert_eq!(unsafe { CNT }, J * K * 2);
-    }
+//         drop(tx);
+//         for _ in 0..2 * K {
+//             rx.recv().unwrap();
+//         }
+//         assert_eq!(unsafe { CNT }, J * K * 2);
+//     }
 
 #[no_mangle]
     #[test]
