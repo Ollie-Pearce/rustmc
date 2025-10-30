@@ -37,9 +37,6 @@ SUMMARY
 Total tests: 7
 Matches expected: 5
 Panics found: 0
-Crashes: 1
-Successes: 6
-Errors: 0
 ```
 
 ### Run a sample of Experiment 2
@@ -77,9 +74,6 @@ SUMMARY
 Total tests: 72
 Matches expected: 49
 Panics found: 17
-Crashes: 14
-Successes: 39
-Errors: 0
 ```
 
 

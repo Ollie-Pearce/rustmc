@@ -400,9 +400,6 @@ def main():
     print(f"Total tests: {len(results)}")
     print(f"Matches expected: {sum(1 for r in results if r.get('matches_expected'))}")
     print(f"Panics found: {sum(1 for r in results if r['panic_found'])}")
-    print(f"Crashes: {sum(1 for r in results if r['crashed'])}")
-    print(f"Successes: {sum(1 for r in results if r['status'] == 'SUCCESS')}")
-    print(f"Errors: {sum(1 for r in results if r['status'] == 'ERROR')}")
 
 
 if __name__ == '__main__':
