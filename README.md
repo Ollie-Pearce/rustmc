@@ -39,6 +39,15 @@ If you'd like to run an individual file for further investigation, run
 You will find the results of the verification in `test_traces/` and `test_results/`.
 
 
+NB: compared to submitted paper, we have added a missing test which is
+analysed successfully (test `mutex_into_inner` in file
+`mutex`). Following an improvement of our tool chain, four tests that
+use to _wrongly_ panic, now crash due to an unknown external function
+(tests `initial_thread`, `threads_have_unique_ids`, `thread_names`,
+`park_unpark` in file ` thread_api`). While this changes some numbers,
+our overall conclusions remain the same.  The improvement involve
+using statics from the stdlib rather than having them
+zero-initialized.
 
 ---
 
