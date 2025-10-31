@@ -32,10 +32,10 @@ docker image and public repository. It includes
 
 You will need Docker to run our artifact.
 
-Any hardware that can run an x86-64bit Docker container.  We tested
-the container in Linux running on an Intel architecture and an M4 (ARM) mac.
 
-Download the [artifact from Zenodo](https://doi.org/10.5281/zenodo.17483176).
+
+Download the [artifact from
+Zenodo](https://doi.org/10.5281/zenodo.17483176).
 
 To load the container, run
 
@@ -49,6 +49,20 @@ To run the container, execute:
 ```
 docker run  --platform linux/amd64 -it rustmc:latest
 ```
+
+
+Any hardware that can run an x86-64bit Docker container. We tested the
+container in Linux running on an Intel architecture and in MacOS on an
+ARM architecture. All experiments (except crate `scc`, see below) were
+tested on the following machine:
+
+```
+OS: Mac OS Sequoia (15.6.1)
+Chip: Apple M4 Max
+Total Number of Cores: 16 (12 performance and 4 efficiency)
+Memory: 64 GB
+```
+
 
 ---
 
@@ -176,10 +190,20 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 Due to the significant demands imposed by linking, transforming and verifying large LLVM modules parts of this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine with the following specifications: 
 
+<<<<<<< HEAD
 - CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
 - Cores (Physical) 48 (24)
 - Memory: 128GB
 - OS: Ubuntu 22.04.5 LTS 
+=======
+```
+CPU: Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
+Cores (Physical) 48 (24)
+Memory: 128GB
+OS: Ubuntu 22.04.5 LTS 
+```
+However, all crates except `scc` verified successfully in ~3 hours on an M4 Macbook with 64GB.
+>>>>>>> public/main
 
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
 
@@ -350,4 +374,12 @@ fn main() -> i32 {
   bitcode files produced by rust's `--emit=llvm-bc` flag and provide
   this as input using the `--program-entry-function=main` flag. It
   should be simple enough to adapt one of the existing scripts for
+<<<<<<< HEAD
   running one of our use cases in order to achieve this.
+=======
+  running one of our use cases in order to achieve this.
+
+
+  
+
+>>>>>>> public/main

@@ -287,7 +287,6 @@ cd $DEPDIR
 
 
 
-
 cd test_traces/${PROJECT_NAME}/
 
 file_count=$(ls | wc -l)
