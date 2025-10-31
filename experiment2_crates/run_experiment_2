@@ -37,4 +37,7 @@ done
 
 ./verify_parking_tests.sh "verify_test_benchmarks/parking"
 
-./verify_scc_tests.sh "verify_test_benchmarks/scc"
+# Conditionally run scc
+if [ "$mode" != "--no_scc" ]; then
+    ./verify_scc_tests.sh "verify_test_benchmarks/scc"
+fi
