@@ -166,7 +166,7 @@ mkdir -p "test_results/"
 
 find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "examples-*.bc" > "$DEPDIR/bitcode.txt"
 
-  llvm-link-18 --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+  llvm-link-18 --override=../override/my_pthread_scc.ll -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
@@ -203,7 +203,7 @@ echo " "
 
 find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "scc-c1a5d174f5dd0307.bc" > "$DEPDIR/bitcode.txt"
 
-  llvm-link-18 --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+  llvm-link-18 --override=../override/my_pthread_scc.ll -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
@@ -247,7 +247,7 @@ while read -r test_file; do
   find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "scc-c1a5d174f5dd0307.bc" > "$DEPDIR/bitcode.txt"
 
   llvm-link-18 --internalize \
-    --override=../override/my_pthread.ll \
+    --override=../override/my_pthread_scc.ll \
     -o combined_old.bc @bitcode.txt
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \

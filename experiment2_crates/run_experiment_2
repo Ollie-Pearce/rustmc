@@ -19,9 +19,6 @@ if [ "$mode" = "--run_small" ]; then
 fi
 
 
-
-crates=("arc-swap" "archery" "arcstr" "atomic_float" "boxcar" "parking" "parking_lot" "ringbuf" "scc" "seize" "spin" "state" "thread_local" "try-lock")
-
 set_1=("thread_local" "state" "boxcar" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "atomic_float")
 
 for crate in "${set_1[@]}"; do
