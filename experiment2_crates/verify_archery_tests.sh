@@ -336,7 +336,22 @@ echo "Verification success: $success_count / $file_count" > "$DEPDIR/test_result
 
 thread_panicked_string="Thread panicked"
 thread_panic_count=$(grep -rl "$thread_panicked_string" . | wc -l)
-echo "Panic called: $thread_panic_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
+
+
+panic_mangled_regex='_ZN4core\(6option13expect_failed\|9panicking18panic_bounds_check\)\|_ZN3std9panicking20rust_panic_with_hook'
+panic_via_external_count=$(
+  grep -r "$external_function_string" . \
+  | grep "$panic_mangled_regex" \
+  | wc -l
+)
+
+total_panic_count=$(
+  printf '%s\n%s\n' "$thread_panic_count" "$panic_via_external_count" \
+  | awk '{s+=$1} END{print s+0}'
+)
+
+echo "Panic called: $total_panic_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
+
 
 uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
 uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
@@ -347,7 +362,13 @@ no_entry_count=$(grep -rl "$no_entry_string" . | wc -l)
 echo "No entry point errors: $no_entry_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 external_function_string="ERROR: Tried to execute an unknown external function:"
-external_function_count=$(grep -rl "$external_function_string" . | wc -l)
+
+external_function_count=$(
+  grep -r "$external_function_string" . \
+  | grep -v "$panic_mangled_regex" \
+  | wc -l
+)
+
 echo "External function errors: $external_function_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 visit_atomic_rmw_string="visitAtomicRMWInst"

@@ -15,8 +15,8 @@ while [ $# -gt 1 ]; do
 done
 
 if [ "$#" -lt 1 ]; then
-	echo "Target Cargo Project not supplied. Exiting"
-	exit 1
+echo "Target Cargo Project not supplied. Exiting"
+exit 1
 fi
 
 TARGET_RUST_PROJECT=$1
@@ -32,7 +32,7 @@ while true; do
 
     if [ "$output" = "No duplicates found or no changes required." ]; then
         echo "Output unchanged"
-        
+       
         break
     fi
 
@@ -92,11 +92,23 @@ while read -r file; do
   ' "$file" > "$TEST_FN_DIR/${base}.txt"
 done < "$INTEGRATION_TEST_FILES"
 
-echo "Collecting unit tests..."
 UNIT_TEST_FILE="$DEPDIR/unit_test_functions.txt"
-> "$UNIT_TEST_FILE"
+EXAMPLES_TEST_FILE="$DEPDIR/examples_tests.txt"
 
-find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
+: > "$UNIT_TEST_FILE"
+: > "$EXAMPLES_TEST_FILE"
+
+find . -path "./tests" -prune -o -name "*.rs" -print |
+while IFS= read -r file; do
+  case $file in
+    */examples/*)
+      out_file=$EXAMPLES_TEST_FILE
+      ;;
+    *)
+      out_file=$UNIT_TEST_FILE
+      ;;
+  esac
+
   awk '
     BEGIN { in_test = 0 }
     /^[[:space:]]*#\[test\]/ { in_test = 1; next }
@@ -106,12 +118,17 @@ find . -path "./tests" -prune -o -name "*.rs" -print | while read -r file; do
       }
       in_test = 0
     }
-  ' "$file"
-done >> "$UNIT_TEST_FILE"
+  ' "$file" >> "$out_file"
+done
 
 echo "Unit test function names written to: $UNIT_TEST_FILE"
+echo "Example test function names written to: $EXAMPLES_TEST_FILE"
+
+
+
 cargo clean
 
+rm -rf target-ir/
 # Create temp file for output
 cargo_output_file=$(mktemp)
 
@@ -144,6 +161,80 @@ cd $DEPDIR
 
 rm -rf "test_traces/${PROJECT_NAME}"
 mkdir -p "test_traces/${PROJECT_NAME}"
+mkdir -p "test_results/"
+
+
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "examples-*.bc" > "$DEPDIR/bitcode.txt"
+
+  llvm-link-18 --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.bc -o combined.bc
+
+echo " "
+echo " ================= Verifying Examples ================= "
+echo " "
+
+
+while read -r test_func; do
+  echo "Verifying test function: $test_func"
+  timeout 1000s ../genmc --mixer \
+          --disable-assume-propagation \
+          --disable-load-annotation \
+          --disable-confirmation-annotation \
+          --disable-spin-assume \
+          --program-entry-function="$test_func" \
+          --disable-estimation \
+          --print-error-trace \
+          --disable-stop-on-system-error \
+          --unroll=2 \
+          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+
+  if [ $? -eq 124 ]; then
+      echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
+  fi
+done < "$EXAMPLES_TEST_FILE"
+
+
+echo " "
+echo " ================= Finished Verifying Examples ================= "
+echo " "
+
+
+find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "scc-c1a5d174f5dd0307.bc" > "$DEPDIR/bitcode.txt"
+
+  llvm-link-18 --override=../override/my_pthread.ll -o combined_old.bc @bitcode.txt
+
+  opt-18 -mtriple=x86_64-unknown-linux-gnu \
+    -expand-reductions combined_old.bc -o combined.bc
+
+echo " "
+echo " ================= Verifying Unit Tests ================= "
+echo " "
+
+while read -r test_func; do
+  echo "Verifying test function: $test_func"
+  timeout 1000s ../genmc --mixer \
+          --disable-assume-propagation \
+          --disable-load-annotation \
+          --disable-confirmation-annotation \
+          --disable-spin-assume \
+          --program-entry-function="$test_func" \
+          --disable-estimation \
+          --print-error-trace \
+          --disable-stop-on-system-error \
+          --unroll=2 \
+          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
+
+  if [ $? -eq 124 ]; then
+      echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
+  fi
+done < "$UNIT_TEST_FILE"
+
+echo " "
+echo " ================= Finished Verifying Unit Tests ================= "
+echo " "
+
 
 echo " "
 echo " ================= Verifying Integration Tests ================= "
@@ -153,26 +244,7 @@ while read -r test_file; do
 
   echo "stem is: $stem"
 
-  #find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-  #  \( -name "${stem}-*.bc" -o -name "lib-*.bc" \) \
-  #  > "$DEPDIR/bitcode.txt"
-
-  #if [ "$stem" != "$PROJECT_NAME" ]; then
-  #  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f \
-  #    -name "${PROJECT_NAME}*.ll" \
-  #  | xargs -r grep -L '@main' >> "$DEPDIR/bitcode.txt"
-  #fi
-
-  # Above find sometimes links the same file multiple times, so make unique I think it's if the stem has the same name as the library
-
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "scc-*.bc" > "$DEPDIR/bitcode.txt"
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "fastrand-*.bc" >> "$DEPDIR/bitcode.txt" #needed for concurrent-queue
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "sdd-*.bc" >> "$DEPDIR/bitcode.txt"
-  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "proptest-*.bc" >> "$DEPDIR/bitcode.txt"
-
-
-  echo "Bitcode files:"
-  cat bitcode.txt
+  find "$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "scc-c1a5d174f5dd0307.bc" > "$DEPDIR/bitcode.txt"
 
   llvm-link-18 --internalize \
     --override=../override/my_pthread.ll \
@@ -180,13 +252,13 @@ while read -r test_file; do
 
   opt-18 -mtriple=x86_64-unknown-linux-gnu \
     -expand-reductions combined_old.bc -o combined.bc
-    
+   
   while read -r test_func; do
     echo "Verifying: $stem :: $test_func"
 
     out="test_traces/${PROJECT_NAME}/${stem}_${test_func}_verification.txt"
 
-    timeout 3600s ../genmc --mixer \
+    timeout 1000s ../genmc --mixer \
       --disable-assume-propagation \
       --disable-load-annotation \
       --disable-confirmation-annotation \
@@ -213,38 +285,7 @@ find "$(pwd)/target-ir/debug/deps" -type f -name "diff-*.bc" >> "$DEPDIR/bitcode
 find "$(pwd)/target-ir/debug/deps" -type f -name "yansi-*.bc" >> "$DEPDIR/bitcode.txt"
 cd $DEPDIR
 
-echo "Bitcode files:"
-cat bitcode.txt
 
-llvm-link-18 --internalize --override../override/my_pthread.ll -o combined_old.bc @bitcode.txt
-opt-18 -mtriple=x86_64-unknown-linux-gnu -expand-reductions combined_old.bc -o combined.bc
-
-echo " "
-echo " ================= Verifying Unit Tests ================= "
-echo " "
-
-while read -r test_func; do
-  echo "Verifying test function: $test_func"
-  timeout 3600s ../genmc --mixer \
-          --disable-assume-propagation \
-          --disable-load-annotation \
-          --disable-confirmation-annotation \
-          --disable-spin-assume \
-          --program-entry-function="$test_func" \
-          --disable-estimation \
-          --print-error-trace \
-          --disable-stop-on-system-error \
-          --unroll=2 \
-          combined.bc > "test_traces/${PROJECT_NAME}/${test_func}_verification.txt" 2>&1
-
-  if [ $? -eq 124 ]; then
-      echo "TIMEOUT" >> "test_traces/${PROJECT_NAME}/${test_func}_verification.txt"
-  fi
-done < "$UNIT_TEST_FILE"
-
-echo " "
-echo " ================= Finished Verifying Unit Tests ================= "
-echo " "
 
 
 cd test_traces/${PROJECT_NAME}/
@@ -257,7 +298,22 @@ echo "Verification success: $success_count / $file_count" > "$DEPDIR/test_result
 
 thread_panicked_string="Thread panicked"
 thread_panic_count=$(grep -rl "$thread_panicked_string" . | wc -l)
-echo "Panic called: $thread_panic_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
+
+
+panic_mangled_regex='_ZN4core\(6option13expect_failed\|9panicking18panic_bounds_check\)\|_ZN3std9panicking20rust_panic_with_hook'
+panic_via_external_count=$(
+  grep -r "$external_function_string" . \
+  | grep "$panic_mangled_regex" \
+  | wc -l
+)
+
+total_panic_count=$(
+  printf '%s\n%s\n' "$thread_panic_count" "$panic_via_external_count" \
+  | awk '{s+=$1} END{print s+0}'
+)
+
+echo "Panic called: $total_panic_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
+
 
 uninitialised_read_string="Error: Attempt to read from uninitialized memory!"
 uninitialised_read_count=$(grep -rl "$uninitialised_read_string" . | wc -l)
@@ -268,7 +324,13 @@ no_entry_count=$(grep -rl "$no_entry_string" . | wc -l)
 echo "No entry point errors: $no_entry_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 external_function_string="ERROR: Tried to execute an unknown external function:"
-external_function_count=$(grep -rl "$external_function_string" . | wc -l)
+
+external_function_count=$(
+  grep -r "$external_function_string" . \
+  | grep -v "$panic_mangled_regex" \
+  | wc -l
+)
+
 echo "External function errors: $external_function_count / $file_count" >> "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
 
 visit_atomic_rmw_string="visitAtomicRMWInst"
