@@ -277,7 +277,7 @@ All times were taken from the `time ./verify_crate` command and include building
 - archery: 6m30.792s
 - scalable-concurrent-containers: 15h45m24.452s
 
-All tests have a one hour timeout apart from scalable-concurrent-containers which was given a 1000 second timeout as tests which took longer than this failed and the large size of this crate's bitcode files made verifying all tests with an hour time out impractical. 
+All tests have a one hour timeout apart from scalable-concurrent-containers which was given a 1000 second timeout as tests which took longer than this failed and the large size of this crate's bitcode files made verifying all tests with an hour timeout impractical. 
 
 **NB:** Following the previously mentioned improvements to our toolchain
 and a change to the verification driver script for the `archery` crate
