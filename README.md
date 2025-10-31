@@ -40,7 +40,8 @@ Download the [artifact from Zenodo](https://zenodo.org/).
 To load the container, run
 
 ```
-docker load < artifact.tar.gz
+tar xzf artifact.tar.gz
+docker load < rustmc-latest-docker
 ```
 
 To run the container, execute:
