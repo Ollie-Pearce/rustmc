@@ -35,7 +35,7 @@ You will need Docker to run our artifact.
 Any hardware that can run an x86-64bit Docker container.  We tested
 the container in Linux running on an Intel architecture and an M4 (ARM) mac.
 
-Download the [artifact from Zenodo](https://zenodo.org/).
+Download the [artifact from Zenodo](https://doi.org/10.5281/zenodo.17483176).
 
 To load the container, run
 
