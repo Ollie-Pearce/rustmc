@@ -190,12 +190,6 @@ You will find the results of the verification in `test_traces/` and `test_result
 
 Due to the significant demands imposed by linking, transforming and verifying large LLVM modules parts of this experiment may require significant system resources. All our tests were run inside the provided Docker container on a machine with the following specifications: 
 
-<<<<<<< HEAD
-- CPU = Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
-- Cores (Physical) 48 (24)
-- Memory: 128GB
-- OS: Ubuntu 22.04.5 LTS 
-=======
 ```
 CPU: Intel(R) Xeon(R) Silver 4410Y @ 2.0GHz (Sapphire Rapids)
 Cores (Physical) 48 (24)
@@ -203,7 +197,6 @@ Memory: 128GB
 OS: Ubuntu 22.04.5 LTS 
 ```
 However, all crates except `scc` verified successfully in ~3 hours on an M4 Macbook with 64GB.
->>>>>>> public/main
 
 To replicate the results in Table 2, navigate to `experiment2_crates/` and run the following command:
 
@@ -213,7 +206,7 @@ To replicate the results in Table 2, navigate to `experiment2_crates/` and run t
 
 This will run RustMC on all the tests in the sample set and report the results in the `test_results` directory
 
-Some of the crates we use for testing contain many dependencies which makes linking transforming and interpreting the necessary LLVM bitcode demanding, to run a smaller set of benchmarks use the `--run_small` flag, this will only run tests which took less than half an hour to verify in our benchmarks which can be found in the "Time to verify" section.
+Some of the crates we use for testing contain many dependencies which makes linking transforming and interpreting the necessary LLVM bitcode demanding, to run a smaller set of benchmarks use the `--run_small` flag, this will only run tests which took less than half an hour to verify in our benchmarks which can be found in the "Time to verify" section. The scalable-concurrent-containers crate takes a particularly long time to verify due to the size of the llvm-bitcode files it emits. To skip this crate and run all other tests pass the `--no_scc` flag.
 
 
 
@@ -268,7 +261,7 @@ panic_with_hook
 ```
 
 ### Time to verify:
-All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification
+All times were taken from the `time ./verify_crate` command and include building, linking, transformation and verification. All crates were given a timeout of one hour per test other than 
 
 - atomic_float: 0m6.746s
 - spin: 12m4.211s
@@ -282,14 +275,15 @@ All times were taken from the `time ./verify_crate` command and include building
 - try_lock: 0m1.576s
 - parking_lot: 1h24m16.143s
 - archery: 6m30.792s
+- scalable-concurrent-containers: 15h45m24.452s
 
-
+All tests have a one hour timeout apart from scalable-concurrent-containers which was given a 1000 second timeout as tests which took longer than this failed and the large size of this crate's bitcode files made verifying all tests with an hour time out impractical. 
 
 **NB:** Following the previously mentioned improvements to our toolchain
 and a change to the verification driver script for the `archery` crate
 we now support an additional archery test and 10 addition spin
 tests. Unfortunately this change disabled support for `try-lock`'s
-`fmt_debug()` test.
+test case and 3 scalable-concurrent-containers test cases.
 
 
 ### Verifying new crates (reusability):
@@ -374,12 +368,4 @@ fn main() -> i32 {
   bitcode files produced by rust's `--emit=llvm-bc` flag and provide
   this as input using the `--program-entry-function=main` flag. It
   should be simple enough to adapt one of the existing scripts for
-<<<<<<< HEAD
   running one of our use cases in order to achieve this.
-=======
-  running one of our use cases in order to achieve this.
-
-
-  
-
->>>>>>> public/main
