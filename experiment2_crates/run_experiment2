@@ -4,22 +4,22 @@ set -euo pipefail
 mode="${1:-all}"
 
 if [ "$mode" = "--run_small" ]; then
-    ./verify_tests.sh "verify_test_benchmarks/thread_local"
+    ./verify_tests.sh "verify_test_benchmarks/thread_local-rs"
     ./verify_tests.sh "verify_test_benchmarks/boxcar"
     ./verify_tests.sh "verify_test_benchmarks/ringbuf/blocking"
     ./verify_tests.sh "verify_test_benchmarks/arc-swap"
     ./verify_tests.sh "verify_test_benchmarks/state"
     ./verify_tests.sh "verify_test_benchmarks/atomic_float"
-    ./verify_tests.sh "verify_test_benchmarks/try_lock"
+    ./verify_tests.sh "verify_test_benchmarks/try-lock"
     ./verify_tests.sh "verify_test_benchmarks/seize"
     ./verify_archery_tests.sh "verify_test_benchmarks/archery"
     ./verify_parking_tests.sh "verify_test_benchmarks/parking"
-    ./verify_spin_tests.sh "verify_test_benchmarks/spin"
+    ./verify_spin_tests.sh "verify_test_benchmarks/spin-rs"
     exit 0
 fi
 
 
-set_1=("thread_local" "state" "boxcar" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "atomic_float")
+set_1=("thread_local-rs" "state" "boxcar" "arc-swap" "arcstr" "ringbuf/blocking" "try-lock" "seize" "atomic_float")
 
 for crate in "${set_1[@]}"; do
   echo "Verifying all tests for crate: $crate"
@@ -28,7 +28,7 @@ done
 
 ./verify_archery_tests.sh "verify_test_benchmarks/archery"
 
-./verify_spin_tests.sh "verify_test_benchmarks/spin"
+./verify_spin_tests.sh "verify_test_benchmarks/spin-rs"
 
 ./verify_parking_lot_tests.sh "verify_test_benchmarks/parking_lot"
 
