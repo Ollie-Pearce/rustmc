@@ -1,0 +1,18 @@
+Verification Summary for condvar_ported_simplified
+Generated on: Thu Feb 26 10:00:40 AM GMT 2026
+Total functions: 2
+========================================
+
+Function: notify_one
+  Status: FAILED ✗
+
+Function: notify_all
+  Status: FAILED ✗
+
+
+========================================
+FINAL RESULTS:
+  Total:   2
+  Success: 0
+  Failed:  2
+========================================

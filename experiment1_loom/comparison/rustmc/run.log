@@ -1,0 +1,15 @@
+Found #[no_mangle] functions:
+basic_usage
+sync_in_drop
+detect_mem_leak
+try_unwrap_succeeds
+try_unwrap_fails
+try_unwrap_multithreaded
+
+Total functions to verify: 6
+
+    Creating binary (application) package
+note: see more `Cargo.toml` keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+Compiling loom-tests-ported/arc_ported_genmc.rs to LLVM bitcode...
+error: custom toolchain 'RustMC2' specified in override file '/tmp/tmp.ipmOgIMoPz/rust-toolchain' is not installed
+ERROR: Rust compilation failed

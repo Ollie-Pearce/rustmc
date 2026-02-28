@@ -1,0 +1,7 @@
+*.dwo
+*.o
+.deps
+librcmc.a
+
+Makefile
+Makefile.in

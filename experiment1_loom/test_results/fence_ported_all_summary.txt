@@ -1,0 +1,37 @@
+Verification Summary for fence_ported
+Generated on: Thu Feb 26 10:00:50 AM GMT 2026
+Total functions: 7
+========================================
+
+Function: fence_sw_base
+  Status: SUCCESS ✓
+
+Function: fence_sw_collapsed_store
+  Status: SUCCESS ✓
+
+Function: fence_sw_collapsed_load
+  Status: SUCCESS ✓
+
+Function: sb_fences
+  Status: FAILED ✗
+  Error: Safety violation
+
+Function: fence_hazard_pointer
+  Status: FAILED ✗
+  Error: Safety violation
+
+Function: rwc_syncs
+  Status: FAILED ✗
+  Error: Safety violation
+
+Function: w_rwc
+  Status: FAILED ✗
+  Error: Safety violation
+
+
+========================================
+FINAL RESULTS:
+  Total:   7
+  Success: 3
+  Failed:  4
+========================================

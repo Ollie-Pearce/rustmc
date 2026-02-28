@@ -1,0 +1,42 @@
+Verification Summary for rwlock_ported
+Generated on: Thu Feb 26 10:01:50 AM GMT 2026
+Total functions: 10
+========================================
+
+Function: rwlock_read_one
+  Status: SUCCESS ✓
+
+Function: rwlock_read_two_write_one
+  Status: SUCCESS ✓
+
+Function: rwlock_write_three
+  Status: SUCCESS ✓
+
+Function: rwlock_write_then_try_write
+  Status: SUCCESS ✓
+
+Function: rwlock_write_then_try_read
+  Status: SUCCESS ✓
+
+Function: rwlock_read_then_try_write
+  Status: SUCCESS ✓
+
+Function: rwlock_try_read
+  Status: SUCCESS ✓
+
+Function: rwlock_write
+  Status: SUCCESS ✓
+
+Function: rwlock_try_write
+  Status: SUCCESS ✓
+
+Function: rwlock_into_inner
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   10
+  Success: 10
+  Failed:  0
+========================================

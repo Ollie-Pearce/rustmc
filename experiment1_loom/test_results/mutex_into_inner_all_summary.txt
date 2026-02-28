@@ -1,0 +1,15 @@
+Verification Summary for mutex_into_inner
+Generated on: Mon Feb  9 10:01:26 AM GMT 2026
+Total functions: 1
+========================================
+
+Function: mutex_into_inner
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   1
+  Success: 1
+  Failed:  0
+========================================

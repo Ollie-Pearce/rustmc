@@ -1,0 +1,11 @@
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+WARNING: Cannot promote non-constant-length mem intrinsic! Skipping...
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Transform-only mode: exiting without verification.

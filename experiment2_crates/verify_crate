@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+verify_one() {
+  local crate="$1"
+  echo "Verifying $crate"
+  case "$crate" in
+    thread_local)
+      ./verify_tests "verify_test_benchmarks/thread_local-rs" > /dev/null 2>&1
+      ;;
+    boxcar)
+      ./verify_tests "verify_test_benchmarks/boxcar" > /dev/null 2>&1
+      ;;
+    state)
+      ./verify_tests --all-features "verify_test_benchmarks/state" > /dev/null 2>&1
+      ;;
+    arc-swap)
+      ./verify_tests --features weak,serde "verify_test_benchmarks/arc-swap" > /dev/null 2>&1
+      ;;
+    arcstr)
+      ./verify_tests --features serde "verify_test_benchmarks/arcstr" > /dev/null 2>&1
+      ;;
+    ringbuf)
+      ./verify_tests --all-features "verify_test_benchmarks/ringbuf" > /dev/null 2>&1
+      ;;
+    try-lock)
+      ./verify_tests "verify_test_benchmarks/try-lock" > /dev/null 2>&1
+      ;;
+    seize)
+      ./verify_tests "verify_test_benchmarks/seize" > /dev/null 2>&1
+      ;;
+    parking)
+      ./verify_tests "verify_test_benchmarks/parking" > /dev/null 2>&1
+      ;;
+    atomic_float)
+      ./verify_tests --features serde "verify_test_benchmarks/atomic_float" > /dev/null 2>&1
+      ;;
+    archery)
+      ./verify_tests --all-features "verify_test_benchmarks/archery" > /dev/null 2>&1
+      ;;
+    spin)
+      ./verify_tests --all-features "verify_test_benchmarks/spin-rs" > /dev/null 2>&1
+      ;;
+    parking_lot)
+      ./verify_tests --features "arc_lock,serde,deadlock_detection" "verify_test_benchmarks/parking_lot" > /dev/null 2>&1
+      ;;
+    scc|scalable-concurrent-containers)
+      ./verify_tests --features "serde" "verify_test_benchmarks/scalable-concurrent-containers" > /dev/null 2>&1
+      ;;
+    *)
+      echo "unknown crate: $crate" >&2
+      return 1
+      ;;
+  esac
+}
+
+if [ "$#" -lt 1 ]; then
+  echo "usage: $0 <crate-name> [<crate-name> ...]" >&2
+  exit 1
+fi
+
+if [ "$#" -eq 1 ]; then
+  # Single crate: run directly
+  verify_one "$1"
+else
+  # Multiple crates: run in parallel
+  pids=()
+  crates=()
+  for crate in "$@"; do
+    echo "Starting verification of: $crate"
+    verify_one "$crate" &
+    pids+=($!)
+    crates+=("$crate")
+  done
+
+  # Wait for all and report results
+  failed=()
+  for i in "${!pids[@]}"; do
+    if ! wait "${pids[$i]}"; then
+      failed+=("${crates[$i]}")
+    fi
+  done
+
+  echo ""
+  echo "======== Parallel verification complete ========"
+  for crate in "${crates[@]}"; do
+    if printf '%s\n' "${failed[@]}" | grep -qx "$crate" 2>/dev/null; then
+      echo "  $crate: FAILED"
+    else
+      echo "  $crate: OK"
+    fi
+  done
+
+  if [ "${#failed[@]}" -gt 0 ]; then
+    echo ""
+    echo "Failed crates: ${failed[*]}"
+    exit 1
+  fi
+fi

@@ -1,0 +1,15 @@
+Verification Summary for rwlock_regression1_ported
+Generated on: Thu Feb 26 10:01:34 AM GMT 2026
+Total functions: 1
+========================================
+
+Function: rwlock_two_writers
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   1
+  Success: 1
+  Failed:  0
+========================================

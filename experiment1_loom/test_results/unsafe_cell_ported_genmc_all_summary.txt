@@ -1,0 +1,51 @@
+Verification Summary for unsafe_cell_ported_genmc
+Generated on: Thu Feb 26 10:08:47 AM GMT 2026
+Total functions: 13
+========================================
+
+Function: atomic_causality_success
+  Status: SUCCESS ✓
+
+Function: atomic_causality_fail
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_mut_1
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_mut_2
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_immut_1
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_immut_2
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_immut_3
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_immut_4
+  Status: FAILED ✗
+
+Function: unsafe_cell_race_mut_immut_5
+  Status: FAILED ✗
+
+Function: unsafe_cell_ok_1
+  Status: SUCCESS ✓
+
+Function: unsafe_cell_ok_2
+  Status: SUCCESS ✓
+
+Function: unsafe_cell_ok_3
+  Status: SUCCESS ✓
+
+Function: unsafe_cell_access_after_sync
+  Status: FAILED ✗
+
+
+========================================
+FINAL RESULTS:
+  Total:   13
+  Success: 4
+  Failed:  9
+========================================

@@ -1,0 +1,565 @@
+#!/bin/bash
+
+ALL_FEATURES=false
+FEATURES=""
+DEPDIR=$(pwd)
+
+# Rust compilation flags for LLVM IR generation
+RUST_COMPILE_FLAGS=(
+  "--emit=llvm-bc,llvm-ir"
+  "-Zdylib-lto"
+  "-Zpanic_abort_tests"
+  "-C panic=abort"
+  "-C codegen-units=1"
+  "-C embed-bitcode=yes"
+  "-C overflow-checks=off"
+  "-C target-feature=-avx,-avx2,-avx512f,-avx512bw,-avx512cd,-avx512dq,-avx512vl,-sse3,-ssse3,-sse4.1,-sse4.2,-xsave"
+  "-C no-vectorize-slp"
+  "-C no-vectorize-loops"
+  "-C prefer-dynamic=no"
+  "-C lto=fat"
+  "-C opt-level=3"
+  "-C debuginfo=2"
+  "-C llvm-args=--bpf-expand-memcpy-in-order"
+  "-C no-prepopulate-passes"
+  "-C passes=ipsccp"
+  "-C passes=globalopt"
+  "-C passes=reassociate"
+  "-C passes=argpromotion"
+  "-C passes=typepromotion"
+  "-C passes=lower-constant-intrinsics"
+  "-C passes=memcpyopt"
+  "-Z mir-opt-level=0"
+  "--target=x86_64-unknown-linux-gnu"
+)
+
+# GenMC verification flags
+GENMC_FLAGS=(
+  --mixer
+  --disable-assume-propagation
+  --disable-load-annotation
+  --disable-confirmation-annotation
+  --disable-spin-assume
+  --disable-loop-jump-threading
+  --disable-code-condenser
+  --disable-estimation
+  --print-error-trace
+  --disable-stop-on-system-error
+  --unroll=2
+)
+
+while [ $# -gt 1 ]; do
+  case "$1" in
+    --all-features)
+      ALL_FEATURES=true
+      shift
+      ;;
+    --features)
+      FEATURES="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
+if [ "$#" -lt 1 ]; then
+	echo "Target Cargo Project not supplied. Exiting"
+	exit 1
+fi
+
+TARGET_RUST_PROJECT=$1
+
+if [ ! -d "$TARGET_RUST_PROJECT" ]; then
+	echo "Error: '$TARGET_RUST_PROJECT' is not a valid directory. Exiting"
+	exit 1
+fi
+
+# ========================= Helper Functions =========================
+
+# Extract #[test] function names from a Rust source file.
+# Handles pub, async fn, and stacked attributes.
+extract_test_functions() {
+  local file="$1"
+  awk '
+    BEGIN { seen_test = 0 }
+    /^[[:space:]]*#\[test\]/          { seen_test = 1; next }
+    /^[[:space:]]*#\[/ && $0 !~ /#\[test\]/ { next }
+    seen_test && /^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]/ {
+      line = $0
+      sub(/^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+/, "", line)
+      sub(/\(.*/, "", line)
+      gsub(/[[:space:]]/, "", line)
+      print line
+      seen_test = 0
+      next
+    }
+    /^[[:space:]]*$/ { seen_test = 0 }
+  ' "$file"
+}
+
+# Extract test function names that are expected to panic.
+# Detects #[should_panic] attribute or catch_unwind/halt_unwinding in the body.
+extract_expected_panic_functions() {
+  local file="$1"
+  awk '
+    BEGIN { st = 0; sp = 0; ib = 0; d = 0; fn_name = ""; hc = 0 }
+    !ib && /^[[:space:]]*#\[test\]/          { st = 1; next }
+    !ib && /^[[:space:]]*#\[should_panic/    { sp = 1; next }
+    !ib && /^[[:space:]]*#\[/                { next }
+    st && !ib && /^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]/ {
+      line = $0
+      sub(/^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]+/, "", line)
+      sub(/\(.*/, "", line)
+      gsub(/[[:space:]]/, "", line)
+      fn_name = line
+      if (sp) { print fn_name; st = 0; sp = 0; fn_name = ""; next }
+      ib = 1; hc = 0; d = 0
+      tmp = $0; gsub(/[^{]/, "", tmp); d += length(tmp)
+      tmp = $0; gsub(/[^}]/, "", tmp); d -= length(tmp)
+      if ($0 ~ /catch_unwind|halt_unwinding|panic!\(/) hc = 1
+      if (d <= 0 && index($0, "{") > 0) {
+        if (hc) print fn_name
+        ib = 0; st = 0; sp = 0; fn_name = ""
+      }
+      next
+    }
+    !ib && /^[[:space:]]*(pub[[:space:]]+)?(async[[:space:]]+)?fn[[:space:]]/ {
+      st = 0; sp = 0; next
+    }
+    ib {
+      tmp = $0; gsub(/[^{]/, "", tmp); d += length(tmp)
+      tmp = $0; gsub(/[^}]/, "", tmp); d -= length(tmp)
+      if ($0 ~ /catch_unwind|halt_unwinding|panic!\(/) hc = 1
+      if (d <= 0) {
+        if (hc) print fn_name
+        ib = 0; st = 0; sp = 0; fn_name = ""
+      }
+      next
+    }
+    !ib && /^[[:space:]]*$/ { st = 0; sp = 0 }
+  ' "$file"
+}
+
+# Run GenMC on each test function in a list.
+# First invocation does full transforms; subsequent ones reuse the transformed bitcode.
+# Args: test_list combined_bc transformed_bc trace_prefix ir_prefix
+run_genmc_batch() {
+  local test_list="$1" combined_bc="$2" transformed_bc="$3"
+  local trace_prefix="$4" ir_prefix="$5" expected_panics="${6:-}"
+  local first=true rc
+  while read -r test_func; do
+    local out="test_traces/${PROJECT_NAME}/${trace_prefix}${test_func}_verification.txt"
+    local tout="transformed_ir/${PROJECT_NAME}/${ir_prefix}${test_func}_transformed.ll"
+    rc=0
+    if [ "$first" = true ]; then
+      timeout 3600s ../genmc "${GENMC_FLAGS[@]}" \
+        --program-entry-function="$test_func" \
+        --transform-output="$tout" \
+        --transform-output-bc="$transformed_bc" \
+        "$combined_bc" > "$out" 2>&1 || rc=$?
+      first=false
+    else
+      timeout 3600s ../genmc "${GENMC_FLAGS[@]}" \
+        --skip-transforms --input-from-bitcode-file \
+        --program-entry-function="$test_func" \
+        "$transformed_bc" > "$out" 2>&1 || rc=$?
+    fi
+    [ "$rc" -eq 124 ] && echo "TIMEOUT" >> "$out"
+    # Mark expected-panic tests that did panic
+    if [ -n "$expected_panics" ] && grep -qxF "$test_func" "$expected_panics" 2>/dev/null; then
+      if grep -q "Thread panicked" "$out" 2>/dev/null; then
+        echo "Expected panic occurred" >> "$out"
+      fi
+    fi
+  done < "$test_list"
+}
+
+# Select the integration-test bitcode file (the one containing a main symbol).
+# Args: search_dir stem output_file
+# Returns 0 if found, 1 if not.
+select_integration_bitcode() {
+  local search_dir="$1" stem="$2" output="$3"
+  : > "$output"
+  for bc in "${search_dir}/${stem}"-*.bc; do
+    [ -f "$bc" ] || continue
+    if llvm-nm-18 "$bc" 2>/dev/null | grep -q " T main$"; then
+      echo "$bc" > "$output"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Link bitcode files with the pthread override and disassemble.
+# Args: input_list output_bc
+link_and_disassemble() {
+  local input_list="$1" output_bc="$2"
+  llvm-link-18 --internalize --override="../override/globals_override.ll" \
+    -o "$output_bc" "@${input_list}"
+  llvm-dis-18 -o "${output_bc%.bc}.ll" "$output_bc"
+}
+
+# Summarize verification results from test_traces into a summary file.
+# Must be called with cwd = test_traces/${PROJECT_NAME}/
+summarize_results() {
+  local summary_file="$1"
+  local file_count
+  file_count=$(find . -maxdepth 1 -type f | wc -l)
+  : > "$summary_file"
+
+  # Ordered list of "label|pattern" entries (matches collect_results.py categories)
+  local categories=(
+    "Verification success|Verification complete. No errors were detected."
+    "Expected panic occurred|Expected panic occurred"
+    "Unexpected panic|Thread panicked"
+    "Uninitialised heap read|Attempt to read from uninitialized memory"
+    "Could not identify test entry point|ERROR: Could not find program's entry point function!"
+    "External function errors|ERROR: Tried to execute an unknown external function:"
+    "Unsupported AtomicRMW operation on non-integer value|visitAtomicRMWInst"
+    "External global errors|LLVM ERROR: Could not resolve external global address:"
+    "Unsupported syscall|Calling external var arg function"
+    "Timeout|TIMEOUT"
+  )
+
+  local categorized_files
+  categorized_files=$(mktemp)
+
+  local expected_panic_files_tmp
+  expected_panic_files_tmp=$(mktemp)
+
+  local label pattern count
+  for entry in "${categories[@]}"; do
+    label="${entry%%|*}"
+    pattern="${entry#*|}"
+    if [ "$label" = "Expected panic occurred" ]; then
+      grep -rl "$pattern" . 2>/dev/null | sort -u > "$expected_panic_files_tmp" 2>/dev/null || true
+      count=$(cat "$expected_panic_files_tmp" | tee -a "$categorized_files" | wc -l)
+    elif [ "$label" = "Unexpected panic" ]; then
+      # Exclude files already counted as expected panics
+      local all_panic
+      all_panic=$(grep -rl "$pattern" . 2>/dev/null | sort -u || true)
+      if [ -n "$all_panic" ] && [ -s "$expected_panic_files_tmp" ]; then
+        count=$(echo "$all_panic" | comm -23 - "$expected_panic_files_tmp" | tee -a "$categorized_files" | wc -l)
+      elif [ -n "$all_panic" ]; then
+        count=$(echo "$all_panic" | tee -a "$categorized_files" | wc -l)
+      else
+        count=0
+      fi
+    else
+      count=$(grep -rl "$pattern" . 2>/dev/null | tee -a "$categorized_files" | wc -l)
+    fi
+    if [ "$label" = "Unexpected panic" ]; then
+      echo "" >> "$summary_file"
+      echo "ERRORS:" >> "$summary_file"
+    fi
+    echo "$label: $count / $file_count" >> "$summary_file"
+  done
+  rm -f "$expected_panic_files_tmp"
+
+  # Deduplicate categorized files and compute "other"
+  sort -u "$categorized_files" | sed 's|^\./||' > "${categorized_files}.sorted"
+
+  local all_files
+  all_files=$(mktemp)
+  find . -maxdepth 1 -type f | sed 's|^\./||' | sort > "$all_files"
+
+  local other_files
+  other_files=$(comm -23 "$all_files" "${categorized_files}.sorted")
+  local other_count=0
+  if [ -n "$other_files" ]; then
+    other_count=$(echo "$other_files" | wc -l)
+  fi
+  echo "Uncategorised errors: $other_count / $file_count" >> "$summary_file"
+  if [ "$other_count" -gt 0 ]; then
+    echo "  uncategorized files:" >> "$summary_file"
+    echo "$other_files" | while read -r f; do
+      echo "    $f" >> "$summary_file"
+    done
+  fi
+
+  rm -f "$categorized_files" "${categorized_files}.sorted" "$all_files"
+}
+
+# ========================= Main Flow =========================
+
+make -C ..
+
+# Rename #[test] functions so they are all unique (use flock to prevent parallel conflicts)
+python_script="rename_duplicate_rust_tests.py"
+
+(
+  flock 200
+  while true; do
+      output=$(python3 "$python_script")
+
+      if [ "$output" = "No duplicates found or no changes required." ]; then
+          echo "Output unchanged"
+          break
+      fi
+
+      echo "Output changed: $output"
+      sleep 1  # Sleep for a second to avoid running continuously without pause
+  done
+) 200>"$DEPDIR/.rename_lock"
+
+cd "$TARGET_RUST_PROJECT"
+
+rm -rf target-ir
+mkdir -p target-ir
+
+PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr '-' '_')
+echo "$PROJECT_NAME"
+
+# Per-project working directory for intermediate files (enables parallel crate verification)
+WORKDIR="$DEPDIR/working_directory/work_${PROJECT_NAME}"
+mkdir -p "$WORKDIR"
+
+# Detect workspace members from Cargo.toml
+WORKSPACE_MEMBERS=()
+declare -A MEMBER_CRATE_NAMES
+if grep -q '^\[workspace\]' Cargo.toml 2>/dev/null; then
+  while IFS= read -r member; do
+    member=$(echo "$member" | tr -d ' ",' )
+    if [ -n "$member" ] && [ -d "$member" ]; then
+      WORKSPACE_MEMBERS+=("$member")
+    fi
+  done < <(
+    awk '
+      /^\[workspace\]/ { in_ws=1; next }
+      /^\[/ && !/^\[workspace\]/ { in_ws=0 }
+      in_ws && /members[[:space:]]*=/ {
+        sub(/.*members[[:space:]]*=[[:space:]]*/, "")
+        in_members=1
+      }
+      in_members {
+        while (match($0, /"([^"]*)"/, m)) {
+          print m[1]
+          $0 = substr($0, RSTART + RLENGTH)
+        }
+        if ($0 ~ /\]/) in_members=0
+      }
+    ' Cargo.toml
+  )
+
+  for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+    m_name=$(grep -m1 '^name\s*=' "$member_dir/Cargo.toml" | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+    m_name=$(printf '%s' "$m_name" | tr '-' '_')
+    MEMBER_CRATE_NAMES["$member_dir"]="$m_name"
+  done
+fi
+echo "Workspace members: ${WORKSPACE_MEMBERS[*]:-none}"
+
+# Add #[no_mangle] to #[test] functions that do not have it
+find . -name "*.rs" | while read -r file; do
+  awk '
+    {
+      if ($0 ~ /^[[:space:]]*#\[test\]/ && prev !~ /^[[:space:]]*#\[no_mangle\]/) {
+        print "#[no_mangle]"
+      }
+      print
+      prev = $0
+    }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+done
+
+# --- Collect test functions (root crate) ---
+echo "Collecting integration tests..."
+INTEGRATION_TEST_FILES="$WORKDIR/integration_test_files.txt"
+: > "$INTEGRATION_TEST_FILES"
+find ./tests -maxdepth 1 -name "*.rs" -type f 2>/dev/null | sort > "$INTEGRATION_TEST_FILES"
+
+TEST_FN_DIR="$DEPDIR/test_functions/${PROJECT_NAME}"
+mkdir -p "$TEST_FN_DIR"
+
+# Collect expected-panic test function names (#[should_panic] or catch_unwind in body)
+EXPECTED_PANICS_FILE="$WORKDIR/expected_panics.txt"
+while read -r file; do
+  extract_expected_panic_functions "$file"
+done < <(find . -name "*.rs" -not -path "*/target*" -not -path "*/.git/*") > "$EXPECTED_PANICS_FILE"
+
+while read -r file; do
+  base="$(basename "${file%.*}")"
+  extract_test_functions "$file" > "$TEST_FN_DIR/${base}.txt"
+done < "$INTEGRATION_TEST_FILES"
+
+echo "Collecting unit tests..."
+UNIT_TEST_FILE="$WORKDIR/unit_test_functions.txt"
+: > "$UNIT_TEST_FILE"
+
+MEMBER_PRUNE_ARGS=()
+for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+  MEMBER_PRUNE_ARGS+=(-path "./$member_dir" -prune -o)
+done
+
+while read -r file; do
+  extract_test_functions "$file"
+done < <(find . -path "./tests" -prune -o "${MEMBER_PRUNE_ARGS[@]}" -name "*.rs" -print) >> "$UNIT_TEST_FILE"
+
+echo "Unit test function names written to: $UNIT_TEST_FILE"
+
+# --- Collect test functions (workspace members) ---
+for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+  member_crate_name="${MEMBER_CRATE_NAMES[$member_dir]}"
+
+  MEMBER_UNIT_FILE="$WORKDIR/unit_test_functions_${member_crate_name}.txt"
+  : > "$MEMBER_UNIT_FILE"
+  while read -r file; do
+    extract_test_functions "$file"
+  done < <(find "./$member_dir" -path "./$member_dir/tests" -prune -o -name "*.rs" -print) >> "$MEMBER_UNIT_FILE"
+
+  MEMBER_INTEG_FILES="$WORKDIR/integration_test_files_${member_crate_name}.txt"
+  : > "$MEMBER_INTEG_FILES"
+  find "./$member_dir/tests" -maxdepth 1 -name "*.rs" -type f 2>/dev/null | sort > "$MEMBER_INTEG_FILES"
+
+  while read -r file; do
+    base="$(basename "${file%.*}")"
+    extract_test_functions "$file" > "$TEST_FN_DIR/${base}.txt"
+  done < "$MEMBER_INTEG_FILES"
+done
+
+# --- Build ---
+cargo clean
+
+CARGO_TEST_ARGS=(test --workspace --target-dir target-ir --no-run)
+if [ "$ALL_FEATURES" = true ]; then
+  CARGO_TEST_ARGS+=(--all-features)
+elif [ -n "$FEATURES" ]; then
+  CARGO_TEST_ARGS+=(--features "$FEATURES")
+fi
+
+RUSTFLAGS="${RUST_COMPILE_FLAGS[*]}" \
+rustup run nightly-2024-06-11-x86_64-unknown-linux-gnu cargo "${CARGO_TEST_ARGS[@]}"
+
+cd "$DEPDIR"
+
+rm -rf "test_traces/${PROJECT_NAME}"
+mkdir -p "test_traces/${PROJECT_NAME}"
+
+rm -rf "transformed_ir/${PROJECT_NAME}"
+mkdir -p "transformed_ir/${PROJECT_NAME}"
+
+# --- Verify root crate integration tests ---
+echo " "
+echo " ================= Verifying Integration Tests ================= "
+echo " "
+while read -r test_file; do
+  stem="$(basename "${test_file%.*}")"
+  echo "stem is: $stem"
+
+  if ! select_integration_bitcode "$TARGET_RUST_PROJECT/target-ir/debug/deps" "$stem" "$WORKDIR/bitcode.txt"; then
+    echo "No bitcode file found for stem: $stem, skipping..."
+    continue
+  fi
+
+  link_and_disassemble "$WORKDIR/bitcode.txt" "$WORKDIR/combined.bc"
+
+  if [ ! -s "$TEST_FN_DIR/${stem}.txt" ]; then
+    echo "No test functions found for stem: $stem, skipping..."
+    continue
+  fi
+
+  echo "Verifying tests for: $stem"
+  run_genmc_batch "$TEST_FN_DIR/${stem}.txt" "$WORKDIR/combined.bc" \
+    "$WORKDIR/transformed_${stem}.bc" "${stem}_" "${stem}_" "$EXPECTED_PANICS_FILE"
+done < "$INTEGRATION_TEST_FILES"
+
+echo " "
+echo " ================= Finished Verifying Integration Tests ================= "
+echo " "
+
+# --- Verify root crate unit tests ---
+# With fat LTO, select the largest bc file (the test binary containing all deps)
+find "$DEPDIR/$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "${PROJECT_NAME}-*.bc" -printf '%s %p\n' \
+  | sort -rn | head -n 1 | cut -d' ' -f2- > "$WORKDIR/bitcode.txt"
+
+echo "Bitcode file for unit tests:"
+cat "$WORKDIR/bitcode.txt"
+
+link_and_disassemble "$WORKDIR/bitcode.txt" "$WORKDIR/combined.bc"
+
+echo " "
+echo " ================= Verifying Unit Tests ================= "
+echo " "
+
+if [ -s "$UNIT_TEST_FILE" ]; then
+  unit_count=$(wc -l < "$UNIT_TEST_FILE")
+  echo "Verifying $unit_count unit test(s)"
+  run_genmc_batch "$UNIT_TEST_FILE" "$WORKDIR/combined.bc" \
+    "$WORKDIR/transformed_unit.bc" "" "unit_" "$EXPECTED_PANICS_FILE"
+else
+  echo "No unit test functions found."
+fi
+
+echo " "
+echo " ================= Finished Verifying Unit Tests ================= "
+echo " "
+
+# --- Verify workspace members ---
+for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+  member_crate_name="${MEMBER_CRATE_NAMES[$member_dir]}"
+  echo " "
+  echo " ================= Verifying Workspace Member: $member_crate_name ($member_dir) ================= "
+  echo " "
+
+  # Select member unit-test bitcode (largest bc file matching member crate name)
+  find "$DEPDIR/$TARGET_RUST_PROJECT/target-ir/debug/deps" -type f -name "${member_crate_name}-*.bc" -printf '%s %p\n' \
+    | sort -rn | head -n 1 | cut -d' ' -f2- > "$WORKDIR/bitcode_${member_crate_name}.txt"
+
+  echo "Bitcode file for member $member_crate_name:"
+  cat "$WORKDIR/bitcode_${member_crate_name}.txt"
+
+  if [ ! -s "$WORKDIR/bitcode_${member_crate_name}.txt" ]; then
+    echo "No bitcode found for workspace member $member_crate_name, skipping..."
+    continue
+  fi
+
+  link_and_disassemble "$WORKDIR/bitcode_${member_crate_name}.txt" "$WORKDIR/combined_${member_crate_name}.bc"
+
+  # Member integration tests
+  MEMBER_INTEG_FILES="$WORKDIR/integration_test_files_${member_crate_name}.txt"
+  while read -r test_file; do
+    stem="$(basename "${test_file%.*}")"
+
+    if ! select_integration_bitcode "$TARGET_RUST_PROJECT/target-ir/debug/deps" "$stem" "$WORKDIR/bitcode.txt"; then
+      echo "No bitcode file found for member integration test stem: $stem, skipping..."
+      continue
+    fi
+
+    link_and_disassemble "$WORKDIR/bitcode.txt" "$WORKDIR/combined_integ_${member_crate_name}.bc"
+
+    if [ ! -s "$TEST_FN_DIR/${stem}.txt" ]; then
+      echo "No test functions found for member integration test stem: $stem, skipping..."
+      continue
+    fi
+
+    run_genmc_batch "$TEST_FN_DIR/${stem}.txt" "$WORKDIR/combined_integ_${member_crate_name}.bc" \
+      "$WORKDIR/transformed_integ_${member_crate_name}_${stem}.bc" "${stem}_" "${stem}_" "$EXPECTED_PANICS_FILE"
+  done < "$MEMBER_INTEG_FILES"
+
+  # Member unit tests
+  MEMBER_UNIT_FILE="$WORKDIR/unit_test_functions_${member_crate_name}.txt"
+  if [ -s "$MEMBER_UNIT_FILE" ]; then
+    member_unit_count=$(wc -l < "$MEMBER_UNIT_FILE")
+    echo "Verifying $member_unit_count unit test(s) for member $member_crate_name"
+    run_genmc_batch "$MEMBER_UNIT_FILE" "$WORKDIR/combined_${member_crate_name}.bc" \
+      "$WORKDIR/transformed_unit_${member_crate_name}.bc" "" "unit_" "$EXPECTED_PANICS_FILE"
+  else
+    echo "No unit tests found for member $member_crate_name."
+  fi
+
+  echo " "
+  echo " ================= Finished Verifying Workspace Member: $member_crate_name ================= "
+  echo " "
+done
+
+# --- Summarize results ---
+cd "test_traces/${PROJECT_NAME}/"
+mkdir -p "$DEPDIR/test_results"
+summarize_results "$DEPDIR/test_results/${PROJECT_NAME}_summary.txt"
+
+# --- Cleanup working directory ---
+rm -rf "$WORKDIR"

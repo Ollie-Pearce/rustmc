@@ -1,0 +1,30 @@
+Verification Summary for arc_ported_genmc
+Generated on: Fri Feb 27 11:51:06 PM GMT 2026
+Total functions: 6
+========================================
+
+Function: basic_usage
+  Status: SUCCESS ✓
+
+Function: sync_in_drop
+  Status: SUCCESS ✓
+
+Function: detect_mem_leak
+  Status: SUCCESS ✓
+
+Function: try_unwrap_succeeds
+  Status: SUCCESS ✓
+
+Function: try_unwrap_fails
+  Status: SUCCESS ✓
+
+Function: try_unwrap_multithreaded
+  Status: FAILED ✗
+
+
+========================================
+FINAL RESULTS:
+  Total:   6
+  Success: 5
+  Failed:  1
+========================================

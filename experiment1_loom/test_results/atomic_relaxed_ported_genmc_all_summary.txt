@@ -1,0 +1,24 @@
+Verification Summary for atomic_relaxed_ported_genmc
+Generated on: Thu Feb 26 10:00:18 AM GMT 2026
+Total functions: 4
+========================================
+
+Function: compare_and_swap
+  Status: SUCCESS ✓
+
+Function: check_ordering_valid
+  Status: SUCCESS ✓
+
+Function: check_ordering_invalid_1
+  Status: FAILED ✗
+
+Function: check_ordering_invalid_2
+  Status: FAILED ✗
+
+
+========================================
+FINAL RESULTS:
+  Total:   4
+  Success: 2
+  Failed:  2
+========================================

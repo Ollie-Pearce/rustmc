@@ -1,0 +1,18 @@
+Verification Summary for litmus_ported
+Generated on: Thu Feb 26 10:01:16 AM GMT 2026
+Total functions: 2
+========================================
+
+Function: load_buffering
+  Status: SUCCESS ✓
+
+Function: store_buffering
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   2
+  Success: 2
+  Failed:  0
+========================================

@@ -1,0 +1,10 @@
+crate,test_name,status,executions_explored,wall_time_s,error_category
+arcstr,arc_str_smoke_test_clone,SUCCESS,1,1.01,
+arcstr,arc_str_test_btreemap_1,CRASH,0,0.00,segfault
+arcstr,arc_str_test_fmt_1,SUCCESS,1,1.01,
+arcstr,arc_str_test_hashmap_1,SUCCESS,1,0.98,
+arcstr,arc_str_test_indexing,SUCCESS,1,1.01,
+arcstr,arc_str_test_loose_ends_1,SUCCESS,1,0.99,
+arcstr,arc_str_test_ord_1,SUCCESS,1,1.08,
+arcstr,arc_str_test_serde_1,SUCCESS,1,1.01,
+arcstr,arc_str_test_various_partial_eq_1,SUCCESS,1,6.39,

@@ -1,0 +1,191 @@
+Verifying: loom-tests-ported/arc_ported_genmc.rs (unroll bound: 1)
+==========================================
+
+Found #[no_mangle] functions:
+basic_usage
+sync_in_drop
+detect_mem_leak
+try_unwrap_succeeds
+try_unwrap_fails
+try_unwrap_multithreaded
+
+Total functions to verify: 6
+
+    Creating binary (application) package
+note: see more `Cargo.toml` keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+Compiling loom-tests-ported/arc_ported_genmc.rs to LLVM bitcode...
+   Compiling arc_ported_genmc v0.1.0 (/tmp/tmp.IEgi1pcx5X)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.56s
+Bitcode files:
+/tmp/tmp.IEgi1pcx5X/target/x86_64-unknown-linux-gnu/debug/deps/arc_ported_genmc-2517d84abdc5a2dc.bc
+ 
+================= [1/6] Verifying: basic_usage =================
+ 
+GenMC exit code: 0
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.vIwTJl)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.vIwTJl' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.vIwTJl' is 'x86_64-pc-linux-gnu'
+
+Tip: The execution graph seems quite large. Consider bounding all loops or using -unroll
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 5
+Total wall-clock time: 1.21s
+ 
+  ✓ Verification SUCCESS for basic_usage
+================= Finished [1/6] basic_usage =================
+
+ 
+================= [2/6] Verifying: sync_in_drop =================
+ 
+GenMC exit code: 0
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.et4qWl)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.et4qWl' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.et4qWl' is 'x86_64-pc-linux-gnu'
+
+Tip: The execution graph seems quite large. Consider bounding all loops or using -unroll
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 4
+Total wall-clock time: 1.05s
+ 
+  ✓ Verification SUCCESS for sync_in_drop
+================= Finished [2/6] sync_in_drop =================
+
+ 
+================= [3/6] Verifying: detect_mem_leak =================
+ 
+GenMC exit code: 0
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.Yyczvu)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.Yyczvu' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.Yyczvu' is 'x86_64-pc-linux-gnu'
+
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 1
+Total wall-clock time: 0.32s
+ 
+  ✓ Verification SUCCESS for detect_mem_leak
+================= Finished [3/6] detect_mem_leak =================
+
+ 
+================= [4/6] Verifying: try_unwrap_succeeds =================
+ 
+GenMC exit code: 0
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.t8XaDd)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.t8XaDd' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.t8XaDd' is 'x86_64-pc-linux-gnu'
+
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 1
+Total wall-clock time: 0.32s
+ 
+  ✓ Verification SUCCESS for try_unwrap_succeeds
+================= Finished [4/6] try_unwrap_succeeds =================
+
+ 
+================= [5/6] Verifying: try_unwrap_fails =================
+ 
+GenMC exit code: 0
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.c9LsLz)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.c9LsLz' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.c9LsLz' is 'x86_64-pc-linux-gnu'
+
+Tip: The execution graph seems quite large. Consider bounding all loops or using -unroll
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 1
+Total wall-clock time: 0.34s
+ 
+  ✓ Verification SUCCESS for try_unwrap_fails
+================= Finished [5/6] try_unwrap_fails =================
+
+ 
+================= [6/6] Verifying: try_unwrap_multithreaded =================
+ 
+GenMC exit code: 134
+Last 30 lines of verification output:
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.q68ZRI)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.q68ZRI' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.q68ZRI' is 'x86_64-pc-linux-gnu'
+
+Tip: The execution graph seems quite large. Consider bounding all loops or using -unroll
+LLVM ERROR: Calling external var arg function 'syscall' is not supported by the Interpreter.
+timeout: the monitored command dumped core
+ 
+  ✗ Verification FAILED for try_unwrap_multithreaded
+================= Finished [6/6] try_unwrap_multithreaded =================
+
+
+============================================
+ALL VERIFICATIONS COMPLETE
+============================================
+Total functions verified: 6
+Successful: 5
+Failed: 1
+
+Summary saved to: test_results/arc_ported_genmc_all_summary.txt
+Individual traces saved to: test_traces/arc_ported_genmc/
+============================================
+
+==========================================
+Verification complete!
+Results saved to:
+  - test_traces/arc_ported_genmc/
+  - test_results/arc_ported_genmc_all_summary.txt

@@ -1,0 +1,32 @@
+Verification Summary for arc_ported_genmc
+Generated on: Fri Feb  6 03:39:50 PM GMT 2026
+Total functions: 6
+========================================
+
+Function: basic_usage
+  Status: SUCCESS ✓
+
+Function: sync_in_drop
+  Status: FAILED ✗
+  Error: Uninitialised read
+
+Function: detect_mem_leak
+  Status: SUCCESS ✓
+
+Function: try_unwrap_succeeds
+  Status: FAILED ✗
+
+Function: try_unwrap_fails
+  Status: FAILED ✗
+
+Function: try_unwrap_multithreaded
+  Status: FAILED ✗
+  Error: Uninitialised read
+
+
+========================================
+FINAL RESULTS:
+  Total:   6
+  Success: 2
+  Failed:  4
+========================================

@@ -1,0 +1,21 @@
+Verification Summary for thread_local_ported_simplified
+Generated on: Thu Feb 26 10:08:38 AM GMT 2026
+Total functions: 3
+========================================
+
+Function: thread_local_test
+  Status: SUCCESS ✓
+
+Function: nested_with
+  Status: SUCCESS ✓
+
+Function: drop_test
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   3
+  Success: 3
+  Failed:  0
+========================================

@@ -1,0 +1,33 @@
+Verification Summary for thread_api_ported
+Generated on: Thu Feb 26 10:07:43 AM GMT 2026
+Total functions: 7
+========================================
+
+Function: initial_thread
+  Status: SUCCESS ✓
+
+Function: many_joins
+  Status: SUCCESS ✓
+
+Function: alt_join
+  Status: SUCCESS ✓
+
+Function: threads_have_unique_ids
+  Status: FAILED ✗
+
+Function: thread_names
+  Status: FAILED ✗
+
+Function: thread_stack_size
+  Status: SUCCESS ✓
+
+Function: park_unpark
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   7
+  Success: 5
+  Failed:  2
+========================================

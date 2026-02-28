@@ -1,0 +1,30 @@
+Verification Summary for atomic_int_ported_fixed
+Generated on: Thu Feb 26 10:00:11 AM GMT 2026
+Total functions: 6
+========================================
+
+Function: xor
+  Status: SUCCESS ✓
+
+Function: max
+  Status: SUCCESS ✓
+
+Function: min
+  Status: SUCCESS ✓
+
+Function: compare_exchange
+  Status: SUCCESS ✓
+
+Function: compare_exchange_weak
+  Status: SUCCESS ✓
+
+Function: fetch_update
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   6
+  Success: 6
+  Failed:  0
+========================================

@@ -1,0 +1,1 @@
+../genmc --mixer --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --disable-loop-jump-threading --disable-estimation --print-error-trace --disable-stop-on-system-error --unroll=2 --program-entry-function="$test_func" --transform-output=my_out.ll combined.bc

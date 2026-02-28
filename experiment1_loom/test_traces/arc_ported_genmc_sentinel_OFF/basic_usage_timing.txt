@@ -1,0 +1,23 @@
+	Command being timed: "timeout 1000s ../genmc --mixer --transform-output=myout.ll --disable-assume-propagation --disable-load-annotation --disable-confirmation-annotation --disable-spin-assume --disable-loop-jump-threading --program-entry-function=basic_usage --disable-estimation --print-error-trace --unroll=3 combined.ll"
+	User time (seconds): 1.71
+	System time (seconds): 0.19
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.91
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 164588
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3
+	Minor (reclaiming a frame) page faults: 52949
+	Voluntary context switches: 681
+	Involuntary context switches: 12
+	Swaps: 0
+	File system inputs: 23152
+	File system outputs: 95904
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,5 @@
+GenMC v0.10.1 (LLVM 18.1.7)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.

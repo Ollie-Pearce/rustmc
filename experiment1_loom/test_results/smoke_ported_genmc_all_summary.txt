@@ -1,0 +1,15 @@
+Verification Summary for smoke_ported_genmc
+Generated on: Thu Feb 26 10:02:01 AM GMT 2026
+Total functions: 1
+========================================
+
+Function: checks_fail
+  Status: FAILED ✗
+
+
+========================================
+FINAL RESULTS:
+  Total:   1
+  Success: 0
+  Failed:  1
+========================================

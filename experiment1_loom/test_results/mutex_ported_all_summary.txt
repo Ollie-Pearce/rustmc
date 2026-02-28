@@ -1,0 +1,21 @@
+Verification Summary for mutex_ported
+Generated on: Thu Feb 26 10:01:24 AM GMT 2026
+Total functions: 3
+========================================
+
+Function: mutex_enforces_mutal_exclusion
+  Status: SUCCESS ✓
+
+Function: mutex_establishes_seq_cst
+  Status: SUCCESS ✓
+
+Function: mutex_into_inner
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   3
+  Success: 3
+  Failed:  0
+========================================

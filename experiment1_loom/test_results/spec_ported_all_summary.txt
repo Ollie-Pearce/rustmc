@@ -1,0 +1,21 @@
+Verification Summary for spec_ported
+Generated on: Thu Feb 26 10:02:11 AM GMT 2026
+Total functions: 3
+========================================
+
+Function: relaxed
+  Status: SUCCESS ✓
+
+Function: acq_rel
+  Status: SUCCESS ✓
+
+Function: test_seq_cst
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   3
+  Success: 3
+  Failed:  0
+========================================

@@ -1,0 +1,18 @@
+clang-18: warning: argument unused during compilation: '-I /home/ollie/Desktop/private_mixer/include' [-Wunused-command-line-argument]
+clang-18: warning: argument unused during compilation: '-I /usr/local/include/genmc//include' [-Wunused-command-line-argument]
+warning: overriding the module target triple with x86_64-pc-linux-gnu [-Woverride-module]
+1 warning generated.
+WARNING: Cannot promote non-constant-length mem intrinsic! Skipping...
+warning: linking module flags 'Dwarf Version': IDs have conflicting values ('i32 5' from /home/ollie/Desktop/private_mixer/src/Runtime/memcpy.ll with 'i32 4' from /tmp/__genmc.ll.JSQcwa)
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memmove.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.JSQcwa' is 'x86_64-pc-linux-gnu'
+
+warning: Linking two modules of different target triples: '/home/ollie/Desktop/private_mixer/src/Runtime/memset.ll' is 'x86_64-unknown-linux-gnu' whereas '/tmp/__genmc.ll.JSQcwa' is 'x86_64-pc-linux-gnu'
+
+GenMC v0.10.1 (LLVM 18.1.3)
+Copyright (C) 2024 MPI-SWS. All rights reserved.
+
+*** Compilation complete.
+*** Transformation complete.
+*** Verification complete. No errors were detected.
+Number of complete executions explored: 1
+Total wall-clock time: 1.80s

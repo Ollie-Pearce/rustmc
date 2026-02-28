@@ -1,0 +1,112 @@
+[package]
+name = "archery"
+description = "Abstract over the atomicity of reference-counting pointers"
+version = "1.2.1"
+authors = ["Diogo Sousa <diogogsousa@gmail.com>"]
+
+edition = "2021"
+rust-version = "1.66.0"
+
+homepage = "https://github.com/orium/archery"
+repository = "https://github.com/orium/archery"
+documentation = "https://docs.rs/archery"
+readme = "README.md"
+
+keywords = [
+    "rc",
+    "arc",
+    "reference-counting",
+    "no_std"
+]
+
+categories = [
+    "concurrency",
+    "memory-management",
+    "rust-patterns",
+]
+
+license = "MPL-2.0"
+
+# What to include when packaging.
+include = [
+    "/src/**/*.rs",
+    "/Cargo.toml",
+    "/LICENSE.md",
+    "/README.md",
+    "/release-notes.md",
+]
+
+[badges]
+codecov = { repository = "orium/archery", branch = "main", service = "github" }
+
+[dependencies]
+serde = { version = "1.0.204", optional = true, default-features = false }
+triomphe = { version = "0.1.13", optional = true, default-features = false }
+
+[dev-dependencies]
+bincode = "1.3.3"
+criterion = { version = "0.5.1", features = ["html_reports"] }
+pretty_assertions = "1.4.0"
+static_assertions = "1.1.0"
+
+[features]
+fatal-warnings = []
+triomphe = ["dep:triomphe"]
+serde = ["dep:serde"]
+
+[lints.clippy]
+all = { level = "warn", priority = -2 }
+pedantic = { level = "warn", priority = -2 }
+correctness = { level = "deny", priority = -1 }
+
+explicit-deref-methods = "allow"
+if-not-else = "allow"
+inline-always = "allow"
+match-bool = "allow"
+missing-errors-doc = "allow"
+missing-safety-doc = "allow"
+module-name-repetitions = "allow"
+partialeq-ne-impl = "allow"
+similar-names = "allow"
+single-match-else = "allow"
+use-self = "allow"
+wildcard-imports = "allow"
+
+[lints.rustdoc]
+# TODO This is only needed because `cargo-rdme` requires a path like `crate::⋯`. Once that limitation is lifted we
+#      can remove this.
+redundant-explicit-links = "allow"
+
+[lib]
+# Disable libtest to make sure criterion can parse the command line flags.
+# See https://bheisler.github.io/criterion.rs/book/faq.html and https://github.com/rust-lang/rust/issues/47241.
+bench = false
+
+[[bench]]
+name = "std_rc"
+path = "benches/std_rc.rs"
+harness = false
+
+[[bench]]
+name = "std_arc"
+path = "benches/std_arc.rs"
+harness = false
+
+[[bench]]
+name = "archery_shared_pointer_rc"
+path = "benches/archery_shared_pointer_rc.rs"
+harness = false
+
+[[bench]]
+name = "archery_shared_pointer_arc"
+path = "benches/archery_shared_pointer_arc.rs"
+harness = false
+
+[[bench]]
+name = "archery_shared_pointer_arct"
+path = "benches/archery_shared_pointer_arct.rs"
+harness = false
+required-features = ["triomphe"]
+
+[package.metadata.docs.rs]
+features = ["triomphe", "serde"]

@@ -1,0 +1,21 @@
+Verification Summary for atomic_ported_genmc
+Generated on: Thu Feb 26 10:00:31 AM GMT 2026
+Total functions: 3
+========================================
+
+Function: invalid_unsync_load_relaxed
+  Status: SUCCESS ✓
+
+Function: compare_and_swap_reads_old_values
+  Status: SUCCESS ✓
+
+Function: fetch_add_atomic
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   3
+  Success: 3
+  Failed:  0
+========================================

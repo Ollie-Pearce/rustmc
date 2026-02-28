@@ -1,0 +1,15 @@
+Verification Summary for yield_ported
+Generated on: Thu Feb 26 10:09:04 AM GMT 2026
+Total functions: 1
+========================================
+
+Function: yield_completes
+  Status: SUCCESS ✓
+
+
+========================================
+FINAL RESULTS:
+  Total:   1
+  Success: 1
+  Failed:  0
+========================================
