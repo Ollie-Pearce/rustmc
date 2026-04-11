@@ -67,14 +67,14 @@ All experiments were tested on the following machine:
 
 # Early smoke tests
 
-A `sanity_check.sh` script is provided to automate this process, step by step instuctions are also given below.
+A `sanity_check.sh` script is provided to automate this process, step by step instructions are also given below.
 We assume the first commands are run from the home directory of the docker container.
 
 ### 1. Verify the example from Figure 1
 
 Run `cd paper_use_cases && ./verify_figure.sh 1`
 
-In `results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected. You can view the file with `more benchmark_results/figure1_output.txt`, and observe:
+In `results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected. You can view the file with `more results/figure1_output.txt`, and observe:
 
 ```
 *** Compilation complete.
@@ -123,92 +123,7 @@ Expected panic occurred: 0 / 11
 
 ERRORS:
 Unexpected panic: 0 / 11
-Uninitialised heap read: 0 / 11# Introduction
-
-This paper introduces RustMC, a tool to detect errors in concurrent
-programs written in Rust.
-
-The purpose of this artefact is to allow the reviewer to verify the main claims we make in the paper:
-
-1. Experiment 1 (Table 1) is reproducible
-
-2. Experiment 2 (Figure 7) is reproducible
-
-3. RustMC works as expected for the various examples given in the paper (Figures 1, 2, 8, 9, and 10).
-
-4. Our artefact can be used to verify test cases in new crates beyond those described in the paper
-
-We aim for the **Available**, **Functional**, and **Reusable** badges
-
-
-The source code of our tool and our datasets are included in the
-docker image and public repository. It includes
-
-- The source code 
-- The dataset for Experiment 1 (`experiment1_loom/loom-tests-ported/`)
-- The dataset for Experiment 2 (`experiment2_crates/verify_test_benchmarks/`)
-- Use cases from our paper (`paper_use_cases/`)
-
-
----
-
-# Getting started
-
-You will need Docker to run our artefact.
-
-
-
-Download the [artefact from
-Zenodo](https://doi.org/10.5281/zenodo.18806668)
-
-To load the container, run
-
-```
-docker load < artefact.tar.gz
-```
-
-To run the container, execute:
-
-```
-docker run  --platform linux/amd64 -it rustmc:latest
-```
-
-
-All experiments were tested on the following machine:
-
-```
-- CPU = AMD Ryzen 9 5900X 12 Core Processor
-- Cores (Physical) 24 (12)
-- Memory: 48GB
-- OS: Ubuntu 24.04.3 LTS 
-```
-
-
----
-
-# Early smoke tests
-
-A `sanity_check.sh` script is provided to automate this process, step by step instuctions are also given below.
-We assume the first commands are run from the home directory of the docker container.
-
-### 1. Verify the example from Figure 1
-
-Run `cd paper_use_cases && ./run_figure.sh 1`
-
-In `results/figure1_output.txt` you should see an execution trace and an error message indicating the race in this program was detected. You can view the file with `more benchmark_results/figure1_output.txt`, and observe:
-
-```
-*** Compilation complete.
-*** Transformation complete.
-Final counter value: 10
-Final counter value: 10
-Error: Non-atomic race!
-Event (3, 1) conflicts with event (2, 2) in graph:
-<-1, 0> main:
-	(0, 1): MALLOC _1
-	(0, 2): Wna (, 0x0) main.rs:22
-	(0, 3): Wna (, 0x0) main.rs:22
-
+Uninitialised heap read: 0 / 11
 Could not identify test entry point: 0 / 11
 External function errors: 0 / 11
 Unsupported AtomicRMW operation on non-integer value: 0 / 11
@@ -286,7 +201,7 @@ Timeouts: 0
 Crashes: 81
 ```
 
-Some of the crates we use for testing contain many dependencies which makes linking transforming and interpreting the necessary LLVM bitcode demanding, the entire experimennt takes around 1 hour and 45 minutes. To run a smaller set of benchmarks use the `--run-small` flag. 
+Some of the crates we use for testing contain many dependencies which makes linking transforming and interpreting the necessary LLVM bitcode demanding, the entire experiment takes around 1 hour and 45 minutes. To run a smaller set of benchmarks use the `--run-small` flag. 
 
 
 In order to verify tests from a single crate run
@@ -340,7 +255,7 @@ For completeness, we give instructions to verify an additional crate (outside ou
 
 1. **Identifying and downloading a compatible crate:**
 
-- Find a version of the crate which supports Rust 1.81 on the <crates.io> package registry. Crates will usually either specify a Minimum Supported Rust Version (MSRV) or a supported Rust edition. 
+- Find a version of the crate which supports Rust 1.81 on the [crates.io](https://crates.io) package registry. Crates will usually either specify a Minimum Supported Rust Version (MSRV) or a supported Rust edition. 
 
 If the MSRV listed is <=1.81 or the edition is <= 2018 the version should be supported by our toolchain. 
 
@@ -356,7 +271,7 @@ mv flume-0.12.0 flume
 Replace `flume` and `0.12.0` with your own crate and version number. 
 
 2. **Resolving dependencies:**
-The Rust toolchain supported by our tool predates MSRV aware depdendency selection (discussed in this [RFC](https://github.com/rust-lang/rfcs/pull/3537)). As a result, even when a crate's MSRV is compatible with the toolchain cargo may attempt to use newer versions of dependencies which are not supported. 
+The Rust toolchain supported by our tool predates MSRV aware dependency selection (discussed in this [RFC](https://github.com/rust-lang/rfcs/pull/3537)). As a result, even when a crate's MSRV is compatible with the toolchain cargo may attempt to use newer versions of dependencies which are not supported. 
 
 The `lock_dependencies.sh` script can be used to resolve any incompatible dependencies. 
 The script uses a more recent MSRV aware toolchain to generate a `Cargo.lock` file with compatible dependency versions.
@@ -383,7 +298,7 @@ rustup run nightly-2024-06-11-x86_64-unknown-linux-gnu cargo test
 This should fix all dependencies to compatible versions.
 
 Sometimes a crate's `Cargo.toml` specifies versions of dependencies which are not compatible with the stated MSRV. 
-We have observed this occasionaly where developer dependencies are included.
+We have observed this occasionally where developer dependencies are included.
 In this case it is recommended to try a previous version of the crate.
 
 3. **Verifying the crate:**
@@ -409,12 +324,12 @@ Alternatively `--all-features` can be used to enable all conditional compilation
 
 **Crates failing to compile:**
 - Our test harness does not currently support macro generated tests, if `verify_tests.sh` is run on a crate that uses procedural or declarative macros in order to generate tests the crate will fail to compile. To fix this temporarily remove any macro-generated tests. 
-- Some crates use the `#![forbid(unsafe_code)]` attribute in order to prohibit the usage of any unafe code in the crate. The `#[no_mangle]` attribute used by `verify_tests` to identify test entry points is considered unsafe by this attribute. In this case please temporarily remove the attribute.
+- Some crates use the `#![forbid(unsafe_code)]` attribute in order to prohibit the usage of any unsafe code in the crate. The `#[no_mangle]` attribute used by `verify_tests` to identify test entry points is considered unsafe by this attribute. In this case please temporarily remove the attribute.
 - Our toolchain does not support Rust's "Raw identifier" syntax for allowing reserved keywords to be used as an identifier. If compilation fails due to unexpected symbols in the headers of functions which start with `#r`, please remove these functions to compile.
 
 **Reasons for test failure (error message in "test_traces"):**
 - `Could not find program's entry point function`: RustMC could not find the definition of a function with the `#[test]` attribute in the crate's LLVM-IR. This is often caused by a missing conditional compilation flag, try looking in the `Cargo.toml` for a `[features]` heading. Features can be passed to the `verify_tests.sh` script using the `--features` flag.
 - `External var arg function syscall is not supported by the interpreter`: Sometimes crates emit syscalls which we do not currently support.
-- `Tried to execute an unkown external function`: Our tool does not currently support the `__rust_realloc` memory reallocation function and crashes if this function is called during interleaving exploration.
+- `Tried to execute an unknown external function`: Our tool does not currently support the `__rust_realloc` memory reallocation function and crashes if this function is called during interleaving exploration.
 - `Uninitialised Read`: RustMC's undefined value transformation currently only supports stack allocations.
 - `External global`: An undefined global is used somewhere in the LLVM module
