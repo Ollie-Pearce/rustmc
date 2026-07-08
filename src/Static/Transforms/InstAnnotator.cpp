@@ -25,6 +25,7 @@
 #include "../LLVMUtils.hpp"
 #include "../ModuleInfo.hpp"
 #include "../../SExprVisitor.hpp"
+#include <llvm/Analysis/ConstantFolding.h>
 #include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/InstIterator.h>
@@ -78,9 +79,24 @@ InstAnnotator::IRExprUP InstAnnotator::generateOperandExpr(Value *op)
 			auto &DL = mod->getDataLayout();
 			return ConcreteExpr<Value *>::create(
 				DL.getTypeAllocSizeInBits(op->getType()), SVal(0));
+		} else if (auto *ce = dyn_cast<ConstantExpr>(c)) {
+			auto iIt =
+				std::find_if(ce->user_begin(), ce->user_end(), [](const User *u) {
+					return llvm::isa<Instruction>(u);
+				});
+			if (iIt != ce->user_end()) {
+				auto *mod =
+					dyn_cast<Instruction>(*iIt)->getParent()->getParent()->getParent();
+				auto &DL = mod->getDataLayout();
+				if (auto *folded = ConstantFoldConstant(ce, DL); folded && folded != ce)
+					return generateOperandExpr(folded);
+			}
+			/* Could not reduce the constant expression to a representable
+			 * value: erroring is sound, whereas assuming true would
+			 * silently drop the assume. */
+			ERROR("Only integer and null constants currently allowed in assume() "
+			      "expressions.\n");
 		}
-		ERROR("Only integer and null constants currently allowed in assume() "
-		      "expressions.\n");
 	}
 	BUG_ON(!isa<Instruction>(op) && !isa<Argument>(op));
 	Module *mod = nullptr;

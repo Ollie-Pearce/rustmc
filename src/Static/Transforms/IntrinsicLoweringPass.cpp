@@ -59,13 +59,10 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 		case llvm::Intrinsic::vastart:
 		case llvm::Intrinsic::vaend:
 		case llvm::Intrinsic::vacopy:
-		case llvm::Intrinsic::is_constant:
 		case llvm::Intrinsic::powi:
 		case llvm::Intrinsic::fptoui_sat:
 		case llvm::Intrinsic::fabs:
 		case llvm::Intrinsic::fptosi_sat:
-		case llvm::Intrinsic::minnum:
-		case llvm::Intrinsic::maxnum:
 		case llvm::Intrinsic::abs:
 		case Intrinsic::fma:
 		case Intrinsic::bitreverse:
@@ -100,6 +97,41 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			}
 
 			Value *result = builder.CreateSelect(cmp, op1, op2);
+			I->replaceAllUsesWith(result);
+			I->eraseFromParent();
+			modified = true;
+			break;
+		}
+
+		// Lower floating-point minnum/maxnum to fcmp + select.
+		//
+		// LLVM's IntrinsicLowering has no case for these, so leaving
+		// them in place makes the interpreter abort with
+		// "Code generator does not support intrinsic function". We
+		// expand them to the IEEE-754 minNum/maxNum definition: if one
+		// operand is NaN the result is the other operand; otherwise it
+		// is the ordered min/max. Works element-wise for vector types.
+		// (The -0.0 vs +0.0 ordering is left unspecified, as the spec
+		// permits.)
+		case Intrinsic::minnum:
+		case Intrinsic::maxnum: {
+			IRBuilder<> builder(I->getParent(), I->getIterator());
+
+			Value *op1 = I->getArgOperand(0);
+			Value *op2 = I->getArgOperand(1);
+
+			Value *op1IsNaN = builder.CreateFCmpUNO(op1, op1);
+			Value *op2IsNaN = builder.CreateFCmpUNO(op2, op2);
+
+			Value *cmp = (I->getIntrinsicID() == Intrinsic::minnum)
+					     ? builder.CreateFCmpOLT(op1, op2)
+					     : builder.CreateFCmpOGT(op1, op2);
+			Value *ordered = builder.CreateSelect(cmp, op1, op2);
+
+			/* if op2 is NaN -> op1; then if op1 is NaN -> op2 */
+			Value *result = builder.CreateSelect(op2IsNaN, op1, ordered);
+			result = builder.CreateSelect(op1IsNaN, op2, result);
+
 			I->replaceAllUsesWith(result);
 			I->eraseFromParent();
 			modified = true;
@@ -277,6 +309,18 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 			I->eraseFromParent();
 			modified = true;
 			break;
+		case llvm::Intrinsic::is_constant: {
+			/* Anything that wasn't constant-folded by the optimizer
+			 * isn't a compile-time constant from our point of view;
+			 * lower to a literal so the interpreter never sees the
+			 * intrinsic (LLVM's IntrinsicLowering aborts on it). */
+			Value *arg = I->getArgOperand(0);
+			Value *result = ConstantInt::get(I->getType(), isa<Constant>(arg) ? 1 : 0);
+			I->replaceAllUsesWith(result);
+			I->eraseFromParent();
+			modified = true;
+			break;
+		}
 		case llvm::Intrinsic::trap: {
 			// Intrinsic instruction "llvm.trap" found. Directly lower it to
 			// a call of the abort() function.
@@ -301,6 +345,33 @@ auto runOnBasicBlock(BasicBlock &BB, IntrinsicLowering *IL) -> bool
 				it = it->eraseFromParent();
 			}
 
+			modified = true;
+			break;
+		}
+
+		case Intrinsic::ucmp:
+		case Intrinsic::scmp: {
+			IRBuilder<> builder(I->getParent(), I->getIterator());
+
+			Value *op1 = I->getArgOperand(0);
+			Value *op2 = I->getArgOperand(1);
+			Type *resTy = I->getType();
+
+			Value *gt, *lt;
+			if (I->getIntrinsicID() == Intrinsic::ucmp) {
+				gt = builder.CreateICmpUGT(op1, op2);
+				lt = builder.CreateICmpULT(op1, op2);
+			} else {
+				gt = builder.CreateICmpSGT(op1, op2);
+				lt = builder.CreateICmpSLT(op1, op2);
+			}
+
+			Value *gtVal = builder.CreateZExt(gt, resTy);
+			Value *ltVal = builder.CreateZExt(lt, resTy);
+			Value *result = builder.CreateSub(gtVal, ltVal);
+
+			I->replaceAllUsesWith(result);
+			I->eraseFromParent();
 			modified = true;
 			break;
 		}

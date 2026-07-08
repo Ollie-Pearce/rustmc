@@ -51,6 +51,8 @@ libgenmc_a_SOURCES = \
   src/Static/Transforms/EliminateUnusedCodePass.cpp src/Static/Transforms/EliminateUnusedCodePass.hpp \
   src/Static/Transforms/PromotePause.cpp src/Static/Transforms/PromotePause.hpp \
   src/Static/Transforms/FixRustAllocLTOPass.cpp src/Static/Transforms/FixRustAllocLTOPass.hpp \
+  src/Static/Transforms/BypassRustRuntimePass.cpp src/Static/Transforms/BypassRustRuntimePass.hpp \
+  src/Static/Transforms/RewriteFutexSyscallPass.cpp src/Static/Transforms/RewriteFutexSyscallPass.hpp \
   src/Static/Transforms/FoldInterpreterUnsupportedConstants.cpp src/Static/Transforms/FoldInterpreterUnsupportedConstants.hpp \
   src/Error.hpp \
   src/Static/Transforms/EscapeCheckerPass.cpp src/Static/Transforms/EscapeCheckerPass.hpp \
@@ -91,6 +93,7 @@ libgenmc_a_SOURCES = \
   src/Static/Transforms/PropagateAssumesPass.cpp src/Static/Transforms/PropagateAssumesPass.hpp \
   src/RADriver.cpp src/RADriver.hpp \
   src/Revisit.cpp src/Revisit.hpp \
+  src/RustTestDiscovery.cpp src/RustTestDiscovery.hpp \
   src/RoundBoundDecider.cpp src/RoundBoundDecider.hpp \
   src/SAddr.cpp src/SAddr.hpp \
   src/SAddrAllocator.hpp \
@@ -111,17 +114,22 @@ libgenmc_a_SOURCES = \
   src/View.hpp src/View.cpp \
   src/VSet.hpp src/VSet.tcc
 
-TESTS=scripts/fast-driver.sh scripts/randomize-driver.sh
-
 AM_CXXFLAGS = -DINCLUDE_DIR=\"$(pkgincludedir)/$(pkg)/include\" -DSRC_INCLUDE_DIR=\"$(abs_top_srcdir)/include\" $(COVERAGE_CXXFLAGS) -fexceptions
 bin_PROGRAMS = genmc
 genmc_SOURCES = src/main.cpp
 genmc_LDADD = libgenmc.a -lpthread $(COVERAGE_LDFLAGS)
 
-include Makefile.am.coverage
+# RustMC `cargo rustmc test` front-end and the data it needs at run time.
+# cargo-rustmc lands on PATH; the override, config, and pipeline library land
+# in $(pkgdatadir) (e.g. /usr/local/share/genmc), where cargo-rustmc looks for
+# them relative to its own install location.
+dist_bin_SCRIPTS = tools/cargo-rustmc
+dist_pkgdata_DATA = \
+  tools/rustmc-config.sh \
+  tools/rustmc_pipeline.sh \
+  override/globals_override.ll
 
-@DX_RULES@
-MOSTLYCLEANFILES = DX_CLEANFILES
+include Makefile.am.coverage
 
 if LINT
 lint-local: $(libgenmc_a_SOURCES) $(genmc_SOURCES)

@@ -73,7 +73,7 @@
 #define INT_TO_GV(typ, val)						\
 ({							                \
 	llvm::GenericValue __ret;					\
-	__ret.IntVal = llvm::APInt((typ)->getIntegerBitWidth(), (val), true); \
+	__ret.IntVal = llvm::APInt((typ)->getIntegerBitWidth(), (val), true, true); \
 	__ret;								\
 })
 
@@ -99,7 +99,7 @@ class GenMCDriver;
 #define INT_TO_GV(typ, val)						\
 ({							                \
 	llvm::GenericValue __ret;					\
-	__ret.IntVal = llvm::APInt((typ)->getIntegerBitWidth(), (val), true); \
+	__ret.IntVal = llvm::APInt((typ)->getIntegerBitWidth(), (val), true, true); \
 	__ret;								\
 })
 
@@ -753,6 +753,7 @@ private:  // Helper functions
   DECLARE_CUSTOM_OPCODE(NondetInt);
   DECLARE_CUSTOM_OPCODE(Malloc);
   DECLARE_CUSTOM_OPCODE(MallocAligned);
+  DECLARE_CUSTOM_OPCODE(MallocZero);
   DECLARE_CUSTOM_OPCODE(PMalloc);
   DECLARE_CUSTOM_OPCODE(Free);
   DECLARE_CUSTOM_OPCODE(ThreadSelf);

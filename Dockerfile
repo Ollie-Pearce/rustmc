@@ -16,13 +16,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf automake make libtool pkg-config \
     libffi-dev zlib1g-dev libedit-dev libxml2-dev \
     g++ clang util-linux \
-    clang-18 llvm-18 llvm-18-dev \
-    llvm-18-tools ripgrep \
+    clang-21 llvm-21 llvm-21-dev \
+    llvm-21-tools ripgrep \
     bash gawk vim openssh-client \
  && rm -rf /var/lib/apt/lists/*
 
 
-RUN dpkg -l | grep llvm-18
+RUN dpkg -l | grep llvm-21
 
 RUN command -v llvm-ar-18 && \
     command -v llvm-readelf-18 && \
@@ -36,7 +36,7 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain none
 
 RUN rustup default stable
 RUN rustup component add cargo
-RUN rustup install nightly-2024-06-11-x86_64-unknown-linux-gnu
+RUN rustup install nightly-2025-08-20-x86_64-unknown-linux-gnu
 
 
 ARG CACHEBUST=1
@@ -45,7 +45,7 @@ RUN git clone https://github.com/Ollie-Pearce/rustmc.git
 
 WORKDIR /root/rustmc
 
-RUN autoreconf --install && ./configure --with-llvm=/usr/lib/llvm-18 && make -j"$(nproc)" && make install
+RUN autoreconf --install && ./configure --with-llvm=/usr/lib/llvm-21 && make -j"$(nproc)" && make install
 
 
 CMD ["bash"]

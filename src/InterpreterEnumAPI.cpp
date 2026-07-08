@@ -81,6 +81,7 @@ const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
 	{"_Znwm", InternalFunctions::FN_Malloc},
 	{"_ZdlPv", InternalFunctions::FN_Free},
 	{"__rust_alloc", InternalFunctions::FN_Malloc},
+	{"__rust_alloc_zeroed", InternalFunctions::FN_MallocZero},
 	{"__rust_dealloc", InternalFunctions::FN_Free},
 	/* Memory intrinsics (lowered from llvm.memcpy/memmove/memset) */
 	{"memcpy", InternalFunctions::FN_Memcpy},

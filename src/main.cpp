@@ -21,17 +21,25 @@
 #include "Config.hpp"
 #include "DriverFactory.hpp"
 #include "Error.hpp"
+#include "RustTestDiscovery.hpp"
 #include "Static/LLVMModule.hpp"
 #include "config.h"
 
+#include <llvm/Demangle/Demangle.h>
+
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <fcntl.h>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <set>
+#include <signal.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 auto getOutFilename(const std::shared_ptr<const Config> & /*conf*/) -> std::string
@@ -192,6 +200,33 @@ auto main(int argc, char **argv) -> int
 	}
 	PRINT(VerbosityLevel::Error) << "*** Compilation complete.\n";
 
+	/* Discover Rust test functions if requested (before transforms) */
+	if (conf->discoverRustTests) {
+		auto tests = discoverRustTests(*module, conf->rustTestFilter);
+		if (tests.empty()) {
+			PRINT(VerbosityLevel::Error)
+				<< "*** No Rust test functions discovered.\n";
+			return 1;
+		}
+
+		PRINT(VerbosityLevel::Error)
+			<< "*** Discovered " << tests.size() << " Rust test function(s).\n";
+
+		if (conf->listRustTests) {
+			for (const auto &t : tests) {
+				PRINT(VerbosityLevel::Error)
+					<< "  " << t.demangledName
+					<< " [" << t.mangledName << "]\n";
+			}
+			return 0;
+		}
+
+		conf->programEntryFuns.clear();
+		for (const auto &t : tests)
+			conf->programEntryFuns.push_back(t.mangledName);
+		conf->programEntryFun = conf->programEntryFuns[0];
+	}
+
 	/* Perform the necessary transformations */
 	auto modInfo = std::make_unique<ModuleInfo>(*module);
 	if (conf->skipTransforms) {
@@ -224,26 +259,100 @@ auto main(int argc, char **argv) -> int
 		const auto &entryFun = conf->programEntryFuns[i];
 		conf->programEntryFun = entryFun;
 
+		auto displayName = conf->discoverRustTests
+					  ? llvm::demangle(entryFun)
+					  : entryFun;
+
 		if (conf->programEntryFuns.size() > 1) {
 			PRINT(VerbosityLevel::Error)
-				<< "=== Verifying: " << entryFun << " ===\n";
+				<< "=== Verifying: " << displayName << " ===\n";
 		}
 
+		/* Redirect output to per-test trace file if requested */
+		int savedOut = -1, savedErr = -1;
+		if (!conf->traceOutputDir.empty()) {
+			std::string safeName = displayName;
+			std::replace(safeName.begin(), safeName.end(), ':', '_');
+			auto filename = conf->traceOutputDir + "/" + safeName + "_verification.txt";
+
+			llvm::outs().flush();
+			llvm::errs().flush();
+			savedOut = dup(STDOUT_FILENO);
+			savedErr = dup(STDERR_FILENO);
+			int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			close(fd);
+		}
+
+		auto testBegin = std::chrono::high_resolution_clock::now();
 		GenMCDriver::Result res;
 		bool isLast = (i + 1 == conf->programEntryFuns.size());
-		if (isLast) {
-			res = GenMCDriver::verify(conf, std::move(module), std::move(modInfo));
+		bool timedOut = false;
+
+		if (conf->perTestTimeout > 0) {
+			/* Run verification with per-test timeout using fork */
+			auto pid = fork();
+			if (pid == 0) {
+				/* Child has its own copy of module via fork */
+				auto cloneCtx = std::make_unique<llvm::LLVMContext>();
+				auto clonedMod = LLVMModule::cloneModule(module, cloneCtx);
+				auto clonedMI = modInfo->clone(*clonedMod);
+				res = GenMCDriver::verify(conf, std::move(clonedMod), std::move(clonedMI));
+				printVerificationResults(conf, testBegin, res);
+				llvm::outs().flush();
+				llvm::errs().flush();
+				_exit(res.status != VerificationError::VE_OK ? EVERIFY : 0);
+			} else {
+				/* Parent: wait with timeout */
+				int status = 0;
+				auto deadline = std::chrono::steady_clock::now() +
+						std::chrono::seconds(conf->perTestTimeout);
+				pid_t waited = 0;
+				while (std::chrono::steady_clock::now() < deadline) {
+					waited = waitpid(pid, &status, WNOHANG);
+					if (waited != 0)
+						break;
+					usleep(100000); /* 100ms */
+				}
+				if (waited == 0) {
+					kill(pid, SIGKILL);
+					waitpid(pid, &status, 0);
+					timedOut = true;
+					PRINT(VerbosityLevel::Error) << "TIMEOUT\n";
+				} else if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+					overallResult = EVERIFY;
+				}
+				if (isLast) {
+					module.reset();
+					modInfo.reset();
+				}
+			}
 		} else {
-			auto cloneCtx = std::make_unique<llvm::LLVMContext>();
-			auto clonedMod = LLVMModule::cloneModule(module, cloneCtx);
-			auto clonedMI = modInfo->clone(*clonedMod);
-			res = GenMCDriver::verify(conf, std::move(clonedMod), std::move(clonedMI));
+			if (isLast) {
+				res = GenMCDriver::verify(conf, std::move(module), std::move(modInfo));
+			} else {
+				auto cloneCtx = std::make_unique<llvm::LLVMContext>();
+				auto clonedMod = LLVMModule::cloneModule(module, cloneCtx);
+				auto clonedMI = modInfo->clone(*clonedMod);
+				res = GenMCDriver::verify(conf, std::move(clonedMod), std::move(clonedMI));
+			}
+			printVerificationResults(conf, testBegin, res);
+			if (res.status != VerificationError::VE_OK)
+				overallResult = EVERIFY;
 		}
 
-		printVerificationResults(conf, begin, res);
-
-		if (res.status != VerificationError::VE_OK)
-			overallResult = EVERIFY;
+		/* Restore output */
+		if (savedOut != -1) {
+			llvm::outs().flush();
+			llvm::errs().flush();
+			fflush(stdout);
+			fflush(stderr);
+			dup2(savedOut, STDOUT_FILENO);
+			dup2(savedErr, STDERR_FILENO);
+			close(savedOut);
+			close(savedErr);
+		}
 	}
 
 	/* TODO: Check globalContext.destroy() and llvm::shutdown() */

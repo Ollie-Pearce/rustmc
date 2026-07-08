@@ -42,6 +42,12 @@ loop:
 done:
   ret i64 %buflen
 }
+@__genmc_errno = global i32 0
+
+define ptr @__errno_location() {
+  ret ptr @__genmc_errno
+}
+
 @environ = local_unnamed_addr global ptr null
 @pidfd_spawnp = global i8 0
 @pidfd_getpid = global i8 0
@@ -173,58 +179,11 @@ entry:
 declare i32 @__VERIFIER_atexit(ptr noundef) #1
 
 
-; Function Attrs: noinline nounwind optnone uwtable
-define dso_local ptr @__rust_alloc_zeroed(i64 noundef %0, i64 noundef %1) #5 {
-  %3 = alloca i64, align 8
-  %4 = alloca i64, align 8
-  %5 = alloca ptr, align 8
-  %6 = alloca ptr, align 8
-  %7 = alloca i64, align 8
-  store i64 %0, ptr %3, align 8
-  store i64 %1, ptr %4, align 8
-  %8 = load i64, ptr %3, align 8
-  %9 = load i64, ptr %4, align 8
-  %10 = call ptr @__rust_alloc(i64 noundef %8, i64 noundef %9)
-  store ptr %10, ptr %5, align 8
-  %11 = load ptr, ptr %5, align 8
-  %12 = icmp ne ptr %11, null
-  br i1 %12, label %13, label %27
-
-13:                                               ; preds = %2
-  %14 = load ptr, ptr %5, align 8
-  store ptr %14, ptr %6, align 8
-  store i64 0, ptr %7, align 8
-  br label %15
-
-15:                                               ; preds = %23, %13
-  %16 = load i64, ptr %7, align 8
-  %17 = load i64, ptr %3, align 8
-  %18 = icmp ult i64 %16, %17
-  br i1 %18, label %19, label %26
-
-19:                                               ; preds = %15
-  %20 = load ptr, ptr %6, align 8
-  %21 = load i64, ptr %7, align 8
-  %22 = getelementptr inbounds i8, ptr %20, i64 %21
-  store i8 0, ptr %22, align 1
-  br label %23
-
-23:                                               ; preds = %19
-  %24 = load i64, ptr %7, align 8
-  %25 = add i64 %24, 1
-  store i64 %25, ptr %7, align 8
-  br label %15, !llvm.loop !6
-
-26:                                               ; preds = %15
-  br label %27
-
-27:                                               ; preds = %26, %2
-  %28 = load ptr, ptr %5, align 8
-  ret ptr %28
-}
-
-; Function Attrs: noinline nounwind optnone uwtable
+; __rust_alloc / __rust_alloc_zeroed are intercepted by the interpreter
+; (see InterpreterEnumAPI.cpp). FixRustAllocLTOPass strips any body Fat LTO
+; leaves behind so the canonical symbol is a bodyless declaration.
 declare ptr @__rust_alloc(i64 noundef, i64 noundef) #5
+declare ptr @__rust_alloc_zeroed(i64 noundef, i64 noundef) #5
 
 ; clock_gettime - stub that zeros out the timespec struct and returns success
 ; clock_gettime(i32 %clk_id, ptr %tp) -> i32

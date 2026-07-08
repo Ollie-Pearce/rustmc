@@ -1,5 +1,0 @@
-bitcode.txt
-**/*.ll
-**/*.bc
-benchmark_results/*.txt
-**/target/

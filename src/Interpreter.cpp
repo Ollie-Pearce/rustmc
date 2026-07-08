@@ -378,6 +378,34 @@ void Interpreter::updateInternalFunRetDeps(unsigned int tid, Function *F, Instru
 	return;
 }
 
+/*
+ * LLVM's ExecutionEngine keys its global-address map by *mangled name*
+ * (see ExecutionEngine::addGlobalMapping / updateGlobalMapping /
+ * getPointerToGlobalIfAvailable, all of which go through getMangledName).
+ * Unnamed globals (e.g. Rust's `private unnamed_addr constant` lookup
+ * tables, printed by llvm-dis as @0, @1, ... but whose in-memory
+ * getName() is the empty string) therefore all collide onto a single
+ * map entry. emitGlobals() then maps them all to the last-seen buffer,
+ * and collectStaticAddresses() makes it fatal: after the first unnamed
+ * global's updateGlobalMapping() rewrites the shared key to a fake
+ * SAddr, the next unnamed global's getConstantValue() hands that SAddr
+ * back as its "host" buffer, and InitializeMemory() memcpy()s the
+ * initializer straight into GenMC's static-address space -> SIGSEGV.
+ *
+ * Give every unnamed global a unique name before emitGlobals() runs so
+ * each one gets its own entry in the name-keyed map. setName()
+ * auto-uniquifies (appends .N) if the chosen name is ever taken, and a
+ * name on a `private` global is otherwise semantically inert.
+ */
+static void nameUnnamedGlobals(Module &M)
+{
+	unsigned counter = 0;
+	for (auto &gv : M.globals()) {
+		if (!gv.hasName())
+			gv.setName("__genmc_unnamed_global_" + std::to_string(counter++));
+	}
+}
+
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
@@ -391,6 +419,11 @@ Interpreter::Interpreter(std::unique_ptr<Module> M, std::unique_ptr<ModuleInfo> 
 	// Initialize the "backend"
 	initializeExecutionEngine();
 	initializeExternalFunctions();
+
+	/* Must run before emitGlobals(): the EE global map is name-keyed and
+	 * unnamed globals would otherwise alias onto one entry. */
+	nameUnnamedGlobals(*Modules.back());
+
 	emitGlobals();
 
 	IL = new IntrinsicLowering(getDataLayout());
@@ -423,9 +456,26 @@ void Interpreter::runAtExitHandlers()
 	auto oldState = getProgramState();
 	setProgramState(ProgramState::Dtors);
 	while (!dynState.AtExitHandlers.empty()) {
-		scheduleThread(0);
-		callFunction(dynState.AtExitHandlers.back(), std::vector<GenericValue>(), nullptr);
+		auto *handler = dynState.AtExitHandlers.back();
 		dynState.AtExitHandlers.pop_back();
+		/* atexit handlers are invoked with zero arguments. Rust/C++
+		 * thread-local destructors registered through
+		 * __cxa_thread_atexit_impl are drop_in_place::<T>(ptr)
+		 * (arity 1), but neither GenMC's AtExitHandlers model nor the
+		 * __VERIFIER_atexit override carries the bound object pointer.
+		 * Invoking such a handler would trip the arg-count assertion
+		 * in callFunction(); skip it instead. Thread-exit TLS cleanup
+		 * is not modeled anyway (cf. the register_dtor / guard::enable
+		 * elisions in FixRustAllocLTOPass). */
+		if (handler->arg_size() != 0) {
+			WARN_ONCE("atexit-args",
+				  "Skipping atexit/thread-local destructor that "
+				  "expects arguments (TLS cleanup is not "
+				  "modeled).\n");
+			continue;
+		}
+		scheduleThread(0);
+		callFunction(handler, std::vector<GenericValue>(), nullptr);
 		run();
 	}
 	setProgramState(oldState);

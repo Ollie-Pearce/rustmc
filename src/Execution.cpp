@@ -81,7 +81,8 @@ using namespace llvm;
 		llvm::GenericValue __result;                                                       \
 		if (auto *iTyp = llvm::dyn_cast<IntegerType>(typ))                                 \
 			__result.IntVal =                                                          \
-				APInt(iTyp->getBitWidth(), (val).get(), iTyp->getSignBit());       \
+				APInt(iTyp->getBitWidth(), (val).get(), iTyp->getSignBit(),        \
+				      /*implicitTrunc=*/true);                                     \
 		else                                                                               \
 			__result.PointerVal = (void *)(val).get();                                 \
 		__result;                                                                          \
@@ -2956,11 +2957,13 @@ GenericValue Interpreter::getConstantExprValue(ConstantExpr *CE, ExecutionContex
 	case Instruction::GetElementPtr:
 		return executeGEPOperation(CE->getOperand(0), gep_type_begin(CE), gep_type_end(CE),
 					   SF);
+#if LLVM_VERSION_MAJOR < 21
 	case Instruction::FCmp:
 	case Instruction::ICmp:
 		return executeCmpInst(CE->getPredicate(), getOperandValue(CE->getOperand(0), SF),
 				      getOperandValue(CE->getOperand(1), SF),
 				      CE->getOperand(0)->getType());
+#endif
 	case Instruction::Select:
 		return executeSelectInst(getOperandValue(CE->getOperand(0), SF),
 					 getOperandValue(CE->getOperand(1), SF),
@@ -3248,6 +3251,37 @@ void Interpreter::callMallocAligned(Function *F, const std::vector<GenericValue>
 		handleMalloc, MallocLabel::create(currPos(), size, align, StorageDuration::SD_Heap,
 						  StorageType::ST_Volatile, AddressSpace::AS_User,
 						  GET_DEPS(deps)));
+	returnValueToCaller(F->getReturnType(), SVAL_TO_GV(address, F->getReturnType()));
+	return;
+}
+
+void Interpreter::callMallocZero(Function *F, const std::vector<GenericValue> &ArgVals,
+				 const std::unique_ptr<EventDeps> &specialDeps)
+{
+	if (!ArgVals[0].IntVal.isStrictlyPositive()) {
+		driver->reportError(
+			{currPos(), VerificationError::VE_Allocation, "Invalid size in malloc()"});
+		return;
+	}
+
+	auto size = ArgVals[0].IntVal.getLimitedValue();
+
+	auto deps = makeEventDeps(nullptr, nullptr, getCtrlDeps(getCurThr().id),
+				  getAddrPoDeps(getCurThr().id), nullptr);
+	auto address =
+		CALL_DRIVER(handleMalloc,
+			    MallocLabel::create(currPos(), size, alignof(std::max_align_t),
+						StorageDuration::SD_Heap, StorageType::ST_Volatile,
+						AddressSpace::AS_User, GET_DEPS(deps)));
+
+	auto *dest = (char *)address.get();
+	auto zero = SVal(0);
+	for (size_t i = 0; i < size; i++) {
+		CALL_DRIVER(handleStore,
+			    WriteLabel::create(currPos(), AtomicOrdering::NotAtomic, dest + i,
+					       ASize(1), AType::Unsigned, zero, GET_DEPS(deps)));
+	}
+
 	returnValueToCaller(F->getReturnType(), SVAL_TO_GV(address, F->getReturnType()));
 	return;
 }
@@ -5043,6 +5077,7 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		CALL_INTERNAL_FUNCTION(NondetInt);
 		CALL_INTERNAL_FUNCTION(Malloc);
 		CALL_INTERNAL_FUNCTION(MallocAligned);
+		CALL_INTERNAL_FUNCTION(MallocZero);
 		CALL_INTERNAL_FUNCTION(PMalloc);
 		CALL_INTERNAL_FUNCTION(Free);
 		CALL_INTERNAL_FUNCTION(ThreadSelf);

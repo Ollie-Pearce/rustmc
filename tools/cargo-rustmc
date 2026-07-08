@@ -1,0 +1,339 @@
+#!/usr/bin/env bash
+#
+# cargo-rustmc — verify a crate's tests with RustMC.
+#
+#   cargo rustmc test [CARGO-TEST-ARGS...]
+#
+# Compiles the tests of the crate in the current directory to LLVM bitcode,
+# links them against the RustMC globals override, and model-checks every
+# discovered #[test] with genmc. Any extra arguments (e.g. --features foo,
+# --all-features, -p member, --release) are forwarded verbatim to the
+# underlying `cargo test --no-run` build.
+#
+# Asset resolution (genmc binary, globals_override.ll, config, pipeline lib):
+#   * $RUSTMC_HOME, if set, is treated as a RustMC source checkout.
+#   * otherwise, when installed as <prefix>/bin/cargo-rustmc, assets are read
+#     from <prefix>/bin/genmc and <prefix>/share/genmc/.
+#   * otherwise, when run in-tree as tools/cargo-rustmc, assets are read from
+#     the enclosing checkout.
+
+# NB: no `-e`/`pipefail`. The shared pipeline helpers rely on `grep` pipelines
+# returning non-zero on "no match" without aborting; errors are checked
+# explicitly below (asset resolution, build, per-test result classification).
+set -u
+
+# --------------------------------------------------------------------------
+# Cargo invokes custom subcommands as `cargo-rustmc rustmc <args...>`; drop the
+# repeated subcommand name so direct and `cargo`-mediated invocation match.
+# --------------------------------------------------------------------------
+[ "${1:-}" = "rustmc" ] && shift
+
+SUBCMD="${1:-}"
+[ "$#" -gt 0 ] && shift || true
+
+# `cargo rustmc test -h|--help` prints our usage rather than being forwarded.
+if [ "$SUBCMD" = "test" ] && { [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; }; then
+  SUBCMD="--help"
+fi
+
+case "$SUBCMD" in
+  test) ;;
+  ""|-h|--help|help)
+    cat <<'EOF'
+cargo-rustmc — model-check a crate's tests with RustMC
+
+USAGE:
+    cargo rustmc test [CARGO-TEST-ARGS...]
+
+All CARGO-TEST-ARGS are forwarded to `cargo test --no-run`, so the usual
+feature/target/package selection flags work:
+
+    cargo rustmc test
+    cargo rustmc test --all-features
+    cargo rustmc test --features weak,serde
+    cargo rustmc test -p my-workspace-member
+
+Test selection works like `cargo test`:
+
+    cargo rustmc test --test integration_foo   # only that integration file
+    cargo rustmc test --lib                     # only unit tests
+    cargo rustmc test my_test_name              # only tests whose name matches
+    cargo rustmc test --test integration_foo my_test_name
+    cargo rustmc test -- my_test_name           # filter after -- also works
+
+A bare TESTNAME (or one after `--`) is forwarded to genmc as a substring
+filter on the demangled test name; only a single filter is honoured, and it
+matches as a substring (no `--exact`). Target/feature/package flags such as
+`--test`, `--lib`, `--features`, `-p` are handled by cargo's own build.
+
+Traces and a summary are written under target/rustmc/ in the crate.
+
+ENVIRONMENT:
+    RUSTMC_HOME   Path to a RustMC source checkout (overrides asset lookup).
+EOF
+    exit 0
+    ;;
+  *)
+    echo "cargo-rustmc: unknown subcommand '$SUBCMD' (only 'test' is supported)" >&2
+    echo "try: cargo rustmc test [cargo-test-args...]" >&2
+    exit 2
+    ;;
+esac
+
+CARGO_ARGS=("$@")
+
+# --------------------------------------------------------------------------
+# Determine a test-name filter, matching how `cargo test [TESTNAME]` /
+# `cargo test -- TESTNAME` select tests. The filter is forwarded to genmc as
+# --rust-test-filter (substring match on the demangled test name). The args
+# themselves stay in CARGO_ARGS and drive cargo's own build unchanged, so
+# target/feature/package flags (e.g. `--test FILE`, `--lib`, `--features`)
+# continue to restrict what is compiled — genmc only ever sees what cargo built.
+# --------------------------------------------------------------------------
+extract_test_filter() {
+  # cargo-test options that consume a following value token (so that value is
+  # an option argument, not the positional TESTNAME).
+  local value_opts=" -p --package --features --target --target-dir --manifest-path --message-format --color -j --jobs --profile --test --bin --example --bench --config -Z "
+  local seen_ddash=0 tok filter=""
+  while [ "$#" -gt 0 ]; do
+    tok="$1"; shift
+    if [ "$seen_ddash" -eq 1 ]; then
+      # Args after `--` go to the test harness; its first bare token is the
+      # name filter (skip harness flags like --nocapture/--exact/--ignored).
+      case "$tok" in
+        -*) : ;;
+        *)  [ -z "$filter" ] && filter="$tok" ;;
+      esac
+      continue
+    fi
+    case "$tok" in
+      --) seen_ddash=1 ;;
+      --*=*) : ;;                       # self-contained --opt=value
+      -*)                               # an option; consume its value if it takes one
+        case "$value_opts" in
+          *" $tok "*) shift || true ;;
+        esac ;;
+      *)  [ -z "$filter" ] && filter="$tok" ;;   # bare cargo-side TESTNAME
+    esac
+  done
+  printf '%s' "$filter"
+}
+
+RUST_TEST_FILTER="$(extract_test_filter "${CARGO_ARGS[@]}")"
+
+# --------------------------------------------------------------------------
+# Resolve RustMC assets.
+# --------------------------------------------------------------------------
+SELF_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+
+if [ -n "${RUSTMC_HOME:-}" ]; then
+  DATADIR="$RUSTMC_HOME/tools"
+  OVERRIDE_LL="$RUSTMC_HOME/override/globals_override.ll"
+  GENMC_BIN="$RUSTMC_HOME/genmc"
+elif [ "$(basename "$SELF_DIR")" = "tools" ] && [ -f "$SELF_DIR/rustmc_pipeline.sh" ]; then
+  # In-tree: tools/cargo-rustmc within a source checkout.
+  REPO="$(dirname "$SELF_DIR")"
+  DATADIR="$SELF_DIR"
+  OVERRIDE_LL="$REPO/override/globals_override.ll"
+  GENMC_BIN="$REPO/genmc"
+else
+  # Installed: <prefix>/bin/cargo-rustmc, data under <prefix>/share/genmc.
+  PREFIX="$(dirname "$SELF_DIR")"
+  DATADIR="$PREFIX/share/genmc"
+  OVERRIDE_LL="$DATADIR/globals_override.ll"
+  GENMC_BIN="$PREFIX/bin/genmc"
+fi
+
+# Fall back to a genmc on PATH if the computed one is not executable.
+[ -x "$GENMC_BIN" ] || GENMC_BIN="$(command -v genmc || echo "$GENMC_BIN")"
+
+die() { echo "cargo-rustmc: $*" >&2; exit 1; }
+
+[ -x "$GENMC_BIN" ]            || die "genmc binary not found (looked at '$GENMC_BIN'; set RUSTMC_HOME or run 'make install')"
+[ -f "$OVERRIDE_LL" ]         || die "globals_override.ll not found at '$OVERRIDE_LL' (set RUSTMC_HOME or run 'make install')"
+[ -f "$DATADIR/rustmc-config.sh" ]   || die "rustmc-config.sh not found at '$DATADIR'"
+[ -f "$DATADIR/rustmc_pipeline.sh" ] || die "rustmc_pipeline.sh not found at '$DATADIR'"
+
+# Provides RUST_COMPILE_FLAGS, GENMC_FLAGS, RUST_TOOLCHAIN.
+source "$DATADIR/rustmc-config.sh"
+# Provides run_genmc_discover, select_integration_bitcode, link_and_disassemble,
+# summarize_results. Reads GENMC_BIN / OVERRIDE_LL / GENMC_FLAGS from the env.
+source "$DATADIR/rustmc_pipeline.sh"
+export GENMC_BIN OVERRIDE_LL
+
+for tool in llvm-link-21 llvm-dis-21 llvm-nm-21 rustup; do
+  command -v "$tool" >/dev/null 2>&1 || die "required tool '$tool' not found on PATH"
+done
+
+# --------------------------------------------------------------------------
+# Locate the crate.
+# --------------------------------------------------------------------------
+CRATE_DIR="$(pwd)"
+[ -f "$CRATE_DIR/Cargo.toml" ] || die "no Cargo.toml in $CRATE_DIR — run this from a crate root"
+
+PROJECT_NAME=$(grep -m1 '^name\s*=' Cargo.toml | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr '-' '_')
+[ -n "$PROJECT_NAME" ] || die "could not read package name from Cargo.toml"
+
+# Output locations (kept inside target/ so they are ignored & cleaned by cargo).
+OUT_ROOT="$CRATE_DIR/target/rustmc"
+IR_TARGET="$OUT_ROOT/ir"
+TRACE_DIR="$OUT_ROOT/traces"
+WORKDIR="$OUT_ROOT/work"
+DEPS_DIR="$IR_TARGET/debug/deps"
+SUMMARY_FILE="$OUT_ROOT/${PROJECT_NAME}_summary.txt"
+
+rm -rf "$TRACE_DIR" "$WORKDIR"
+mkdir -p "$IR_TARGET" "$TRACE_DIR" "$WORKDIR"
+
+echo "==> RustMC: verifying tests for '$PROJECT_NAME'"
+echo "    genmc:    $GENMC_BIN"
+echo "    override: $OVERRIDE_LL"
+[ -n "$RUST_TEST_FILTER" ] && echo "    filter:   $RUST_TEST_FILTER (test-name substring)"
+
+# --------------------------------------------------------------------------
+# Detect workspace members (so their unit/integration tests are verified too).
+# --------------------------------------------------------------------------
+WORKSPACE_MEMBERS=()
+declare -A MEMBER_CRATE_NAMES
+if grep -q '^\[workspace\]' Cargo.toml 2>/dev/null; then
+  while IFS= read -r member; do
+    member=$(echo "$member" | tr -d ' ",')
+    if [ -n "$member" ] && [ -d "$member" ]; then
+      WORKSPACE_MEMBERS+=("$member")
+    fi
+  done < <(
+    awk '
+      /^\[workspace\]/ { in_ws=1; next }
+      /^\[/ && !/^\[workspace\]/ { in_ws=0 }
+      in_ws && /members[[:space:]]*=/ {
+        sub(/.*members[[:space:]]*=[[:space:]]*/, "")
+        in_members=1
+      }
+      in_members {
+        while (match($0, /"([^"]*)"/, m)) {
+          print m[1]
+          $0 = substr($0, RSTART + RLENGTH)
+        }
+        if ($0 ~ /\]/) in_members=0
+      }
+    ' Cargo.toml
+  )
+  for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+    m_name=$(grep -m1 '^name\s*=' "$member_dir/Cargo.toml" | sed -E 's/name\s*=\s*"([^"]+)".*/\1/')
+    m_name=$(printf '%s' "$m_name" | tr '-' '_')
+    MEMBER_CRATE_NAMES["$member_dir"]="$m_name"
+  done
+fi
+[ "${#WORKSPACE_MEMBERS[@]}" -gt 0 ] && echo "    workspace members: ${WORKSPACE_MEMBERS[*]}"
+
+# --------------------------------------------------------------------------
+# Collect #[should_panic] test names (matched against trace files, no source
+# edits). Optional per-crate rustmc-unsupported-tests.txt lists module-qualified
+# test names to treat as out-of-scope rather than failures.
+# --------------------------------------------------------------------------
+EXPECTED_PANICS_FILE="$WORKDIR/expected_panics.txt"
+: > "$EXPECTED_PANICS_FILE"
+find . -name '*.rs' -type f -print0 2>/dev/null \
+  | xargs -0 awk '
+      FNR==1 { pending=0 }
+      /#\[should_panic/ { pending=1 }
+      pending && match($0, /(^|[^A-Za-z0-9_])fn[ \t]+([A-Za-z_][A-Za-z0-9_]*)/, m) {
+        print m[2]; pending=0
+      }
+    ' 2>/dev/null | sort -u > "$EXPECTED_PANICS_FILE" || true
+
+UNSUPPORTED_TESTS_FILE=""
+if [ -f "$CRATE_DIR/rustmc-unsupported-tests.txt" ]; then
+  UNSUPPORTED_TESTS_FILE="$CRATE_DIR/rustmc-unsupported-tests.txt"
+fi
+
+# --------------------------------------------------------------------------
+# Build the test bitcode.
+# --------------------------------------------------------------------------
+echo "==> Building test bitcode (cargo test --no-run)"
+RUSTFLAGS="${RUST_COMPILE_FLAGS[*]}" \
+  rustup run "$RUST_TOOLCHAIN" cargo test --no-run \
+    --target-dir "$IR_TARGET" "${CARGO_ARGS[@]}"
+build_rc=$?
+[ "$build_rc" -eq 0 ] || die "cargo test --no-run failed (exit $build_rc)"
+[ -d "$DEPS_DIR" ] || die "no bitcode produced under $DEPS_DIR"
+
+# --------------------------------------------------------------------------
+# verify_crate <crate_name> <integration-tests-dir>
+#   Verifies the unit-test binary (largest matching .bc) plus every integration
+#   test binary (those exporting `main`) for one crate.
+# --------------------------------------------------------------------------
+verify_crate() {
+  local crate_name="$1" tests_dir="$2"
+
+  # Integration tests: each file under <tests_dir>/*.rs becomes a `main` binary.
+  if [ -d "$tests_dir" ]; then
+    while IFS= read -r test_file; do
+      [ -n "$test_file" ] || continue
+      local stem
+      stem="$(basename "${test_file%.*}")"
+      if ! select_integration_bitcode "$DEPS_DIR" "$stem" "$WORKDIR/bc.txt"; then
+        continue
+      fi
+      echo "==> Verifying integration test: $stem"
+      link_and_disassemble "$WORKDIR/bc.txt" "$WORKDIR/combined.bc"
+      run_genmc_discover "$WORKDIR/combined.bc" "$TRACE_DIR" \
+        "$EXPECTED_PANICS_FILE" "$UNSUPPORTED_TESTS_FILE"
+    done < <(find "$tests_dir" -maxdepth 1 -name '*.rs' -type f 2>/dev/null | sort)
+  fi
+
+  # Unit tests: with fat LTO the test binary is the largest bc for the crate.
+  local unit_bc
+  unit_bc=$(find "$DEPS_DIR" -type f -name "${crate_name}-*.bc" -printf '%s %p\n' 2>/dev/null \
+    | sort -rn | head -n1 | cut -d' ' -f2-)
+  if [ -n "$unit_bc" ]; then
+    echo "==> Verifying unit tests: $crate_name"
+    echo "$unit_bc" > "$WORKDIR/bc.txt"
+    link_and_disassemble "$WORKDIR/bc.txt" "$WORKDIR/combined.bc"
+    run_genmc_discover "$WORKDIR/combined.bc" "$TRACE_DIR" \
+      "$EXPECTED_PANICS_FILE" "$UNSUPPORTED_TESTS_FILE"
+  fi
+}
+
+verify_crate "$PROJECT_NAME" "$CRATE_DIR/tests"
+for member_dir in "${WORKSPACE_MEMBERS[@]}"; do
+  verify_crate "${MEMBER_CRATE_NAMES[$member_dir]}" "$CRATE_DIR/$member_dir/tests"
+done
+
+# --------------------------------------------------------------------------
+# Report.
+# --------------------------------------------------------------------------
+mkdir -p "$OUT_ROOT"
+( cd "$TRACE_DIR" && summarize_results "$SUMMARY_FILE" )
+
+echo ""
+echo "======================= RustMC results ======================="
+fail=0
+pass=0
+skip=0
+shopt -s nullglob
+for trace_file in "$TRACE_DIR"/*_verification.txt; do
+  name=$(basename "$trace_file" _verification.txt)
+  if grep -q "Verification complete. No errors were detected." "$trace_file" 2>/dev/null; then
+    printf '  ok       %s\n' "$name"; pass=$((pass+1))
+  elif grep -q "Expected panic occurred" "$trace_file" 2>/dev/null; then
+    printf '  ok       %s (expected panic)\n' "$name"; pass=$((pass+1))
+  elif grep -q "Unsupported test:" "$trace_file" 2>/dev/null; then
+    printf '  skip     %s (out of scope)\n' "$name"; skip=$((skip+1))
+  else
+    reason=$(grep -m1 -E "Error:|ERROR:|Thread panicked|TIMEOUT|LLVM ERROR:" "$trace_file" 2>/dev/null | sed 's/^[[:space:]]*//')
+    printf '  FAILED   %s\n           %s\n' "$name" "${reason:-see $trace_file}"; fail=$((fail+1))
+  fi
+done
+shopt -u nullglob
+
+echo "--------------------------------------------------------------"
+echo "  $pass passed, $fail failed, $skip skipped"
+echo "  traces:  $TRACE_DIR"
+echo "  summary: $SUMMARY_FILE"
+echo "=============================================================="
+
+rm -rf "$WORKDIR"
+
+[ "$fail" -eq 0 ]

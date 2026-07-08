@@ -95,6 +95,11 @@ public:
 	std::string transformBcFile;
 	std::string programEntryFun;
 	std::vector<std::string> programEntryFuns;
+	bool discoverRustTests;
+	std::string rustTestFilter;
+	bool listRustTests;
+	std::string traceOutputDir;
+	unsigned int perTestTimeout;
 	unsigned int warnOnGraphSize;
 	VerbosityLevel vLevel;
 #ifdef ENABLE_GENMC_DEBUG

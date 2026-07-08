@@ -21,6 +21,8 @@
 #include "LLVMModule.hpp"
 #include "../Error.hpp"
 #include "../SExprVisitor.hpp"
+#include "Transforms/BypassRustRuntimePass.hpp"
+#include "Transforms/RewriteFutexSyscallPass.hpp"
 #include "Transforms/BisimilarityCheckerPass.hpp"
 #include "Transforms/CallInfoCollectionPass.hpp"
 #include "Transforms/CodeCondenserPass.hpp"
@@ -180,6 +182,8 @@ auto transformLLVMModule(llvm::Module &mod, ModuleInfo &MI,
 	 */
 	llvm::ModulePassManager preLinkMGR;
 
+	preLinkMGR.addPass(BypassRustRuntimePass());
+	preLinkMGR.addPass(RewriteFutexSyscallPass());
 	preLinkMGR.addPass(DeclareInternalsPass());
 	preLinkMGR.addPass(FixRustAllocLTOPass());
 	preLinkMGR.addPass(DefineLibcFunsPass());

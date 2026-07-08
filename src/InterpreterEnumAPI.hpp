@@ -68,6 +68,7 @@ enum class InternalFunctions {
 	FN_AtExit,
 	FN_Malloc,
 	FN_MallocAligned,
+	FN_MallocZero,
 	FN_PMalloc,
 	FN_HazptrAlloc,
 	FN_MallocLast,

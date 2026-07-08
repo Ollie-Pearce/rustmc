@@ -1,3 +1,0 @@
-[submodule "kater-tool"]
-	path = kater-tool
-	url = git-rts@gitlab.mpi-sws.org:michalis/kater-tool.git

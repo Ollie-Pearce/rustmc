@@ -229,6 +229,29 @@ static llvm::cl::opt<std::string>
 	clTransformBcFile("transform-output-bc", llvm::cl::init(""), llvm::cl::value_desc("file"),
 			  llvm::cl::cat(clDebugging),
 			  llvm::cl::desc("Output the transformed LLVM module as bitcode"));
+static llvm::cl::opt<bool>
+	clDiscoverRustTests("discover-rust-tests", llvm::cl::cat(clDebugging),
+			    llvm::cl::desc("Discover Rust test functions from LLVM bitcode (no #[no_mangle] needed)"));
+
+static llvm::cl::opt<std::string>
+	clRustTestFilter("rust-test-filter", llvm::cl::init(""), llvm::cl::value_desc("pattern"),
+			 llvm::cl::cat(clDebugging),
+			 llvm::cl::desc("Only verify Rust tests whose demangled name contains this substring"));
+
+static llvm::cl::opt<bool>
+	clListRustTests("list-rust-tests", llvm::cl::cat(clDebugging),
+			llvm::cl::desc("List discovered Rust test functions and exit"));
+
+static llvm::cl::opt<std::string>
+	clTraceOutputDir("trace-output-dir", llvm::cl::init(""), llvm::cl::value_desc("dir"),
+			 llvm::cl::cat(clDebugging),
+			 llvm::cl::desc("Write per-test verification traces to separate files in <dir>"));
+
+static llvm::cl::opt<unsigned int>
+	clPerTestTimeout("per-test-timeout", llvm::cl::init(0), llvm::cl::value_desc("seconds"),
+			 llvm::cl::cat(clDebugging),
+			 llvm::cl::desc("Timeout in seconds for each individual test (0 = no timeout)"));
+
 static llvm::cl::opt<unsigned int>
 	clWarnOnGraphSize("warn-on-graph-size", llvm::cl::init(1024), llvm::cl::value_desc("N"),
 			  llvm::cl::cat(clDebugging),
@@ -440,6 +463,11 @@ void Config::saveConfigOptions()
 	skipTransforms = clSkipTransforms;
 	transformOnly = clTransformOnly;
 	transformBcFile = clTransformBcFile;
+	discoverRustTests = clDiscoverRustTests;
+	rustTestFilter = clRustTestFilter;
+	listRustTests = clListRustTests;
+	traceOutputDir = clTraceOutputDir;
+	perTestTimeout = clPerTestTimeout;
 	vLevel = clVLevel;
 #ifdef ENABLE_GENMC_DEBUG
 	printStamps = clPrintStamps;
